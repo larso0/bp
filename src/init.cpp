@@ -1,8 +1,8 @@
 #include <bp/bp.h>
+#include <bp/vk_includes.h>
 #include <vector>
 #include <stdexcept>
 #include <iostream>
-#include <cstdlib>
 #include <cstring>
 #include <algorithm>
 #include <sstream>
@@ -10,7 +10,7 @@
 using namespace std;
 
 namespace bp {
-	static VkInstance instance = VK_NULL_HANDLE;
+	VkInstance instance = VK_NULL_HANDLE;
 	vector<VkPhysicalDevice> physical_devices;
 
 	static void glfw_error_callback(int error, const char* description) {
@@ -23,16 +23,18 @@ namespace bp {
 	static PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallback = nullptr;
 	static PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallback = nullptr;
 
-	static VKAPI_ATTR VkBool32 VKAPI_CALL dbg_report_callback(VkDebugReportFlagsEXT, VkDebugReportObjectTypeEXT, uint64_t, size_t, int32_t, const char* pLayerPrefix, const char* pMessage, void*) {
+	static VKAPI_ATTR VkBool32 VKAPI_CALL
+	dbg_report_callback(VkDebugReportFlagsEXT, VkDebugReportObjectTypeEXT, uint64_t, size_t, int32_t,
+	                    const char* pLayerPrefix, const char* pMessage, void*) {
 		cerr << pLayerPrefix << ": " << pMessage << endl;
 		return VK_FALSE;
 	}
 
 	void load_dbg_ext() {
 		vkCreateDebugReportCallback =
-			(PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT");
+			(PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT");
 		vkDestroyDebugReportCallback =
-			(PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT");
+			(PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT");
 	}
 
 	void create_dbg_callback() {
@@ -40,8 +42,8 @@ namespace bp {
 		info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
 		info.flags
 			= VK_DEBUG_REPORT_ERROR_BIT_EXT
-			| VK_DEBUG_REPORT_WARNING_BIT_EXT
-			| VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+			  | VK_DEBUG_REPORT_WARNING_BIT_EXT
+			  | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
 		info.pfnCallback = dbg_report_callback;
 		info.pUserData = nullptr;
 
@@ -50,6 +52,7 @@ namespace bp {
 			throw runtime_error("Failed to create debug report callback.");
 		}
 	}
+
 #endif
 
 	static vector<const char*> get_required_ext_names() {
@@ -57,18 +60,18 @@ namespace bp {
 		const char** es;
 		es = glfwGetRequiredInstanceExtensions(&n);
 		vector<const char*> ext_names(es, es + n);
-		#ifndef NDEBUG
+#ifndef NDEBUG
 		ext_names.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-		#endif
+#endif
 		vkEnumerateInstanceExtensionProperties(nullptr, &n, nullptr);
 		vector<VkExtensionProperties> available(n);
 		vkEnumerateInstanceExtensionProperties(nullptr, &n, available.data());
 		n = 0;
 		for (const char* e : ext_names) {
 			if (find_if(available.begin(), available.end(),
-			[e](const VkExtensionProperties& l) -> bool {
-				return strcmp(l.extensionName, e) == 0;
-			}) == available.end()) {
+			            [e](const VkExtensionProperties& l) -> bool {
+				            return strcmp(l.extensionName, e) == 0;
+			            }) == available.end()) {
 				stringstream ss;
 				ss << "Required extension \"" << e << "\" is not available.";
 				throw runtime_error(ss.str());
@@ -102,7 +105,7 @@ namespace bp {
 		instance_info.pApplicationInfo = &app_info;
 
 		auto extensions = get_required_ext_names();
-		instance_info.enabledExtensionCount = (uint32_t)extensions.size();
+		instance_info.enabledExtensionCount = (uint32_t) extensions.size();
 		instance_info.ppEnabledExtensionNames = extensions.data();
 
 #ifdef NDEBUG
