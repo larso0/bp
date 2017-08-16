@@ -1,7 +1,8 @@
 #ifndef BP_H
 #define BP_H
 
-namespace bp {
+namespace bp
+{
 	void init();
 }
 

@@ -9,11 +9,13 @@
 
 using namespace std;
 
-namespace bp {
+namespace bp
+{
 	VkInstance instance = VK_NULL_HANDLE;
 	vector<VkPhysicalDevice> physical_devices;
 
-	static void glfw_error_callback(int error, const char* description) {
+	static void glfw_error_callback(int error, const char* description)
+	{
 		cerr << "GLFW Error:" << description << endl;
 	}
 
@@ -24,20 +26,25 @@ namespace bp {
 	static PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallback = nullptr;
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL
-	dbg_report_callback(VkDebugReportFlagsEXT, VkDebugReportObjectTypeEXT, uint64_t, size_t, int32_t,
-	                    const char* pLayerPrefix, const char* pMessage, void*) {
+	dbg_report_callback(VkDebugReportFlagsEXT, VkDebugReportObjectTypeEXT, uint64_t, size_t,
+			    int32_t, const char* pLayerPrefix, const char* pMessage, void*)
+	{
 		cerr << pLayerPrefix << ": " << pMessage << endl;
 		return VK_FALSE;
 	}
 
-	void load_dbg_ext() {
+	void load_dbg_ext()
+	{
 		vkCreateDebugReportCallback =
-			(PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT");
+			(PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr(
+				instance, "vkCreateDebugReportCallbackEXT");
 		vkDestroyDebugReportCallback =
-			(PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT");
+			(PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr(
+				instance, "vkDestroyDebugReportCallbackEXT");
 	}
 
-	void create_dbg_callback() {
+	void create_dbg_callback()
+	{
 		VkDebugReportCallbackCreateInfoEXT info;
 		info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
 		info.flags
@@ -47,15 +54,20 @@ namespace bp {
 		info.pfnCallback = dbg_report_callback;
 		info.pUserData = nullptr;
 
-		VkResult result = vkCreateDebugReportCallback(instance, &info, nullptr, &dbg_callback);
-		if (result != VK_SUCCESS) {
-			throw runtime_error("Failed to create debug report callback.");
+		VkResult result = vkCreateDebugReportCallback(instance, &info,
+							      nullptr,
+							      &dbg_callback);
+		if (result != VK_SUCCESS)
+		{
+			throw runtime_error(
+				"Failed to create debug report callback.");
 		}
 	}
 
 #endif
 
-	static vector<const char*> get_required_ext_names() {
+	static vector<const char*> get_required_ext_names()
+	{
 		unsigned n = 0;
 		const char** es;
 		es = glfwGetRequiredInstanceExtensions(&n);
@@ -65,22 +77,29 @@ namespace bp {
 #endif
 		vkEnumerateInstanceExtensionProperties(nullptr, &n, nullptr);
 		vector<VkExtensionProperties> available(n);
-		vkEnumerateInstanceExtensionProperties(nullptr, &n, available.data());
+		vkEnumerateInstanceExtensionProperties(nullptr, &n,
+						       available.data());
 		n = 0;
-		for (const char* e : ext_names) {
+		for (const char* e : ext_names)
+		{
 			if (find_if(available.begin(), available.end(),
-			            [e](const VkExtensionProperties& l) -> bool {
-				            return strcmp(l.extensionName, e) == 0;
-			            }) == available.end()) {
+				    [e](const VkExtensionProperties& l) -> bool
+				    {
+					    return strcmp(l.extensionName, e) ==
+						   0;
+				    }) == available.end())
+			{
 				stringstream ss;
-				ss << "Required extension \"" << e << "\" is not available.";
+				ss << "Required extension \"" << e
+				   << "\" is not available.";
 				throw runtime_error(ss.str());
 			}
 		}
 		return ext_names;
 	}
 
-	static vector<VkLayerProperties> get_layer_names() {
+	static vector<VkLayerProperties> get_layer_names()
+	{
 		uint32_t count = 0;
 		vkEnumerateInstanceLayerProperties(&count, nullptr);
 		vector<VkLayerProperties> layers(count);
@@ -88,7 +107,8 @@ namespace bp {
 		return layers;
 	}
 
-	void create_instance() {
+	void create_instance()
+	{
 		VkApplicationInfo app_info = {};
 		app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		app_info.pNext = nullptr;
@@ -114,25 +134,34 @@ namespace bp {
 #else
 		{
 			auto available = get_layer_names();
-			auto pred = [](const VkLayerProperties& l) -> bool {
-				return strcmp(l.layerName, validation_layer) == 0;
+			auto pred = [](const VkLayerProperties& l) -> bool
+			{
+				return strcmp(l.layerName, validation_layer) ==
+				       0;
 			};
-			auto result = find_if(available.begin(), available.end(), pred);
-			if (result == available.end()) {
-				throw runtime_error("Validation layer is not available.");
+			auto result = find_if(available.begin(),
+					      available.end(), pred);
+			if (result == available.end())
+			{
+				throw runtime_error(
+					"Validation layer is not available.");
 			}
 		}
 		instance_info.enabledLayerCount = 1;
 		instance_info.ppEnabledLayerNames = &validation_layer;
 #endif
 
-		VkResult result = vkCreateInstance(&instance_info, nullptr, &instance);
-		if (result != VK_SUCCESS) {
-			throw runtime_error("Failed to create Vulkan instance.");
+		VkResult result = vkCreateInstance(&instance_info, nullptr,
+						   &instance);
+		if (result != VK_SUCCESS)
+		{
+			throw runtime_error(
+				"Failed to create Vulkan instance.");
 		}
 	}
 
-	static void quit() {
+	static void quit()
+	{
 #ifndef NDEBUG
 		vkDestroyDebugReportCallback(instance, dbg_callback, nullptr);
 #endif
@@ -140,8 +169,10 @@ namespace bp {
 		glfwTerminate();
 	}
 
-	void init() {
-		if (!glfwInit()) {
+	void init()
+	{
+		if (!glfwInit())
+		{
 			throw runtime_error("Failed to initialize GLFW.");
 		}
 		glfwSetErrorCallback(glfw_error_callback);
@@ -156,7 +187,8 @@ namespace bp {
 		uint32_t n = 0;
 		vkEnumeratePhysicalDevices(instance, &n, nullptr);
 		physical_devices.resize(n);
-		vkEnumeratePhysicalDevices(instance, &n, physical_devices.data());
+		vkEnumeratePhysicalDevices(instance, &n,
+					   physical_devices.data());
 
 		atexit(quit);
 	}
