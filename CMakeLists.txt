@@ -14,9 +14,9 @@ find_package(Vulkan REQUIRED)
 set(BP_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(BP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(BP_SRC_FILES
-	${BP_INCLUDE_DIR}/bp/bitmask_operators.h
 	${BP_INCLUDE_DIR}/bp/bp.h
 	${BP_INCLUDE_DIR}/bp/device.h
+    	${BP_INCLUDE_DIR}/bp/ed.h
 	${BP_INCLUDE_DIR}/bp/vk_includes.h
 	${BP_SRC_DIR}/device.cpp
 	${BP_SRC_DIR}/init.cpp
