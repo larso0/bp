@@ -10,9 +10,24 @@ namespace bp
 	extern VkInstance instance;
 	extern vector<VkPhysicalDevice> physical_devices;
 
+	device::~device()
+	{
+		if (!m_realized) return;
+
+		if (m_transfer_command_pool != VK_NULL_HANDLE)
+			vkDestroyCommandPool(m_logical_handle, m_transfer_command_pool, nullptr);
+		if (m_graphics_command_pool != VK_NULL_HANDLE)
+			vkDestroyCommandPool(m_logical_handle, m_graphics_command_pool, nullptr);
+		if (m_compute_command_pool != VK_NULL_HANDLE)
+			vkDestroyCommandPool(m_logical_handle, m_compute_command_pool, nullptr);
+
+		vkDestroyDevice(m_logical_handle, nullptr);
+	}
+
 	void device::realize()
 	{
-		pick_physical_device();
+		if (m_physical_handle == VK_NULL_HANDLE)
+			pick_physical_device();
 
 		vector<VkDeviceQueueCreateInfo> queue_create_infos = setup_queue_create_infos();
 
@@ -26,7 +41,7 @@ namespace bp
 		info.pQueueCreateInfos = queue_create_infos.data();
 
 
-		if (m_queues & VK_QUEUE_GRAPHICS_BIT && m_surface != VK_NULL_HANDLE)
+		if (m_queues & VK_QUEUE_GRAPHICS_BIT && !m_surfaces.empty())
 		{
 			info.enabledExtensionCount = 1;
 			info.ppEnabledExtensionNames = &swapchain_ext_name;
@@ -47,28 +62,42 @@ namespace bp
 		m_realized = true;
 	}
 
-	void device::use_surface(VkSurfaceKHR s)
+	void device::use_physical_device(VkPhysicalDevice device)
+	{
+		if (m_realized)
+		{
+			throw runtime_error(
+				"Failed to alter physical device, device is already realized.");
+		}
+		m_physical_handle = device;
+	}
+
+	void device::use_surface(VkSurfaceKHR surface, bool swapchain)
 	{
 		if (m_realized)
 		{
 			if ((m_queues & VK_QUEUE_GRAPHICS_BIT) == 0)
-			{
 				throw runtime_error("Realized device is not capable of graphics.");
-			}
 
 			VkBool32 supported = VK_FALSE;
 			vkGetPhysicalDeviceSurfaceSupportKHR(m_physical_handle,
-							     m_graphics_queue_index, s, &supported);
+							     m_graphics_queue_index, surface,
+							     &supported);
 			if (!supported)
-			{
 				throw runtime_error(
 					"Realized device does not support given surface.");
-			}
+
+			if (swapchain && !m_swapchain_enabled)
+				throw runtime_error("Realized device does not support swapchains.");
+		} else
+		{
+			m_swapchain_enabled = swapchain;
 		}
-		m_surface = s;
+
+		m_surfaces.push_back(surface);
 	}
 
-	void device::use_queues(VkQueueFlags queues)
+	void device::set_queues(VkQueueFlags queues)
 	{
 		if (m_realized)
 		{
@@ -78,7 +107,7 @@ namespace bp
 		m_queues = queues;
 	}
 
-	void device::use_features(const VkPhysicalDeviceFeatures& f)
+	void device::set_features(const VkPhysicalDeviceFeatures& f)
 	{
 		if (m_realized)
 		{
@@ -116,12 +145,18 @@ namespace bp
 				    && !(cap & VK_QUEUE_GRAPHICS_BIT)
 				    && (flags & VK_QUEUE_GRAPHICS_BIT))
 				{
-					if (m_surface != VK_NULL_HANDLE)
+					if (!m_surfaces.empty())
 					{
-						VkBool32 supported;
-						vkGetPhysicalDeviceSurfaceSupportKHR(current, i,
-										     m_surface,
-										     &supported);
+						VkBool32 supported = VK_TRUE;
+						for (int i = 0;
+						     i < m_surfaces.size() && supported; i++)
+						{
+							vkGetPhysicalDeviceSurfaceSupportKHR(
+								current, i,
+								m_surfaces[i],
+								&supported);
+						}
+
 						if (supported)
 						{
 							cap |= VK_QUEUE_GRAPHICS_BIT;

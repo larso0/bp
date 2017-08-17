@@ -1,5 +1,5 @@
-#ifndef ED_H
-#define ED_H
+#ifndef BP_ED_H
+#define BP_ED_H
 
 #include <vector>
 #include <functional>
