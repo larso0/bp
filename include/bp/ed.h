@@ -6,15 +6,18 @@
 
 namespace bp
 {
-	template<typename... ParamTypes> class event
+	template<typename... ParamTypes>
+	class event
 	{
 	public:
-		void operator()(ParamTypes... args) {
+		void operator()(ParamTypes... args)
+		{
 			for (std::function<void(ParamTypes...)>& d : delegates)
 				d(args...);
 		}
 
-		void attach(std::function<void(ParamTypes...)> d) {
+		void attach(std::function<void(ParamTypes...)> d)
+		{
 			delegates.push_back(d);
 		}
 
@@ -31,7 +34,7 @@ namespace bp
 	template<class T, typename... ParamTypes>
 	void connect(event<ParamTypes...>& e, T& o, void(T::*m)(ParamTypes...))
 	{
-		e.attach([&o, m](ParamTypes... args){ (o.*m)(args...); });
+		e.attach([&o, m](ParamTypes... args) { (o.*m)(args...); });
 	}
 }
 

@@ -6,6 +6,7 @@
 #include "ed.h"
 #include <string>
 #include <memory>
+#include <vector>
 
 namespace bp
 {
@@ -38,7 +39,17 @@ namespace bp
 		GLFWwindow* handle() { return m_handle; }
 		const GLFWwindow* handle() const { return m_handle; }
 
+		event<int, int> key_press_event;
+		event<int, int> key_release_event;
+		event<int, int> key_repeat_event;
+		event<unsigned int> char_input_event;
+		event<int, int> mouse_btn_press_event;
+		event<int, int> mouse_btn_release_event;
+		event<double, double> cursor_pos_event;
+		event<> cursor_enter_event;
+		event<> cursor_leave_event;
 		event<int, int> resize_event;
+		event<const std::vector<std::string>&> file_drop_event;
 
 	private:
 		bool m_realized;
@@ -51,6 +62,14 @@ namespace bp
 		std::string m_title;
 
 		std::shared_ptr<device> m_device;
+
+		static void key_callback(GLFWwindow* handle, int key, int, int action, int mods);
+		static void char_callback(GLFWwindow* handle, unsigned int codepoint);
+		static void mouse_btn_callback(GLFWwindow* handle, int button, int action, int mods);
+		static void cursor_pos_callback(GLFWwindow* handle, double x, double y);
+		static void cursor_enter_callback(GLFWwindow* handle, int entered);
+		static void window_size_callback(GLFWwindow* window, int width, int height);
+		static void file_drop_callback(GLFWwindow* handle, int count, const char** paths);
 	};
 }
 
