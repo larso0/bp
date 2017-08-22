@@ -14,11 +14,15 @@ namespace bp
 		swapchain() :
 			m_realized(false),
 			m_handle(VK_NULL_HANDLE),
+			m_device(std::shared_ptr<bp::device>()),
 			m_surface(VK_NULL_HANDLE),
 			m_format(VK_FORMAT_B8G8R8_UNORM),
 			m_color_space(VK_COLOR_SPACE_SRGB_NONLINEAR_KHR),
 			m_resolution({}),
 			m_image_count(2),
+			m_images(std::vector<VkImage>()),
+			m_transition_status(std::vector<bool>()),
+			m_image_views(std::vector<VkImageView>()),
 			m_present_semaphore(VK_NULL_HANDLE),
 			m_current_image(0) {}
 		~swapchain();

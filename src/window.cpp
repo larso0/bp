@@ -9,10 +9,7 @@ namespace bp
 
 	window::~window()
 	{
-		if (!m_realized) return;
-
-		vkDestroySurfaceKHR(instance, m_surface, nullptr);
-		glfwDestroyWindow(m_handle);
+		close();
 	}
 
 	void window::realize()
@@ -51,6 +48,19 @@ namespace bp
 		m_swapchain.realize();
 
 		connect(resize_event, m_swapchain, &bp::swapchain::resize);
+
+		m_realized = true;
+	}
+
+	void window::close()
+	{
+		if (!m_realized) return;
+		m_swapchain.~swapchain();
+		m_swapchain = bp::swapchain();
+		m_device = nullptr;
+		vkDestroySurfaceKHR(instance, m_surface, nullptr);
+		glfwDestroyWindow(m_handle);
+		m_realized = false;
 	}
 
 	void window::use_device(std::shared_ptr<bp::device> device)

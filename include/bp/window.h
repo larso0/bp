@@ -24,6 +24,7 @@ namespace bp
 		~window();
 
 		void realize();
+		void close();
 
 		void use_monitor(GLFWmonitor* monitor);
 		void use_device(std::shared_ptr<bp::device> device);
