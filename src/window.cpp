@@ -17,7 +17,8 @@ namespace bp
 
 	void window::realize()
 	{
-		m_handle = glfwCreateWindow(m_width, m_height, m_title.c_str(), m_monitor, nullptr);
+		m_handle = glfwCreateWindow(m_resolution.width, m_resolution.height,
+					    m_title.c_str(), m_monitor, nullptr);
 		if (!m_handle)
 			throw runtime_error("Failed to create GLFW window.");
 
@@ -36,16 +37,23 @@ namespace bp
 
 		if (!m_device)
 		{
-			m_device = make_shared<device>();
+			m_device = make_shared<bp::device>();
 			m_device->set_queues(VK_QUEUE_GRAPHICS_BIT);
 		}
 
 		m_device->use_surface(m_surface);
 
 		if (!m_device->is_realized()) m_device->realize();
+
+		m_swapchain.use_device(m_device);
+		m_swapchain.use_surface(m_surface);
+		m_swapchain.set_size(m_resolution.width, m_resolution.height);
+		m_swapchain.realize();
+
+		connect(resize_event, m_swapchain, &bp::swapchain::resize);
 	}
 
-	void window::use_device(std::shared_ptr<device> device)
+	void window::use_device(std::shared_ptr<bp::device> device)
 	{
 		if (m_realized)
 			throw runtime_error("Failed to alter device, window is already realized.");
@@ -67,8 +75,7 @@ namespace bp
 			glfwSetWindowSize(m_handle, width, height);
 		else
 		{
-			m_width = width;
-			m_height = height;
+			m_resolution = { (uint32_t)width, (uint32_t)height };
 		}
 	}
 
@@ -82,13 +89,13 @@ namespace bp
 
 	void window::set_device_queues(VkQueueFlags queues)
 	{
-		if (!m_device) m_device = make_shared<device>();
+		if (!m_device) m_device = make_shared<bp::device>();
 		m_device->set_queues(queues | VK_QUEUE_GRAPHICS_BIT);
 	}
 
 	void window::set_device_features(const VkPhysicalDeviceFeatures& features)
 	{
-		if (!m_device) m_device = make_shared<device>();
+		if (!m_device) m_device = make_shared<bp::device>();
 		m_device->set_features(features);
 	}
 
@@ -150,8 +157,7 @@ namespace bp
 	{
 		window* w = static_cast<window*>(glfwGetWindowUserPointer(handle));
 		w->resize_event(width, height);
-		w->m_width = width;
-		w->m_height = height;
+		w->m_resolution = { (uint32_t)width, (uint32_t)height };
 	}
 
 	void window::file_drop_callback(GLFWwindow* handle, int count, const char** c_paths)

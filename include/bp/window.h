@@ -4,6 +4,7 @@
 #include "vk_includes.h"
 #include "device.h"
 #include "ed.h"
+#include "swapchain.h"
 #include <string>
 #include <memory>
 #include <vector>
@@ -17,8 +18,7 @@ namespace bp
 			m_handle(nullptr),
 			m_surface(VK_NULL_HANDLE),
 			m_monitor(nullptr),
-			m_width(1024),
-			m_height(768),
+			m_resolution({ (uint32_t)1024, (uint32_t)768 }),
 			m_title("bp window") {}
 
 		~window();
@@ -26,7 +26,7 @@ namespace bp
 		void realize();
 
 		void use_monitor(GLFWmonitor* monitor);
-		void use_device(std::shared_ptr<device> device);
+		void use_device(std::shared_ptr<bp::device> device);
 
 		void set_size(int width, int height);
 		void set_title(const std::string& title);
@@ -38,6 +38,15 @@ namespace bp
 
 		GLFWwindow* handle() { return m_handle; }
 		const GLFWwindow* handle() const { return m_handle; }
+		VkSurfaceKHR surface() { return m_surface; }
+		GLFWmonitor* monitor() const { return m_monitor; }
+		VkExtent2D resolution() const { return m_resolution; }
+		const std::string& title() const { return m_title; }
+		std::shared_ptr<bp::device> device() { return m_device; }
+		const std::shared_ptr<bp::device> device() const { return m_device; }
+		bp::swapchain& swapchain() { return m_swapchain; }
+		const bp::swapchain& swapchain() const { return m_swapchain; }
+
 
 		event<int, int> key_press_event;
 		event<int, int> key_release_event;
@@ -58,10 +67,12 @@ namespace bp
 		VkSurfaceKHR m_surface;
 
 		GLFWmonitor* m_monitor;
-		int m_width, m_height;
+		VkExtent2D m_resolution;
 		std::string m_title;
 
-		std::shared_ptr<device> m_device;
+		std::shared_ptr<bp::device> m_device;
+
+		bp::swapchain m_swapchain;
 
 		static void key_callback(GLFWwindow* handle, int key, int, int action, int mods);
 		static void char_callback(GLFWwindow* handle, unsigned int codepoint);
