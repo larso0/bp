@@ -20,11 +20,13 @@ set(BP_SRC_FILES
     ${BP_INCLUDE_DIR}/bp/vk_includes.h
     ${BP_INCLUDE_DIR}/bp/window.h
     ${BP_INCLUDE_DIR}/bp/swapchain.h
+    ${BP_INCLUDE_DIR}/bp/buffer.h
     ${BP_SRC_DIR}/device.cpp
     ${BP_SRC_DIR}/init.cpp
     ${BP_SRC_DIR}/window.cpp
     ${BP_SRC_DIR}/event_handling.cpp
-    ${BP_SRC_DIR}/swapchain.cpp)
+    ${BP_SRC_DIR}/swapchain.cpp
+    ${BP_SRC_DIR}/buffer.cpp)
 
 add_library(bp STATIC ${BP_SRC_FILES})
 include_directories(

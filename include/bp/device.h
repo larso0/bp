@@ -10,7 +10,7 @@ namespace bp
 	{
 	public:
 		device() :
-			m_queues(0),
+			m_queues(VK_QUEUE_TRANSFER_BIT),
 			m_swapchain_enabled(false),
 			m_features({}),
 			m_realized(false),
@@ -31,6 +31,7 @@ namespace bp
 		~device();
 
 		void realize();
+		int32_t find_memory_type(uint32_t desired, VkMemoryPropertyFlags properties) const;
 
 		void use_physical_device(VkPhysicalDevice device);
 		void use_surface(VkSurfaceKHR s, bool swapchain = true);

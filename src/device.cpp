@@ -62,6 +62,16 @@ namespace bp
 		m_realized = true;
 	}
 
+	int32_t device::find_memory_type(uint32_t desired, VkMemoryPropertyFlags properties) const
+	{
+		for (uint32_t i = 0; i < m_physical_memory_properties.memoryTypeCount; i++)
+			if ((desired & (1 << i)) &&
+			    (m_physical_memory_properties.memoryTypes[i].propertyFlags & properties)
+			    == properties)
+				return i;
+		return -1;
+	}
+
 	void device::use_physical_device(VkPhysicalDevice device)
 	{
 		if (m_realized)
@@ -104,7 +114,7 @@ namespace bp
 			throw runtime_error(
 				"Failed to alter device queues, device is already realized.");
 		}
-		m_queues = queues;
+		m_queues = VK_QUEUE_TRANSFER_BIT | queues;
 	}
 
 	void device::set_features(const VkPhysicalDeviceFeatures& f)
