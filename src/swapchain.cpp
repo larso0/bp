@@ -164,17 +164,41 @@ namespace bp
 			}
 		}
 
-		VkSemaphoreCreateInfo sem_info = {
-			VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-			0, 0
-		};
 		if (!m_realized)
 		{
+			VkSemaphoreCreateInfo sem_info = {
+				VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+				0, 0
+			};
 			vkCreateSemaphore(m_device->logical_handle(), &sem_info, nullptr,
 					  &m_present_semaphore);
 		}
 
 		m_realized = true;
+	}
+
+	void swapchain::reset()
+	{
+		if (m_realized)
+		{
+			vkDestroySemaphore(m_device->logical_handle(), m_present_semaphore,
+					   nullptr);
+			m_present_semaphore = VK_NULL_HANDLE;
+			for (VkImageView i : m_image_views)
+				vkDestroyImageView(m_device->logical_handle(), i, nullptr);
+			m_image_views.clear();
+			m_transition_status.clear();
+			m_images.clear();
+			m_image_count = 2;
+			m_resolution = {};
+			m_color_space = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+			m_format = VK_FORMAT_B8G8R8_UNORM;
+			m_surface = VK_NULL_HANDLE;
+			vkDestroySwapchainKHR(m_device->logical_handle(), m_handle, nullptr);
+			m_device.reset();
+			m_handle = VK_NULL_HANDLE;
+			m_realized = false;
+		}
 	}
 
 	void swapchain::resize(int width, int height)

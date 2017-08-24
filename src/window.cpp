@@ -55,11 +55,12 @@ namespace bp
 	void window::close()
 	{
 		if (!m_realized) return;
-		m_swapchain.~swapchain();
-		m_swapchain = bp::swapchain();
+		m_swapchain.reset();
 		m_device = nullptr;
 		vkDestroySurfaceKHR(instance, m_surface, nullptr);
+		m_surface = VK_NULL_HANDLE;
 		glfwDestroyWindow(m_handle);
+		m_handle = nullptr;
 		m_realized = false;
 	}
 

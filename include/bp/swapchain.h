@@ -20,14 +20,12 @@ namespace bp
 			m_color_space(VK_COLOR_SPACE_SRGB_NONLINEAR_KHR),
 			m_resolution({}),
 			m_image_count(2),
-			m_images(std::vector<VkImage>()),
-			m_transition_status(std::vector<bool>()),
-			m_image_views(std::vector<VkImageView>()),
 			m_present_semaphore(VK_NULL_HANDLE),
 			m_current_image(0) {}
 		~swapchain();
 
 		void realize();
+		void reset();
 		void resize(int width, int height);
 
 		void next_image();
@@ -46,8 +44,10 @@ namespace bp
 		VkFormat format() const { return m_format; }
 		VkColorSpaceKHR color_space() const { return m_color_space; }
 		VkExtent2D resolution() const { return m_resolution; }
+		uint32_t image_count() const { return m_image_count; }
+		const std::vector<VkImageView>& image_views() const { return m_image_views; }
 		VkSemaphore present_semaphore() { return m_present_semaphore; }
-		uint32_t current_image() const { return m_current_image; }
+		uint32_t current_image_index() const { return m_current_image; }
 
 	private:
 		bool m_realized;

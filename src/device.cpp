@@ -41,7 +41,7 @@ namespace bp
 		info.pQueueCreateInfos = queue_create_infos.data();
 
 
-		if (m_queues & VK_QUEUE_GRAPHICS_BIT && !m_surfaces.empty())
+		if (m_swapchain_enabled)
 		{
 			info.enabledExtensionCount = 1;
 			info.ppEnabledExtensionNames = &swapchain_ext_name;
