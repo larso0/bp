@@ -21,10 +21,17 @@ namespace bp
 			m_monitor(nullptr),
 			m_resolution({(uint32_t) 1024, (uint32_t) 768}),
 			m_title("bp window"),
+			m_clear_enabled(true),
 			m_depth_image(nullptr),
 			m_depth_image_view(VK_NULL_HANDLE),
 			m_render_pass(VK_NULL_HANDLE),
-			m_size_changed(false) {}
+			m_present_cmd_buffer(VK_NULL_HANDLE),
+			m_render_complete_sem(VK_NULL_HANDLE),
+			m_size_changed(false)
+		{
+			m_clear_values[0] = {0.5f, 0.5f, 0.5f, 1.f};
+			m_clear_values[1] = {1.f, 0.f};
+		}
 
 		~window();
 
@@ -39,6 +46,8 @@ namespace bp
 
 		void set_size(int width, int height);
 		void set_title(const std::string& title);
+		void set_clear_color(VkClearColorValue color) { m_clear_values[0].color = color; }
+		void set_clear_enabled(bool enabled) { m_clear_enabled = enabled; }
 		void set_device_queues(VkQueueFlags queues);
 		void set_device_features(const VkPhysicalDeviceFeatures& features);
 
@@ -75,6 +84,8 @@ namespace bp
 		GLFWmonitor* m_monitor;
 		VkExtent2D m_resolution;
 		std::string m_title;
+		VkClearValue m_clear_values[2];
+		bool m_clear_enabled;
 
 		std::shared_ptr<bp::device> m_device;
 
@@ -83,6 +94,8 @@ namespace bp
 		VkImageView m_depth_image_view;
 		VkRenderPass m_render_pass;
 		std::vector<VkFramebuffer> m_framebuffers;
+		VkCommandBuffer m_present_cmd_buffer;
+		VkSemaphore m_render_complete_sem;
 
 		void create_depth_image();
 		void create_render_pass();

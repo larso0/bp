@@ -51,6 +51,24 @@ namespace bp
 		create_render_pass();
 		create_framebuffers();
 
+		VkCommandBufferAllocateInfo cmd_buffer_info = {};
+		cmd_buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		cmd_buffer_info.commandPool = m_device->graphics_command_pool();
+		cmd_buffer_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		cmd_buffer_info.commandBufferCount = 1;
+
+		result = vkAllocateCommandBuffers(m_device->logical_handle(), &cmd_buffer_info,
+						  &m_present_cmd_buffer);
+		if (result != VK_SUCCESS)
+			throw runtime_error("Failed to allocate present command buffer.");
+
+		VkSemaphoreCreateInfo sem_info = {
+			VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, 0, 0};
+		result = vkCreateSemaphore(m_device->logical_handle(), &sem_info, nullptr,
+					   &m_render_complete_sem);
+		if (result != VK_SUCCESS)
+			throw runtime_error("Failed to create render complete semaphore.");
+
 		connect(resize_event, *this, &on_resize);
 
 		m_realized = true;
@@ -59,6 +77,9 @@ namespace bp
 	void window::close()
 	{
 		if (!m_realized) return;
+		vkFreeCommandBuffers(m_device->logical_handle(), m_device->graphics_command_pool(),
+				     1, &m_present_cmd_buffer);
+		m_present_cmd_buffer = VK_NULL_HANDLE;
 		m_swapchain.reset();
 		m_device = nullptr;
 		vkDestroySurfaceKHR(instance, m_surface, nullptr);
@@ -71,11 +92,59 @@ namespace bp
 	void window::begin_frame()
 	{
 		if (m_size_changed) update_size();
+
+		m_swapchain.next_image();
+
+		VkCommandBufferBeginInfo begin_info = {};
+		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		vkBeginCommandBuffer(m_present_cmd_buffer, &begin_info);
+
+		m_swapchain.transition_color(m_present_cmd_buffer);
+
+		VkRenderPassBeginInfo render_pass_begin_info = {};
+		render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		render_pass_begin_info.renderPass = m_render_pass;
+		render_pass_begin_info.framebuffer =
+			m_framebuffers[m_swapchain.current_image_index()];
+		render_pass_begin_info.renderArea = {{0, 0}, m_resolution};
+		render_pass_begin_info.clearValueCount = 2;
+		render_pass_begin_info.pClearValues = m_clear_values;
+		vkCmdBeginRenderPass(m_present_cmd_buffer, &render_pass_begin_info,
+				     VK_SUBPASS_CONTENTS_INLINE);
 	}
 
 	void window::end_frame()
 	{
+		vkCmdEndRenderPass(m_present_cmd_buffer);
 
+		m_swapchain.transition_present(m_present_cmd_buffer);
+
+		vkEndCommandBuffer(m_present_cmd_buffer);
+
+		VkFence render_fence;
+		VkFenceCreateInfo fence_info = {};
+		fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		vkCreateFence(m_device->logical_handle(), &fence_info, nullptr, &render_fence);
+
+		VkSemaphore present_sem = m_swapchain.present_semaphore();
+
+		VkPipelineStageFlags wait_stages = {VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT};
+		VkSubmitInfo submit_info = {};
+		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submit_info.waitSemaphoreCount = 1;
+		submit_info.pWaitSemaphores = &present_sem;
+		submit_info.pWaitDstStageMask = &wait_stages;
+		submit_info.commandBufferCount = 1;
+		submit_info.pCommandBuffers = &m_present_cmd_buffer;
+		submit_info.signalSemaphoreCount = 1;
+		submit_info.pSignalSemaphores = &m_render_complete_sem;
+		vkQueueSubmit(m_device->graphics_queue(), 1, &submit_info, render_fence);
+
+		vkWaitForFences(m_device->logical_handle(), 1, &render_fence, VK_TRUE, UINT64_MAX);
+		vkDestroyFence(m_device->logical_handle(), render_fence, nullptr);
+
+		m_swapchain.present(m_render_complete_sem);
 	}
 
 	void window::use_device(std::shared_ptr<bp::device> device)
