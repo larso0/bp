@@ -47,7 +47,11 @@ namespace bp
 		m_swapchain.set_size(m_resolution.width, m_resolution.height);
 		m_swapchain.realize();
 
-		connect(resize_event, m_swapchain, &bp::swapchain::resize);
+		create_depth_image();
+		create_render_pass();
+		create_framebuffers();
+
+		connect(resize_event, *this, &on_resize);
 
 		m_realized = true;
 	}
@@ -62,6 +66,16 @@ namespace bp
 		glfwDestroyWindow(m_handle);
 		m_handle = nullptr;
 		m_realized = false;
+	}
+
+	void window::begin_frame()
+	{
+		if (m_size_changed) update_size();
+	}
+
+	void window::end_frame()
+	{
+
 	}
 
 	void window::use_device(std::shared_ptr<bp::device> device)
@@ -86,7 +100,7 @@ namespace bp
 			glfwSetWindowSize(m_handle, width, height);
 		else
 		{
-			m_resolution = { (uint32_t)width, (uint32_t)height };
+			m_resolution = {(uint32_t) width, (uint32_t) height};
 		}
 	}
 
@@ -108,6 +122,139 @@ namespace bp
 	{
 		if (!m_device) m_device = make_shared<bp::device>();
 		m_device->set_features(features);
+	}
+
+	void window::create_depth_image()
+	{
+		m_depth_image = new image();
+		m_depth_image->use_device(m_device);
+		m_depth_image->set_size(m_resolution.width, m_resolution.height);
+		m_depth_image->set_format(VK_FORMAT_D16_UNORM);
+		m_depth_image->set_tiling(VK_IMAGE_TILING_OPTIMAL);
+		m_depth_image->set_layout(VK_IMAGE_LAYOUT_UNDEFINED);
+		m_depth_image->set_usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+		m_depth_image->set_memory_properties(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		m_depth_image->realize();
+		m_depth_image->transition(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+		VkImageViewCreateInfo image_view_info = {};
+		image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		image_view_info.image = m_depth_image->handle();
+		image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		image_view_info.format = VK_FORMAT_D16_UNORM;
+		image_view_info.components = {
+			VK_COMPONENT_SWIZZLE_IDENTITY,
+			VK_COMPONENT_SWIZZLE_IDENTITY,
+			VK_COMPONENT_SWIZZLE_IDENTITY,
+			VK_COMPONENT_SWIZZLE_IDENTITY
+		};
+		image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		image_view_info.subresourceRange.baseMipLevel = 0;
+		image_view_info.subresourceRange.levelCount = 1;
+		image_view_info.subresourceRange.baseArrayLayer = 0;
+		image_view_info.subresourceRange.layerCount = 1;
+
+		VkResult result = vkCreateImageView(m_device->logical_handle(), &image_view_info,
+						    nullptr, &m_depth_image_view);
+		if (result != VK_SUCCESS)
+			throw runtime_error("Failed to create depth image view.");
+	}
+
+	void window::create_render_pass()
+	{
+		VkAttachmentDescription pass_attachments[2] = {};
+		pass_attachments[0].format = m_swapchain.format();
+		pass_attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+		pass_attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		pass_attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		pass_attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		pass_attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		pass_attachments[0].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		pass_attachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		pass_attachments[1].format = VK_FORMAT_D16_UNORM;
+		pass_attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+		pass_attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		pass_attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		pass_attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		pass_attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		pass_attachments[1].initialLayout =
+			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		pass_attachments[1].finalLayout =
+			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentReference color_attachment = {};
+		color_attachment.attachment = 0;
+		color_attachment.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentReference depth_attachment = {};
+		depth_attachment.attachment = 1;
+		depth_attachment.layout =
+			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkSubpassDescription subpass = {};
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &color_attachment;
+		subpass.pDepthStencilAttachment = &depth_attachment;
+
+		VkRenderPassCreateInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		info.attachmentCount = 2;
+		info.pAttachments = pass_attachments;
+		info.subpassCount = 1;
+		info.pSubpasses = &subpass;
+
+		VkResult result = vkCreateRenderPass(m_device->logical_handle(), &info, nullptr,
+						     &m_render_pass);
+		if (result != VK_SUCCESS)
+			throw runtime_error("Failed to create render pass.");
+	}
+
+	void window::create_framebuffers()
+	{
+		VkImageView attachments[2];
+		attachments[1] = m_depth_image_view;
+
+		VkFramebufferCreateInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		info.renderPass = m_render_pass;
+		info.attachmentCount = 2;
+		info.pAttachments = attachments;
+		info.width = m_resolution.width;
+		info.height = m_resolution.height;
+		info.layers = 1;
+
+		uint32_t n = m_swapchain.image_count();
+		m_framebuffers.resize(n);
+		for (uint32_t i = 0; i < n; i++)
+		{
+			attachments[0] = m_swapchain.image_views()[i];
+			VkResult result = vkCreateFramebuffer(m_device->logical_handle(), &info,
+							      nullptr, m_framebuffers.data() + i);
+			if (result != VK_SUCCESS)
+				throw runtime_error("Failed to create framebuffer.");
+		}
+	}
+
+	void window::on_resize(int width, int height)
+	{
+		m_resolution = {(uint32_t) width, (uint32_t) height};
+		m_size_changed = true;
+	}
+
+	void window::update_size()
+	{
+		vkDeviceWaitIdle(m_device->logical_handle());
+		for (VkFramebuffer b : m_framebuffers)
+			vkDestroyFramebuffer(m_device->logical_handle(), b, nullptr);
+		vkDestroyImageView(m_device->logical_handle(), m_depth_image_view, nullptr);
+		delete m_depth_image;
+
+		m_swapchain.resize(m_resolution.width, m_resolution.height);
+		create_depth_image();
+		create_framebuffers();
+		m_size_changed = false;
 	}
 
 	void window::key_callback(GLFWwindow* handle, int key, int, int action, int mods)
@@ -168,7 +315,6 @@ namespace bp
 	{
 		window* w = static_cast<window*>(glfwGetWindowUserPointer(handle));
 		w->resize_event(width, height);
-		w->m_resolution = { (uint32_t)width, (uint32_t)height };
 	}
 
 	void window::file_drop_callback(GLFWwindow* handle, int count, const char** c_paths)
