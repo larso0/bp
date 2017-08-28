@@ -69,7 +69,7 @@ namespace bp
 		if (result != VK_SUCCESS)
 			throw runtime_error("Failed to create render complete semaphore.");
 
-		connect(resize_event, *this, &on_resize);
+		connect(resize_event, *this, &bp::window::on_resize);
 
 		m_realized = true;
 	}
