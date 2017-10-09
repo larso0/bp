@@ -8,31 +8,38 @@ elseif (MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif ()
 
-find_package(GLFW REQUIRED)
+set(BP_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bp/include)
+set(BP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bp/src)
+set(BP_SCENE_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bpScene/include)
+set(BP_SCENE_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bpScene/src)
+set(BP_VIEW_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bpView/include)
+set(BP_VIEW_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bpView/src)
+
+file(GLOB_RECURSE BP_SRC_FILES "${BP_SRC_DIR}/*.cpp" "src/*.c")
+file(GLOB_RECURSE BP_INCLUDE_FILES "${BP_INCLUDE_DIR}/*.h" "${BP_INCLUDE_DIR}/*.hpp")
+set(BP_SRC ${BP_SRC_FILES} ${BP_INCLUDE_FILES} bpView/include/bpView/bpView.h)
+
+file(GLOB_RECURSE BP_SCENE_SRC_FILES "${BP_SCENE_SRC_DIR}/*.cpp" "src/*.c")
+file(GLOB_RECURSE BP_SCENE_INCLUDE_FILES "${BP_SCENE_INCLUDE_DIR}/*.h" "${BP_SCENE_INCLUDE_DIR}/*.hpp")
+set(BP_SCENE_SRC ${BP_SCENE_SRC_FILES} ${BP_SCENE_INCLUDE_FILES})
+
+file(GLOB_RECURSE BP_VIEW_SRC_FILES "${BP_VIEW_SRC_DIR}/*.cpp" "src/*.c")
+file(GLOB_RECURSE BP_VIEW_INCLUDE_FILES "${BP_VIEW_INCLUDE_DIR}/*.h" "${BP_VIEW_INCLUDE_DIR}/*.hpp")
+set(BP_VIEW_SRC ${BP_VIEW_SRC_FILES} ${BP_VIEW_INCLUDE_FILES})
+
 find_package(Vulkan REQUIRED)
+find_package(GLM REQUIRED)
+find_package(GLFW REQUIRED)
 
-set(BP_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set(BP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
-set(BP_SRC_FILES
-    ${BP_INCLUDE_DIR}/bp/bp.h
-    ${BP_INCLUDE_DIR}/bp/device.h
-    ${BP_INCLUDE_DIR}/bp/ed.h
-    ${BP_INCLUDE_DIR}/bp/vk_includes.h
-    ${BP_INCLUDE_DIR}/bp/window.h
-    ${BP_INCLUDE_DIR}/bp/swapchain.h
-    ${BP_INCLUDE_DIR}/bp/buffer.h
-    ${BP_INCLUDE_DIR}/bp/image.h
-    ${BP_SRC_DIR}/device.cpp
-    ${BP_SRC_DIR}/init.cpp
-    ${BP_SRC_DIR}/window.cpp
-    ${BP_SRC_DIR}/event_handling.cpp
-    ${BP_SRC_DIR}/swapchain.cpp
-    ${BP_SRC_DIR}/buffer.cpp
-    ${BP_SRC_DIR}/image.cpp)
-
-add_library(bp STATIC ${BP_SRC_FILES})
 include_directories(
 	${BP_INCLUDE_DIR}
-	${GLFW_INCLUDE_DIR}
+	${BP_SCENE_INCLUDE_DIR}
+	${BP_VIEW_INCLUDE_DIR}
 	${Vulkan_INCLUDE_DIRS}
+	${GLM_INCLUDE_DIRS}
+	${GLFW_INCLUDE_DIR}
 )
+
+add_library(bp STATIC ${BP_SRC})
+add_library(bpScene STATIC ${BP_SCENE_SRC})
+add_library(bpView STATIC ${BP_VIEW_SRC})
