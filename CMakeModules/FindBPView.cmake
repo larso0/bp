@@ -8,15 +8,19 @@ find_package(bp REQUIRED)
 find_package(GLFW REQUIRED)
 
 find_path(BP_VIEW_INCLUDE_DIR bpView/Window.h
-	  HINTS ${BP_VIEW_ROOT_DIR}/include ${BP_VIEW_INCLUDE_DIR}
-	  PATHS bpView/include)
+	  HINTS ${BP_VIEW_ROOT_DIR}/include ${BP_ROOT_DIR}/bpView/include ${BP_VIEW_INCLUDE_DIR}
+	  PATHS ../bp/bpView/include)
 
 find_library(BP_VIEW_LIBRARY NAMES bpView
-	     HINTS ${BP_VIEW_ROOT_DIR}/lib ${BP_VIEW_LIBRARY_DIR}
+	     HINTS
+	     	${BP_VIEW_ROOT_DIR}/lib
+	     	${BP_VIEW_ROOT_DIR}/cmake-build-debug
+	     	${BP_ROOT_DIR}/cmake-build-debug
+	     	${BP_VIEW_LIBRARY_DIR}
 	     PATHS lib cmake-build-debug)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(BP DEFAULT_MSG
+find_package_handle_standard_args(BP_VIEW DEFAULT_MSG
 				  BP_VIEW_LIBRARY BP_VIEW_INCLUDE_DIR)
 mark_as_advanced(BP_VIEW_INCLUDE_DIR BP_VIEW_LIBRARY)
 

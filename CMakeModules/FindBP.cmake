@@ -7,12 +7,12 @@
 find_package(Vulkan REQUIRED)
 
 find_path(BP_INCLUDE_DIR bp/Context.h
-	  HINTS ${BP_ROOT_DIR}/include ${BP_INCLUDE_DIR}
-	  PATHS bp/include)
+	  HINTS ${BP_ROOT_DIR}/include ${BP_ROOT_DIR}/bp/include ${BP_INCLUDE_DIR}
+	  PATHS ../bp/bp/include)
 
 find_library(BP_LIBRARY NAMES bp
-	     HINTS ${BP_ROOT_DIR}/lib ${BP_LIBRARY_DIR}
-	     PATHS lib cmake-build-debug)
+	     HINTS ${BP_ROOT_DIR}/lib ${BP_ROOT_DIR}/cmake-build-debug ${BP_LIBRARY_DIR}
+	     PATHS ../bp/lib ../bp/cmake-build-debug)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(BP DEFAULT_MSG

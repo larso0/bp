@@ -8,15 +8,19 @@ find_package(bp REQUIRED)
 find_package(GLM REQUIRED)
 
 find_path(BP_SCENE_INCLUDE_DIR bpScene/Node.h
-	  HINTS ${BP_SCENE_ROOT_DIR}/include ${BP_SCENE_INCLUDE_DIR}
-	  PATHS bpScene/include)
+	  HINTS ${BP_SCENE_ROOT_DIR}/include ${BP_ROOT_DIR}/bpScene/include ${BP_SCENE_INCLUDE_DIR}
+	  PATHS ../bp/bpScene/include)
 
 find_library(BP_SCENE_LIBRARY NAMES bpScene
-	     HINTS ${BP_SCENE_ROOT_DIR}/lib ${BP_SCENE_LIBRARY_DIR}
-	     PATHS lib cmake-build-debug)
+	     HINTS
+	     	${BP_SCENE_ROOT_DIR}/lib
+	     	${BP_SCENE_ROOT_DIR}/cmake-build-debug
+	     	${BP_ROOT_DIR}/cmake-build-debug
+	     	${BP_SCENE_LIBRARY_DIR}
+	     PATHS ../bp/lib ../bp/cmake-build-debug)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(BP DEFAULT_MSG
+find_package_handle_standard_args(BP_SCENE DEFAULT_MSG
 				  BP_SCENE_LIBRARY BP_SCENE_INCLUDE_DIR)
 mark_as_advanced(BP_SCENE_INCLUDE_DIR BP_SCENE_LIBRARY)
 
