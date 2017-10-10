@@ -27,8 +27,6 @@ void Window::init()
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to create window surface.");
 
-	glfwGetWindowSize(handle, &width, &height);
-
 	glfwSetWindowUserPointer(handle, this);
 	glfwSetKeyCallback(handle, keyCallback);
 	glfwSetCharCallback(handle, charCallback);

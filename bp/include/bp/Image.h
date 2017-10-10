@@ -48,6 +48,7 @@ public:
 	VkFormat getFormat() const { return format; }
 	VkImageTiling getTiling() const { return tiling; }
 	VkImageLayout getLayout() const { return layout; }
+	VkMemoryPropertyFlags getMemoryProperties() const { return memoryProperties; }
 private:
 	VkPhysicalDevice physicalDevice;
 	VkDevice device;
