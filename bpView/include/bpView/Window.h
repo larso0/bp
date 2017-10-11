@@ -21,7 +21,10 @@ public:
 		width(1024), height(768),
 		title("Window")
 	{
-		flags << Flag::RESIZABLE << Flag::DECORATED << Flag::VISIBLE;
+		flags << Flag::RESIZABLE
+		      << Flag::VISIBLE
+		      << Flag::DECORATED
+		      << Flag::AUTO_ICONIFY;
 	}
 	~Window();
 
