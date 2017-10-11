@@ -41,6 +41,7 @@ public:
 	void setInstance(VkInstance instance);
 	void setMonitor(GLFWmonitor* monitor);
 	void setSize(int width, int height);
+	void setPosition(int x, int y);
 	void setTitle(const std::string& title);
 	void enable(Flag flag);
 	void enable(const bp::FlagSet<Flag>& flags);

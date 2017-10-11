@@ -72,6 +72,12 @@ void Window::setSize(int w, int h)
 	}
 }
 
+void Window::setPosition(int x, int y)
+{
+	if (isReady())
+		glfwSetWindowPos(handle, x, y);
+}
+
 void Window::setTitle(const string& title)
 {
 	if (isReady())
