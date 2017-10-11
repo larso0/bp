@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 #include <string>
 #include <bp/Event.h>
+#include <bp/FlagSet.h>
 
 namespace bpView
 {
@@ -18,8 +19,22 @@ public:
 		handle(nullptr),
 		surface(VK_NULL_HANDLE),
 		width(1024), height(768),
-		title("Window") {}
+		title("Window")
+	{
+		flags << Flag::RESIZABLE << Flag::DECORATED << Flag::VISIBLE;
+	}
 	~Window();
+
+	enum class Flag : size_t
+	{
+		RESIZABLE,
+		VISIBLE,
+		DECORATED,
+		AUTO_ICONIFY,
+		FLOATING,
+		MAXIMIZED,
+		BP_FLAGSET_LAST
+	};
 
 	void init();
 
@@ -27,6 +42,12 @@ public:
 	void setMonitor(GLFWmonitor* monitor);
 	void setSize(int width, int height);
 	void setTitle(const std::string& title);
+	void enable(Flag flag);
+	void enable(const bp::FlagSet<Flag>& flags);
+	void disable(Flag flag);
+	void disable(const bp::FlagSet<Flag>& flags);
+	void toggle(Flag flag);
+	void toggle(const bp::FlagSet<Flag>& flags);
 
 	GLFWwindow* getHandle() { return handle; }
 	VkSurfaceKHR getSurface() { return surface; }
@@ -53,6 +74,7 @@ private:
 	VkSurfaceKHR surface;
 	int width, height;
 	std::string title;
+	bp::FlagSet<Flag> flags;
 
 	static void keyCallback(GLFWwindow* handle, int key, int, int action, int mods);
 	static void charCallback(GLFWwindow* handle, unsigned int codepoint);
