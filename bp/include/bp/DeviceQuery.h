@@ -24,7 +24,7 @@ public:
 	/*
 	 * Set the list of physical devices of which to query.
 	 */
-	void setPhysicalDevices(uint32_t count, VkPhysicalDevice* devices);
+	void setPhysicalDevices(uint32_t count, const VkPhysicalDevice* devices);
 
 	/*
 	 * Filter the results by setting required queues, features, surface to support (graphics
@@ -41,7 +41,7 @@ public:
 	std::vector<VkPhysicalDevice>& getResults();
 private:
 	uint32_t physicalDeviceCount;
-	VkPhysicalDevice* physicalDevices;
+	const VkPhysicalDevice* physicalDevices;
 
 	VkQueueFlags queues;
 	VkPhysicalDeviceFeatures* features;

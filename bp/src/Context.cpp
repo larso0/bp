@@ -128,7 +128,7 @@ void Context::init()
 	}
 }
 
-DeviceQuery Context::createDeviceQuery()
+DeviceQuery Context::createDeviceQuery() const
 {
 	DeviceQuery query;
 	query.setPhysicalDevices(static_cast<uint32_t>(physicalDevices.size()),

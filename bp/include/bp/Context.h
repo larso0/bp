@@ -35,7 +35,7 @@ public:
 	/*
 	 * Create a device query that queries physical devices available to this context.
 	 */
-	DeviceQuery createDeviceQuery();
+	DeviceQuery createDeviceQuery() const;
 
 	/*
 	 * Set application info, add extensions, and set debug mode before calling init.

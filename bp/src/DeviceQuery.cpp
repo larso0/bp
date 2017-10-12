@@ -6,7 +6,7 @@ using namespace std;
 namespace bp
 {
 
-void DeviceQuery::setPhysicalDevices(uint32_t count, VkPhysicalDevice* devices)
+void DeviceQuery::setPhysicalDevices(uint32_t count, const VkPhysicalDevice* devices)
 {
 	results.clear();
 	physicalDeviceCount = count;
