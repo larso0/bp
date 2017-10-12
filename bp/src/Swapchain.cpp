@@ -116,14 +116,20 @@ void Swapchain::create()
 						  present_modes.data());
 
 	VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR;
-	for (uint32_t i = 0; i < n; i++)
+	if (!(flags & Flags::VERTICAL_SYNC))
 	{
-		bool enableVSync = flags & Flags::VERTICAL_SYNC;
-		if ((enableVSync && present_modes[i] == VK_PRESENT_MODE_MAILBOX_KHR) ||
-		    (!enableVSync && present_modes[i] == VK_PRESENT_MODE_IMMEDIATE_KHR))
+		for (uint32_t i = 0; i < n; i++)
 		{
-			presentMode = present_modes[i];
-			break;
+			if (present_modes[i] == VK_PRESENT_MODE_IMMEDIATE_KHR)
+			{
+				presentMode = present_modes[i];
+				break;
+			} else if (present_modes[i] == VK_PRESENT_MODE_FIFO_RELAXED_KHR ||
+				   (present_modes[i] == VK_PRESENT_MODE_IMMEDIATE_KHR &&
+				    presentMode == VK_PRESENT_MODE_FIFO_KHR))
+			{
+				presentMode = present_modes[i];
+			}
 		}
 	}
 
