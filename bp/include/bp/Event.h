@@ -18,16 +18,6 @@ class Event
 public:
 	Event() {}
 
-	Event(Event&& other)
-	{
-		delegates = std::move(other.delegates);
-	}
-
-	Event& operator=(Event&& other)
-	{
-		delegates = std::move(other.delegates);
-	}
-
 	void operator()(ParamTypes... args)
 	{
 		for (std::function<void(ParamTypes...)>& d : delegates)
@@ -51,6 +41,15 @@ template<typename... ParamTypes, typename Functor>
 void connect(Event<ParamTypes...>& e, Functor f)
 {
 	e.attach(f);
+}
+
+/*
+ * Forward an event a to b.
+ */
+template<typename... ParamTypes, typename Functor>
+void connect(Event<ParamTypes...>& a, Event<ParamTypes...>& b)
+{
+	a.attach([a, b](ParamTypes... args){ b(args...); });
 }
 
 /*

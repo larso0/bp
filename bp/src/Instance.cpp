@@ -1,4 +1,4 @@
-#include <bp/Context.h>
+#include <bp/Instance.h>
 #include <sstream>
 #include <stdexcept>
 
@@ -17,16 +17,16 @@ VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flags,
 {
 	stringstream ss;
 	ss << pLayerPrefix << ": " << pMessage;
-	Context* context = static_cast<Context*>(pUserData);
+	Instance* instance = static_cast<Instance*>(pUserData);
 	if (flags & (VK_DEBUG_REPORT_INFORMATION_BIT_EXT | VK_DEBUG_REPORT_DEBUG_BIT_EXT))
-		context->info(ss.str());
+		instance->infoEvent(ss.str());
 	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
-		context->warning(ss.str());
+		instance->warningEvent(ss.str());
 	else
-		context->error(ss.str());
+		instance->errorEvent(ss.str());
 }
 
-Context::~Context()
+Instance::~Instance()
 {
 	if (debugReportCallback != VK_NULL_HANDLE)
 	{
@@ -38,7 +38,7 @@ Context::~Context()
 	vkDestroyInstance(instance, nullptr);
 }
 
-Context::Context(bool enableDebug, const vector<string>& enabledExtensions,
+Instance::Instance(bool enableDebug, const vector<string>& enabledExtensions,
 		 const VkApplicationInfo* applicationInfo) :
 	debugReportCallback{VK_NULL_HANDLE}
 {

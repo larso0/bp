@@ -10,15 +10,15 @@ namespace bp
 {
 
 /*
- * Context for a vulkan application.
+ * Instance for a vulkan application.
  * Contains the vulkan instance, available physical devices, and optional debug callback.
  */
-class Context
+class Instance
 {
 public:
-	Context(bool enableDebug, const std::vector<std::string>& enabledExtensions,
+	Instance(bool enableDebug, const std::vector<std::string>& enabledExtensions,
 		const VkApplicationInfo* applicationInfo = nullptr);
-	~Context();
+	~Instance();
 
 	operator VkInstance() { return instance; }
 
@@ -31,9 +31,9 @@ public:
 	 * Connect delegates to these events to recieve messages.
 	 * Call these events to send messages to the delegates (operator()).
 	 */
-	Event<const std::string&> info;
-	Event<const std::string&> warning;
-	Event<const std::string&> error;
+	Event<const std::string&> infoEvent;
+	Event<const std::string&> warningEvent;
+	Event<const std::string&> errorEvent;
 private:
 	VkInstance instance;
 	std::vector<VkPhysicalDevice> physicalDevices;

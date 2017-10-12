@@ -129,11 +129,11 @@ bool queryDevice(VkPhysicalDevice device, const DeviceRequirements& requirements
 	return true;
 }
 
-vector<VkPhysicalDevice> queryDevices(const Context& context,
+vector<VkPhysicalDevice> queryDevices(const Instance& instance,
 				      const DeviceRequirements& requirements)
 {
 	vector<VkPhysicalDevice> results;
-	for (VkPhysicalDevice device : context.getPhysicalDevices())
+	for (VkPhysicalDevice device : instance.getPhysicalDevices())
 	{
 		if (queryDevice(device, requirements))
 			results.push_back(device);
@@ -141,9 +141,9 @@ vector<VkPhysicalDevice> queryDevices(const Context& context,
 	return results;
 }
 
-Device::Device(const Context& context, const DeviceRequirements& requirements)
+Device::Device(const Instance& instance, const DeviceRequirements& requirements)
 {
-	auto result = queryDevices(context, requirements);
+	auto result = queryDevices(instance, requirements);
 	if (result.empty())
 		throw runtime_error("No suitable physical device found.");
 	physical = result[0];

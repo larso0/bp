@@ -1,7 +1,7 @@
 #ifndef BP_DEVICE_H
 #define BP_DEVICE_H
 
-#include "Context.h"
+#include "Instance.h"
 #include "Queue.h"
 #include <vulkan/vulkan.h>
 #include <vector>
@@ -29,13 +29,13 @@ struct DeviceRequirements
 };
 
 bool queryDevice(VkPhysicalDevice device, const DeviceRequirements& requirements);
-std::vector<VkPhysicalDevice> queryDevices(const Context& context,
+std::vector<VkPhysicalDevice> queryDevices(const Instance& instance,
 					   const DeviceRequirements& requirements);
 
 class Device
 {
 public:
-	Device(const Context& context, const DeviceRequirements& requirements);
+	Device(const Instance& instance, const DeviceRequirements& requirements);
 	Device(VkPhysicalDevice physicalDevice, const DeviceRequirements& requirements);
 	~Device();
 
