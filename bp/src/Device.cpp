@@ -261,7 +261,7 @@ Device::setupQueueCreateInfos(const DeviceRequirements& requirements)
 		bool found = false;
 		for (auto& q : queueInfos)
 		{
-			if (q.familyIndex)
+			if (q.familyIndex == qfi)
 			{
 				q.flags |= VK_QUEUE_COMPUTE_BIT;
 				found = true;
@@ -287,7 +287,7 @@ Device::setupQueueCreateInfos(const DeviceRequirements& requirements)
 		bool found = false;
 		for (auto& q : queueInfos)
 		{
-			if (q.familyIndex)
+			if (q.familyIndex == qfi)
 			{
 				q.flags |= VK_QUEUE_TRANSFER_BIT;
 				found = true;

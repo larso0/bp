@@ -6,7 +6,7 @@
 
 find_package(Vulkan REQUIRED)
 
-find_path(BP_INCLUDE_DIR bp/Context.h
+find_path(BP_INCLUDE_DIR bp/Instance.h
 	  HINTS ${BP_ROOT_DIR}/include ${BP_ROOT_DIR}/bp/include ${BP_INCLUDE_DIR}
 	  PATHS ../bp/bp/include)
 
