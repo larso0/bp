@@ -12,6 +12,8 @@ class Queue
 public:
 	Queue(VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex);
 
+	operator VkQueue() { return handle; }
+
 	uint32_t getQueueFamilyIndex() const { return queueFamilyIndex; }
 	uint32_t getQueueIndex() const { return queueIndex; }
 	VkQueue getHandle() { return handle; }

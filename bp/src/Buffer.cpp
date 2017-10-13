@@ -9,20 +9,14 @@ using namespace std;
 namespace bp
 {
 
-Buffer::~Buffer()
-{
-	if (isReady())
-	{
-		if (cmdPool != VK_NULL_HANDLE)
-			vkDestroyCommandPool(device, cmdPool, nullptr);
-		if (stagingBuffer != nullptr)
-			delete stagingBuffer;
-		vkFreeMemory(device, memory, nullptr);
-		vkDestroyBuffer(device, handle, nullptr);
-	}
-}
-
-void Buffer::init()
+Buffer::Buffer(Device& device, VkDeviceSize size, VkBufferUsageFlags usage,
+	       VkMemoryPropertyFlags requiredMemoryProperties,
+	       VkMemoryPropertyFlags optimalMemoryProperties) :
+	device{device},
+	size{size},
+	cmdPool{VK_NULL_HANDLE},
+	mapped{},
+	stagingBuffer{nullptr}
 {
 	if (!(requiredMemoryProperties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT))
 		usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
@@ -44,14 +38,14 @@ void Buffer::init()
 	int32_t memType = -1;
 	if (optimalMemoryProperties != 0)
 	{
-		memType = findPhysicalDeviceMemoryType(physicalDevice,
+		memType = findPhysicalDeviceMemoryType(device,
 						       memoryRequirements.memoryTypeBits,
 						       optimalMemoryProperties);
 		memoryProperties = optimalMemoryProperties;
 	}
 	if (memType == -1)
 	{
-		memType = findPhysicalDeviceMemoryType(physicalDevice,
+		memType = findPhysicalDeviceMemoryType(device,
 						       memoryRequirements.memoryTypeBits,
 						       requiredMemoryProperties);
 		memoryProperties = requiredMemoryProperties;
@@ -77,6 +71,16 @@ void Buffer::init()
 	mapped.memory = memory;
 }
 
+Buffer::~Buffer()
+{
+	if (cmdPool != VK_NULL_HANDLE)
+		vkDestroyCommandPool(device, cmdPool, nullptr);
+	if (stagingBuffer != nullptr)
+		delete stagingBuffer;
+	vkFreeMemory(device, memory, nullptr);
+	vkDestroyBuffer(device, handle, nullptr);
+}
+
 void* Buffer::map(VkDeviceSize offset, VkDeviceSize size)
 {
 	void* mappedMemory;
@@ -85,22 +89,17 @@ void* Buffer::map(VkDeviceSize offset, VkDeviceSize size)
 		VkResult result = vkMapMemory(device, memory, offset, size, 0, &mappedMemory);
 		if (result != VK_SUCCESS)
 			throw runtime_error("Failed to map buffer memory.");
-	} else if (transferQueue != VK_NULL_HANDLE)
+	} else
 	{
 		if (stagingBuffer == nullptr)
 		{
-			stagingBuffer = new Buffer();
-			stagingBuffer->setDevice(physicalDevice, device);
-			stagingBuffer->setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-			stagingBuffer->setRequiredMemoryProperties(
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-				VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			stagingBuffer->setSize(this->size);
-			stagingBuffer->init();
+			stagingBuffer = new Buffer(device, this->size,
+						   VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+						   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+						   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		}
 		mappedMemory = stagingBuffer->map(offset, size);
-	} else
-		throw runtime_error("Buffer is not mappable.");
+	}
 
 	mapped.offset = offset;
 	mapped.size = size;
@@ -140,7 +139,8 @@ void Buffer::transfer(VkDeviceSize offset, VkDeviceSize size, const void* data,
 		transfer(*stagingBuffer, offset, offset, size, cmdBuffer);
 
 		if (useOwnBuffer)
-			endSingleUseCmdBuffer(device, transferQueue, cmdPool, cmdBuffer);
+			endSingleUseCmdBuffer(device, device.getTransferQueue(), cmdPool,
+					      cmdBuffer);
 	} else
 	{
 		void* mapped = map(offset, size);
@@ -171,50 +171,7 @@ void Buffer::transfer(Buffer& src, VkDeviceSize srcOffset, VkDeviceSize dstOffse
 	vkCmdCopyBuffer(cmdBuffer, src.getHandle(), handle, 1, &copy_region);
 
 	if (useOwnBuffer)
-		endSingleUseCmdBuffer(device, transferQueue, cmdPool, cmdBuffer);
-}
-
-void Buffer::setDevice(VkPhysicalDevice physical, VkDevice logical)
-{
-	if (isReady())
-		throw runtime_error("Failed to alter device, buffer already created.");
-	physicalDevice = physical;
-	device = logical;
-}
-
-void Buffer::setTransferQueue(uint32_t queueFamilyIndex, VkQueue queue)
-{
-	if (isReady() && cmdPool != VK_NULL_HANDLE)
-	{
-		vkDestroyCommandPool(device, cmdPool, nullptr);
-		cmdPool = VK_NULL_HANDLE;
-	}
-	transferQueueFamilyIndex = queueFamilyIndex;
-	transferQueue = queue;
-}
-
-void Buffer::setUsage(VkBufferUsageFlags usage)
-{
-	if (isReady())
-		throw runtime_error("Failed to alter usage, buffer already created.");
-	this->usage = usage;
-}
-
-void Buffer::setRequiredMemoryProperties(VkMemoryPropertyFlags properties)
-{
-	requiredMemoryProperties = properties;
-}
-
-void Buffer::setOptimalMemoryProperties(VkMemoryPropertyFlags properties)
-{
-	optimalMemoryProperties = properties;
-}
-
-void Buffer::setSize(VkDeviceSize size)
-{
-	if (isReady())
-		throw runtime_error("Failed to alter size, buffer already created.");
-	this->size = size;
+		endSingleUseCmdBuffer(device, device.getTransferQueue(), cmdPool, cmdBuffer);
 }
 
 void Buffer::createCommandPool()
@@ -222,7 +179,7 @@ void Buffer::createCommandPool()
 	VkCommandPoolCreateInfo cmdPoolInfo = {};
 	cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	cmdPoolInfo.queueFamilyIndex = transferQueueFamilyIndex;
+	cmdPoolInfo.queueFamilyIndex = device.getTransferQueue().getQueueFamilyIndex();
 
 	VkResult result = vkCreateCommandPool(device, &cmdPoolInfo, nullptr, &cmdPool);
 	if (result != VK_SUCCESS)

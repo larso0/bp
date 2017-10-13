@@ -3,6 +3,7 @@
 
 #include "RenderTarget.h"
 #include "Image.h"
+#include "FlagSet.h"
 
 namespace bp
 {
@@ -10,26 +11,29 @@ namespace bp
 class ImageTarget : public RenderTarget
 {
 public:
-	ImageTarget() :
-		RenderTarget(),
-		image(nullptr),
-		stagingImage(nullptr)
+	enum class Flags : size_t
 	{
-		format = VK_FORMAT_R8G8B8A8_UNORM;
-		imageCount = 1;
-	}
+		DEPTH_IMAGE,
+		STAGING_IMAGE,
+		SHADER_READABLE,
+		BP_FLAGSET_LAST
+	};
+
+	ImageTarget(Device& device, uint32_t width, uint32_t height,
+		    const FlagSet<Flags>& flags =
+		    	FlagSet<Flags>() << Flags::DEPTH_IMAGE << Flags::SHADER_READABLE);
+
 	~ImageTarget() final;
 
-	void init() override;
 	void beginFrame(VkCommandBuffer cmdBuffer) override;
 	void endFrame(VkCommandBuffer cmdBuffer) override;
 	void present(VkSemaphore renderCompleteSemaphore) override;
 	void resize(uint32_t width, uint32_t height) override;
 
 	Image* getStagingImage() { return stagingImage; }
-	bool isReady() const override { return RenderTarget::isReady() && image != nullptr; }
 
 private:
+	FlagSet<Flags> flags;
 	Image* image;
 	Image* stagingImage;
 

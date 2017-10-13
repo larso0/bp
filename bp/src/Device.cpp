@@ -157,35 +157,35 @@ Device::~Device()
 	vkDestroyDevice(logical, nullptr);
 }
 
-shared_ptr<Queue> Device::getQueue(uint32_t index)
+Queue& Device::getQueue(uint32_t index)
 {
 	if (index >= getQueueCount())
 		throw out_of_range("Invalid queue index.");
 	return queues[index];
 }
 
-shared_ptr<Queue> Device::getGraphicsQueue()
+Queue& Device::getGraphicsQueue()
 {
 	for (auto i = 0; i < getQueueCount(); i++)
 		if (queueInfos[i].flags & VK_QUEUE_GRAPHICS_BIT) return queues[i];
 	throw runtime_error("No graphics queue available.");
 }
 
-shared_ptr<Queue> Device::getComputeQueue()
+Queue& Device::getComputeQueue()
 {
 	for (auto i = 0; i < getQueueCount(); i++)
 		if (queueInfos[i].flags & VK_QUEUE_COMPUTE_BIT) return queues[i];
 	throw runtime_error("No compute queue available.");
 }
 
-shared_ptr<Queue> Device::getTransferQueue()
+Queue& Device::getTransferQueue()
 {
 	for (auto i = 0; i < getQueueCount(); i++)
 		if (queueInfos[i].flags & VK_QUEUE_TRANSFER_BIT) return queues[i];
 	throw runtime_error("No transfer queue available.");
 }
 
-shared_ptr<Queue> Device::getSparseBindingQueue()
+Queue& Device::getSparseBindingQueue()
 {
 	for (auto i = 0; i < getQueueCount(); i++)
 		if (queueInfos[i].flags & VK_QUEUE_SPARSE_BINDING_BIT) return queues[i];
@@ -217,7 +217,7 @@ void Device::createLogicalDevice(const DeviceRequirements& requirements)
 void Device::createQueues()
 {
 	for (auto& q : queueInfos)
-		queues.emplace_back(new Queue(logical, q.familyIndex, 0));
+		queues.emplace_back(logical, q.familyIndex, 0);
 }
 
 vector<VkDeviceQueueCreateInfo>

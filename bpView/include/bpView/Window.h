@@ -21,14 +21,14 @@ public:
 		width(1024), height(768),
 		title("Window")
 	{
-		flags << Flag::RESIZABLE
-		      << Flag::VISIBLE
-		      << Flag::DECORATED
-		      << Flag::AUTO_ICONIFY;
+		flags << Flags::RESIZABLE
+		      << Flags::VISIBLE
+		      << Flags::DECORATED
+		      << Flags::AUTO_ICONIFY;
 	}
 	~Window();
 
-	enum class Flag : size_t
+	enum class Flags : size_t
 	{
 		RESIZABLE,
 		VISIBLE,
@@ -46,12 +46,12 @@ public:
 	void setSize(int width, int height);
 	void setPosition(int x, int y);
 	void setTitle(const std::string& title);
-	void enable(Flag flag);
-	void enable(const bp::FlagSet<Flag>& flags);
-	void disable(Flag flag);
-	void disable(const bp::FlagSet<Flag>& flags);
-	void toggle(Flag flag);
-	void toggle(const bp::FlagSet<Flag>& flags);
+	void enable(Flags flag);
+	void enable(const bp::FlagSet<Flags>& flags);
+	void disable(Flags flag);
+	void disable(const bp::FlagSet<Flags>& flags);
+	void toggle(Flags flag);
+	void toggle(const bp::FlagSet<Flags>& flags);
 
 	GLFWwindow* getHandle() { return handle; }
 	VkSurfaceKHR getSurface() { return surface; }
@@ -78,7 +78,7 @@ private:
 	VkSurfaceKHR surface;
 	int width, height;
 	std::string title;
-	bp::FlagSet<Flag> flags;
+	bp::FlagSet<Flags> flags;
 
 	static void keyCallback(GLFWwindow* handle, int key, int, int action, int mods);
 	static void charCallback(GLFWwindow* handle, unsigned int codepoint);

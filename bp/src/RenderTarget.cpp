@@ -8,26 +8,20 @@ using namespace std;
 namespace bp
 {
 
-RenderTarget::~RenderTarget()
-{
-	if (ready)
-	{
-		vkDestroySemaphore(device, presentSemaphore, nullptr);
-		if (depthImageEnabled)
-		{
-			vkDestroyImageView(device, depthImageView, nullptr);
-			delete depthImage;
-		}
-		vkDestroyCommandPool(device, cmdPool, nullptr);
-	}
-}
-
-void RenderTarget::init()
+RenderTarget::RenderTarget(Device& device, VkFormat format, uint32_t width, uint32_t height,
+			   bool enableDepthImage) :
+	device{device},
+	format{format},
+	width{width}, height{height},
+	depthImage{nullptr},
+	depthImageView{VK_NULL_HANDLE},
+	framebufferImageCount{0},
+	currentFramebufferIndex{0}
 {
 	VkCommandPoolCreateInfo cmdPoolInfo = {};
 	cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	cmdPoolInfo.queueFamilyIndex = graphicsQueueFamilyIndex;
+	cmdPoolInfo.queueFamilyIndex = device.getGraphicsQueue().getQueueFamilyIndex();
 
 	VkResult result = vkCreateCommandPool(device, &cmdPoolInfo, nullptr, &cmdPool);
 	if (result != VK_SUCCESS)
@@ -37,58 +31,26 @@ void RenderTarget::init()
 		{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, nullptr, 0};
 	vkCreateSemaphore(device, &semInfo, nullptr, &presentSemaphore);
 
-	if (depthImageEnabled) createDepthImage();
-	ready = true;
+	if (enableDepthImage) createDepthImage();
 }
 
-void RenderTarget::setDevice(VkPhysicalDevice physical, VkDevice logical)
+RenderTarget::~RenderTarget()
 {
-	if (isReady())
-		throw runtime_error("Failed to alter device, render target already created.");
-	physicalDevice = physical;
-	device = logical;
-}
-
-void RenderTarget::setGraphicsQueue(uint32_t queueFamilyIndex, VkQueue queue)
-{
-	if (isReady())
-		throw runtime_error("Failed to alter queue, render target already created.");
-	graphicsQueueFamilyIndex = queueFamilyIndex;
-	graphicsQueue = queue;
-}
-
-void RenderTarget::setDepthImageEnabled(bool enabled)
-{
-	if (isReady())
+	vkDestroySemaphore(device, presentSemaphore, nullptr);
+	if (isDepthImageEnabled())
 	{
-		stringstream ss;
-		ss << "Failed to " << (enabled ? "enable" : "disable")
-		   << " depth image, render target already created.";
-		throw runtime_error(ss.str());
+		vkDestroyImageView(device, depthImageView, nullptr);
+		delete depthImage;
 	}
-	depthImageEnabled = enabled;
+	vkDestroyCommandPool(device, cmdPool, nullptr);
 }
 
-void RenderTarget::setFormat(VkFormat format)
-{
-	if (isReady())
-		throw runtime_error("Failed to alter format, render target already created.");
-	this->format = format;
-}
-
-void RenderTarget::setSize(uint32_t w, uint32_t h)
-{
-	if (isReady())
-		throw runtime_error("Failed to alter size, render target already created.");
-	width = w;
-	height = h;
-}
 
 void RenderTarget::resize(uint32_t w, uint32_t h)
 {
 	width = w;
 	height = h;
-	if (ready && depthImageEnabled)
+	if (isDepthImageEnabled())
 	{
 		vkDestroyImageView(device, depthImageView, nullptr);
 		delete depthImage;
@@ -98,21 +60,14 @@ void RenderTarget::resize(uint32_t w, uint32_t h)
 
 void RenderTarget::createDepthImage()
 {
-	depthImage = new Image();
-	depthImage->setDevice(physicalDevice, device);
-	depthImage->setSize(width, height);
-	depthImage->setFormat(VK_FORMAT_D16_UNORM);
-	depthImage->setTiling(VK_IMAGE_TILING_OPTIMAL);
-	depthImage->setUsage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
-	depthImage->setMemoryProperties(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	depthImage->init();
+	depthImage = new Image(device, width, height, VK_FORMAT_D16_UNORM, VK_IMAGE_TILING_OPTIMAL,
+			       VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+			       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	VkCommandBuffer cmdBuffer = beginSingleUseCmdBuffer(device, cmdPool);
 	depthImage->transition(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 			       VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
 			       VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-			       VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, cmdBuffer);
-	endSingleUseCmdBuffer(device, graphicsQueue, cmdPool, cmdBuffer);
+			       VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
 
 	VkImageViewCreateInfo viewInfo = {};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;

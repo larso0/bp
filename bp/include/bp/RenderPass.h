@@ -9,32 +9,25 @@ namespace bp
 class RenderPass
 {
 public:
-	RenderPass() :
-		renderTarget(nullptr),
-		handle(VK_NULL_HANDLE),
-		renderArea({}),
-		clearEnabled(false),
-		clearValue({}) {}
+	RenderPass(RenderTarget& renderTarget, VkRect2D renderArea, bool enableClear = false,
+		   VkClearValue clearValue = {});
 	~RenderPass();
 
-	void init();
 	void recreateFramebuffers();
 	void begin(VkCommandBuffer cmdBuffer);
 	void end(VkCommandBuffer cmdBuffer);
 
-	void setRenderTarget(RenderTarget* renderTarget);
 	void setRenderArea(VkRect2D renderArea);
-	void setClearEnabled(bool enabled);
 	void setClearValue(VkClearValue clearValue);
 
-	RenderTarget* getRenderTarget() { return renderTarget; }
+	RenderTarget& getRenderTarget() { return renderTarget; }
 	VkRenderPass getHandle() { return handle; }
 	const VkRect2D& getRenderArea() const { return renderArea; }
 	bool isClearEnabled() const { return clearEnabled; }
 	const VkClearValue& getClearValue() const { return clearValue; }
 	bool isReady() const { return handle != VK_NULL_HANDLE; }
 private:
-	RenderTarget* renderTarget;
+	RenderTarget& renderTarget;
 	VkRenderPass handle;
 	VkRect2D renderArea;
 	bool clearEnabled;

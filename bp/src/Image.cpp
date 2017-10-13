@@ -7,17 +7,21 @@ using namespace std;
 namespace bp
 {
 
-Image::~Image()
+Image::Image(Device& device, uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
+	     VkImageUsageFlags usage, VkMemoryPropertyFlags requiredMemoryProperties,
+	     VkMemoryPropertyFlags optimalMemoryProperties, VkImageLayout initialLayout) :
+	device{device},
+	cmdPool{VK_NULL_HANDLE},
+	width{width}, height{height},
+	tiling{tiling},
+	layout{initialLayout},
+	accessFlags{0},
+	mapped{},
+	stagingImage{0}
 {
-	if (isReady())
-	{
-		vkFreeMemory(device, memory, nullptr);
-		vkDestroyImage(device, handle, nullptr);
-	}
-}
+	if (!(requiredMemoryProperties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT))
+		usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
-void Image::init()
-{
 	VkImageCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	info.imageType = VK_IMAGE_TYPE_2D;
@@ -37,17 +41,30 @@ void Image::init()
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to create image.");
 
-	VkMemoryRequirements requirements;
-	vkGetImageMemoryRequirements(device, handle, &requirements);
+	VkMemoryRequirements memoryRequirements;
+	vkGetImageMemoryRequirements(device, handle, &memoryRequirements);
 
-	int32_t memType = findPhysicalDeviceMemoryType(physicalDevice, requirements.memoryTypeBits,
-						       memoryProperties);
+	int32_t memType = -1;
+	if (optimalMemoryProperties != 0)
+	{
+		memType = findPhysicalDeviceMemoryType(device,
+						       memoryRequirements.memoryTypeBits,
+						       optimalMemoryProperties);
+		memoryProperties = optimalMemoryProperties;
+	}
+	if (memType == -1)
+	{
+		memType = findPhysicalDeviceMemoryType(device,
+						       memoryRequirements.memoryTypeBits,
+						       requiredMemoryProperties);
+		memoryProperties = requiredMemoryProperties;
+	}
 	if (memType == -1)
 		throw runtime_error("No suitable memory type.");
 
 	VkMemoryAllocateInfo memInfo = {};
 	memInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	memInfo.allocationSize = requirements.size;
+	memInfo.allocationSize = memoryRequirements.size;
 	memInfo.memoryTypeIndex = (uint32_t) memType;
 
 	result = vkAllocateMemory(device, &memInfo, nullptr,
@@ -62,15 +79,39 @@ void Image::init()
 	mapped.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 	mapped.pNext = nullptr;
 	mapped.memory = memory;
-	memorySize = requirements.size;
+	memorySize = memoryRequirements.size;
+}
+
+Image::~Image()
+{
+	if (cmdPool != VK_NULL_HANDLE) vkDestroyCommandPool(device, cmdPool, nullptr);
+	if (stagingImage != nullptr) delete stagingImage;
+	vkFreeMemory(device, memory, nullptr);
+	vkDestroyImage(device, handle, nullptr);
 }
 
 void* Image::map(VkDeviceSize offset, VkDeviceSize size)
 {
 	void* mappedMemory;
-	VkResult result = vkMapMemory(device, memory, offset, size, 0, &mappedMemory);
-	if (result != VK_SUCCESS)
-		throw runtime_error("Failed to map image memory.");
+	if (tiling == VK_IMAGE_TILING_LINEAR &&
+	    memoryProperties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+	{
+		VkResult result = vkMapMemory(device, memory, offset, size, 0, &mappedMemory);
+		if (result != VK_SUCCESS)
+			throw runtime_error("Failed to map Image memory.");
+	} else
+	{
+		if (stagingImage == nullptr)
+		{
+			stagingImage = new Image(device, width, height, format,
+						 VK_IMAGE_TILING_LINEAR,
+						 VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+						 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+						 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		}
+		mappedMemory = stagingImage->map(offset, size);
+	}
+
 	mapped.offset = offset;
 	mapped.size = size;
 	return mappedMemory;
@@ -86,6 +127,13 @@ void Image::transition(VkImageLayout dstLayout, VkAccessFlags dstAccess,
 		       VkPipelineStageFlags dstStage, VkCommandBuffer cmdBuffer)
 {
 	if (dstLayout == layout) return;
+
+	bool useOwnBuffer = cmdBuffer == VK_NULL_HANDLE;
+	if (useOwnBuffer)
+	{
+		if (cmdPool == VK_NULL_HANDLE) createCommandPool();
+		cmdBuffer = beginSingleUseCmdBuffer(device, cmdPool);
+	}
 
 	VkImageMemoryBarrier barrier = {};
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -104,12 +152,22 @@ void Image::transition(VkImageLayout dstLayout, VkAccessFlags dstAccess,
 	vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, dstStage, 0, 0, nullptr,
 			     0, nullptr, 1, &barrier);
 
+	if (useOwnBuffer)
+		endSingleUseCmdBuffer(device, device.getTransferQueue(), cmdPool, cmdBuffer);
+
 	layout = dstLayout;
 	accessFlags = dstAccess;
 }
 
 void Image::transfer(Image& fromImage, VkCommandBuffer cmdBuffer)
 {
+	bool useOwnBuffer = cmdBuffer == VK_NULL_HANDLE;
+	if (useOwnBuffer)
+	{
+		if (cmdPool == VK_NULL_HANDLE) createCommandPool();
+		cmdBuffer = beginSingleUseCmdBuffer(device, cmdPool);
+	}
+
 	fromImage.transition(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT,
 			     VK_PIPELINE_STAGE_TRANSFER_BIT, cmdBuffer);
 	transition(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT,
@@ -132,64 +190,21 @@ void Image::transfer(Image& fromImage, VkCommandBuffer cmdBuffer)
 
 	vkCmdCopyImage(cmdBuffer, fromImage.getHandle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		       handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+	if (useOwnBuffer)
+		endSingleUseCmdBuffer(device, device.getTransferQueue(), cmdPool, cmdBuffer);
 }
 
-void Image::setDevice(VkPhysicalDevice physical, VkDevice logical)
+void Image::createCommandPool()
 {
-	if (isReady())
-		throw runtime_error("Failed to alter device, image already created.");
-	physicalDevice = physical;
-	device = logical;
-}
+	VkCommandPoolCreateInfo cmdPoolInfo = {};
+	cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	cmdPoolInfo.queueFamilyIndex = device.getGraphicsQueue().getQueueFamilyIndex();
 
-void Image::setSize(uint32_t w, uint32_t h)
-{
-	if (isReady())
-		throw runtime_error("Failed to alter size, image already created.");
-	width = w;
-	height = h;
-}
-
-void Image::setFormat(VkFormat format)
-{
-	if (isReady())
-		throw runtime_error("Failed to alter format, image already created.");
-	this->format = format;
-}
-
-void Image::setTiling(VkImageTiling tiling)
-{
-	if (isReady())
-		throw runtime_error("Failed to alter tiling, image already created.");
-	this->tiling = tiling;
-}
-
-void Image::setLayout(VkImageLayout layout)
-{
-	if (isReady())
-		throw runtime_error("Failed to alter layout, image already created.");
-	this->layout = layout;
-}
-
-void Image::setAccessFlags(VkAccessFlags flags)
-{
-	if (isReady())
-		throw runtime_error("Failed to alter access flags, image already created.");
-	accessFlags = flags;
-}
-
-void Image::setUsage(VkImageUsageFlags usage)
-{
-	if (isReady())
-		throw runtime_error("Failed to alter usage, image already created.");
-	this->usage = usage;
-}
-
-void Image::setMemoryProperties(VkMemoryPropertyFlags properties)
-{
-	if (isReady())
-		throw runtime_error("Failed to alter memory properties, image already created.");
-	memoryProperties = properties;
+	VkResult result = vkCreateCommandPool(device, &cmdPoolInfo, nullptr, &cmdPool);
+	if (result != VK_SUCCESS)
+		throw runtime_error("Failed to create command pool.");
 }
 
 }

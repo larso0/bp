@@ -7,22 +7,15 @@ using namespace std;
 namespace bp
 {
 
-ImageTarget::~ImageTarget()
+ImageTarget::ImageTarget(Device& device, uint32_t width, uint32_t height,
+			 const FlagSet<Flags>& flags) :
+	RenderTarget(device, VK_FORMAT_R8G8B8A8_UNORM, width, height, flags & Flags::DEPTH_IMAGE),
+	flags{flags},
+	stagingImage{nullptr}
 {
-	if (isReady())
-	{
-		vkDestroyImageView(device, imageViews[0], nullptr);
-		delete image;
-		delete stagingImage;
-	}
-}
-
-void ImageTarget::init()
-{
-	RenderTarget::init();
-
+	framebufferImageCount = 1;
 	createImage();
-	createStagingImage();
+	if (flags & Flags::STAGING_IMAGE) createStagingImage();
 
 	VkCommandBuffer cmdBuffer = beginSingleUseCmdBuffer(device, cmdPool);
 	image->transition(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -31,7 +24,14 @@ void ImageTarget::init()
 			  VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, cmdBuffer);
 	stagingImage->transition(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT,
 				 VK_PIPELINE_STAGE_TRANSFER_BIT, cmdBuffer);
-	endSingleUseCmdBuffer(device, graphicsQueue, cmdPool, cmdBuffer);
+	endSingleUseCmdBuffer(device, device.getGraphicsQueue(), cmdPool, cmdBuffer);
+}
+
+ImageTarget::~ImageTarget()
+{
+	vkDestroyImageView(device, framebufferImageViews[0], nullptr);
+	delete image;
+	if (flags & Flags::STAGING_IMAGE) delete stagingImage;
 }
 
 void ImageTarget::beginFrame(VkCommandBuffer cmdBuffer)
@@ -68,35 +68,32 @@ void ImageTarget::present(VkSemaphore renderCompleteSemaphore)
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = &presentSemaphore;
 
-	vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-	vkQueueWaitIdle(graphicsQueue);
+	vkQueueSubmit(device.getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(device.getGraphicsQueue());
 }
 
 void ImageTarget::resize(uint32_t width, uint32_t height)
 {
 	RenderTarget::resize(width, height);
-	if (isReady())
+	vkDestroyImageView(device, framebufferImageViews[0], nullptr);
+	delete image;
+	createImage();
+	if (flags & Flags::STAGING_IMAGE)
 	{
-		vkDestroyImageView(device, imageViews[0], nullptr);
-		delete image;
 		delete stagingImage;
-		createImage();
 		createStagingImage();
 	}
 }
 
 void ImageTarget::createImage()
 {
-	image = new Image();
-	image->setDevice(physicalDevice, device);
-	image->setSize(width, height);
-	image->setFormat(format);
-	image->setTiling(VK_IMAGE_TILING_OPTIMAL);
-	image->setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-	image->setMemoryProperties(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	image->init();
+	image = new Image(device, width, height, format, VK_IMAGE_TILING_OPTIMAL,
+			  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+			  (flags & Flags::STAGING_IMAGE ? VK_IMAGE_USAGE_TRANSFER_SRC_BIT : 0) |
+			  (flags & Flags::SHADER_READABLE ? VK_IMAGE_USAGE_SAMPLED_BIT : 0),
+			  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	imageViews.resize(1);
+	framebufferImageViews.resize(1);
 
 	VkImageViewCreateInfo imageViewInfo = {};
 	imageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -115,28 +112,22 @@ void ImageTarget::createImage()
 	imageViewInfo.subresourceRange.baseArrayLayer = 0;
 	imageViewInfo.subresourceRange.layerCount = 1;
 
-	VkResult result = vkCreateImageView(device, &imageViewInfo, nullptr, imageViews.data());
+	VkResult result = vkCreateImageView(device, &imageViewInfo, nullptr,
+					    framebufferImageViews.data());
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to create image view.");
 }
 
 void ImageTarget::createStagingImage()
 {
-	stagingImage = new Image();
-	stagingImage->setDevice(physicalDevice, device);
-	stagingImage->setSize(width, height);
-	stagingImage->setFormat(format);
-	stagingImage->setTiling(VK_IMAGE_TILING_LINEAR);
-	stagingImage->setLayout(VK_IMAGE_LAYOUT_PREINITIALIZED);
-	stagingImage->setUsage(VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-	stagingImage->setMemoryProperties(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					  VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	stagingImage->init();
+	stagingImage = new Image(device, width, height, format, VK_IMAGE_TILING_LINEAR,
+				 VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+				 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+				 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 0,
+				 VK_IMAGE_LAYOUT_PREINITIALIZED);
 
-	VkCommandBuffer cmdBuffer = beginSingleUseCmdBuffer(device, cmdPool);
 	stagingImage->transition(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT,
-				 VK_PIPELINE_STAGE_TRANSFER_BIT, cmdBuffer);
-	endSingleUseCmdBuffer(device, graphicsQueue, cmdPool, cmdBuffer);
+				 VK_PIPELINE_STAGE_TRANSFER_BIT);
 }
 
 }

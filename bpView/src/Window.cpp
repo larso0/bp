@@ -18,12 +18,12 @@ Window::~Window()
 void Window::init()
 {
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, flags & Flag::RESIZABLE);
-	glfwWindowHint(GLFW_VISIBLE, flags & Flag::VISIBLE);
-	glfwWindowHint(GLFW_DECORATED, flags & Flag::DECORATED);
-	glfwWindowHint(GLFW_AUTO_ICONIFY, flags & Flag::AUTO_ICONIFY);
-	glfwWindowHint(GLFW_FLOATING, flags & Flag::FLOATING);
-	glfwWindowHint(GLFW_MAXIMIZED, flags & Flag::MAXIMIZED);
+	glfwWindowHint(GLFW_RESIZABLE, flags & Flags::RESIZABLE);
+	glfwWindowHint(GLFW_VISIBLE, flags & Flags::VISIBLE);
+	glfwWindowHint(GLFW_DECORATED, flags & Flags::DECORATED);
+	glfwWindowHint(GLFW_AUTO_ICONIFY, flags & Flags::AUTO_ICONIFY);
+	glfwWindowHint(GLFW_FLOATING, flags & Flags::FLOATING);
+	glfwWindowHint(GLFW_MAXIMIZED, flags & Flags::MAXIMIZED);
 
 	handle = glfwCreateWindow(width, height, title.c_str(), monitor, nullptr);
 	if (handle == nullptr)
@@ -85,42 +85,42 @@ void Window::setTitle(const string& title)
 	this->title = title;
 }
 
-void Window::enable(Flag flag)
+void Window::enable(Flags flag)
 {
 	if (isReady())
 		throw runtime_error("Failed to set flags, window already initialized.");
 	flags |= flag;
 }
 
-void Window::enable(const bp::FlagSet<Flag>& flags)
+void Window::enable(const bp::FlagSet<Flags>& flags)
 {
 	if (isReady())
 		throw runtime_error("Failed to set flags, window already initialized.");
 	this->flags |= flags;
 }
 
-void Window::disable(Flag flag)
+void Window::disable(Flags flag)
 {
 	if (isReady())
 		throw runtime_error("Failed to set flags, window already initialized.");
 	flags >> flag;
 }
 
-void Window::disable(const bp::FlagSet<Flag>& flags)
+void Window::disable(const bp::FlagSet<Flags>& flags)
 {
 	if (isReady())
 		throw runtime_error("Failed to set flags, window already initialized.");
 	this->flags &= ~flags;
 }
 
-void Window::toggle(Flag flag)
+void Window::toggle(Flags flag)
 {
 	if (isReady())
 		throw runtime_error("Failed to set flags, window already initialized.");
 	flags ^= flag;
 }
 
-void Window::toggle(const bp::FlagSet<Flag>& flags)
+void Window::toggle(const bp::FlagSet<Flags>& flags)
 {
 	if (isReady())
 		throw runtime_error("Failed to set flags, window already initialized.");

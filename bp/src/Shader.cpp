@@ -6,13 +6,8 @@ using namespace std;
 namespace bp
 {
 
-Shader::~Shader()
-{
-	if (isReady())
-		vkDestroyShaderModule(device, handle, nullptr);
-}
-
-void Shader::init()
+Shader::Shader(VkDevice device, VkShaderStageFlagBits stage, uint32_t codeSize,
+	       const uint32_t* code)
 {
 	VkShaderModuleCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -31,26 +26,9 @@ void Shader::init()
 	pipelineShaderStageInfo.pSpecializationInfo = nullptr;
 }
 
-void Shader::setDevice(VkDevice device)
+Shader::~Shader()
 {
-	if (isReady())
-		throw runtime_error("Failed to alter device, shader module already created.");
-	this->device = device;
-}
-
-void Shader::setStage(VkShaderStageFlagBits stage)
-{
-	if (isReady())
-		throw runtime_error("Failed to alter stage, shader module already created.");
-	this->stage = stage;
-}
-
-void Shader::setCode(uint32_t size, const uint32_t* code)
-{
-	if (isReady())
-		throw runtime_error("Failed to alter code, shader module already created.");
-	codeSize = size;
-	this->code = code;
+	vkDestroyShaderModule(device, handle, nullptr);
 }
 
 }

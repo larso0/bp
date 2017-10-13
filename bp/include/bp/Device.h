@@ -5,7 +5,6 @@
 #include "Queue.h"
 #include <vulkan/vulkan.h>
 #include <vector>
-#include <memory>
 
 namespace bp
 {
@@ -40,11 +39,11 @@ public:
 	VkPhysicalDevice getPhysicalHandle() { return physical; }
 	VkDevice getLogicalHandle() { return logical; }
 	uint32_t getQueueCount() const { return static_cast<uint32_t>(queues.size()); }
-	std::shared_ptr<Queue> getQueue(uint32_t index = 0);
-	std::shared_ptr<Queue> getGraphicsQueue();
-	std::shared_ptr<Queue> getComputeQueue();
-	std::shared_ptr<Queue> getTransferQueue();
-	std::shared_ptr<Queue> getSparseBindingQueue();
+	Queue& getQueue(uint32_t index = 0);
+	Queue& getGraphicsQueue();
+	Queue& getComputeQueue();
+	Queue& getTransferQueue();
+	Queue& getSparseBindingQueue();
 
 private:
 	VkPhysicalDevice physical;
@@ -56,7 +55,7 @@ private:
 		VkQueueFlags flags;
 	};
 	std::vector<QueueInfo> queueInfos;
-	std::vector<std::shared_ptr<Queue>> queues;
+	std::vector<Queue> queues;
 
 	void createLogicalDevice(const DeviceRequirements& requirements);
 	void createQueues();
