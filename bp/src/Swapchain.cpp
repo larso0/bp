@@ -120,7 +120,7 @@ void Swapchain::create()
 	{
 		for (uint32_t i = 0; i < n; i++)
 		{
-			if (present_modes[i] == VK_PRESENT_MODE_IMMEDIATE_KHR)
+			if (present_modes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
 			{
 				presentMode = present_modes[i];
 				break;
