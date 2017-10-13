@@ -38,7 +38,7 @@ Context::~Context()
 	vkDestroyInstance(instance, nullptr);
 }
 
-Context::Context(bool enableDebug, const std::vector<const char*>& enabledExtensions,
+Context::Context(bool enableDebug, const vector<string>& enabledExtensions,
 		 const VkApplicationInfo* applicationInfo) :
 	debugReportCallback{VK_NULL_HANDLE}
 {
@@ -46,7 +46,9 @@ Context::Context(bool enableDebug, const std::vector<const char*>& enabledExtens
 	instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	instanceInfo.pApplicationInfo = applicationInfo;
 
-	vector<const char*> extensions(enabledExtensions);
+	vector<const char*> extensions;
+	for (const string& ext : enabledExtensions)
+		extensions.push_back(ext.c_str());
 
 	if (enableDebug)
 	{

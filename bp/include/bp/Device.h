@@ -11,6 +11,12 @@ namespace bp
 
 struct DeviceRequirements
 {
+	DeviceRequirements(VkQueueFlags queues, const VkPhysicalDeviceFeatures& features,
+			   VkSurfaceKHR surface, const std::vector<const char*>& extensions) :
+		queues{queues},
+		features{features},
+		surface{surface},
+		extensions{extensions} {}
 	DeviceRequirements() :
 		queues{0},
 		features{},

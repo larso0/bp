@@ -16,7 +16,7 @@ namespace bp
 class Context
 {
 public:
-	Context(bool enableDebug, const std::vector<const char*>& enabledExtensions,
+	Context(bool enableDebug, const std::vector<std::string>& enabledExtensions,
 		const VkApplicationInfo* applicationInfo = nullptr);
 	~Context();
 

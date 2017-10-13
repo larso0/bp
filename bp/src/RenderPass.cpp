@@ -89,8 +89,11 @@ void RenderPass::begin(VkCommandBuffer cmdBuffer)
 	beginInfo.renderPass = handle;
 	beginInfo.framebuffer = framebuffers[renderTarget.getCurrentFramebufferIndex()];
 	beginInfo.renderArea = renderArea;
-	beginInfo.clearValueCount = renderTarget.isDepthImageEnabled() ? 2 : 1;
-	beginInfo.pClearValues = clearValues;
+	if (clearEnabled)
+	{
+		beginInfo.clearValueCount = renderTarget.isDepthImageEnabled() ? 2 : 1;
+		beginInfo.pClearValues = clearValues;
+	}
 	vkCmdBeginRenderPass(cmdBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
@@ -102,6 +105,11 @@ void RenderPass::end(VkCommandBuffer cmdBuffer)
 void RenderPass::setRenderArea(VkRect2D area)
 {
 	renderArea = area;
+}
+
+void RenderPass::setClearEnabled(bool enabled)
+{
+	clearEnabled = enabled;
 }
 
 void RenderPass::setClearValue(VkClearValue value)

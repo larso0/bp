@@ -153,7 +153,7 @@ void Image::transition(VkImageLayout dstLayout, VkAccessFlags dstAccess,
 			     0, nullptr, 1, &barrier);
 
 	if (useOwnBuffer)
-		endSingleUseCmdBuffer(device, device.getTransferQueue(), cmdPool, cmdBuffer);
+		endSingleUseCmdBuffer(device, device.getGraphicsQueue(), cmdPool, cmdBuffer);
 
 	layout = dstLayout;
 	accessFlags = dstAccess;
@@ -192,7 +192,7 @@ void Image::transfer(Image& fromImage, VkCommandBuffer cmdBuffer)
 		       handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
 	if (useOwnBuffer)
-		endSingleUseCmdBuffer(device, device.getTransferQueue(), cmdPool, cmdBuffer);
+		endSingleUseCmdBuffer(device, device.getGraphicsQueue(), cmdPool, cmdBuffer);
 }
 
 void Image::createCommandPool()

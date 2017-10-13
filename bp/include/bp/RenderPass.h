@@ -18,6 +18,7 @@ public:
 	void end(VkCommandBuffer cmdBuffer);
 
 	void setRenderArea(VkRect2D renderArea);
+	void setClearEnabled(bool enabled);
 	void setClearValue(VkClearValue clearValue);
 
 	RenderTarget& getRenderTarget() { return renderTarget; }

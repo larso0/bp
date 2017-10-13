@@ -10,7 +10,7 @@ namespace bpScene
 class Node
 {
 public:
-	Node(Node* p = nullptr) : parent(nullptr)
+	Node(Node* p = nullptr) : parent{nullptr}
 	{
 		if (p) p->addChild(this);
 	}

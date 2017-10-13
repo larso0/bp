@@ -129,6 +129,18 @@ bool queryDevice(VkPhysicalDevice device, const DeviceRequirements& requirements
 	return true;
 }
 
+vector<VkPhysicalDevice> queryDevices(const Context& context,
+				      const DeviceRequirements& requirements)
+{
+	vector<VkPhysicalDevice> results;
+	for (VkPhysicalDevice device : context.getPhysicalDevices())
+	{
+		if (queryDevice(device, requirements))
+			results.push_back(device);
+	}
+	return results;
+}
+
 Device::Device(const Context& context, const DeviceRequirements& requirements)
 {
 	auto result = queryDevices(context, requirements);

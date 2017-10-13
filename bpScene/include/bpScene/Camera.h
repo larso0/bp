@@ -9,7 +9,7 @@ namespace bpScene
 class Camera
 {
 public:
-	Camera(Node* node = nullptr) : node(node) {}
+	Camera(Node* node = nullptr) : node{node} {}
 
 	Node* getNode()
 	{

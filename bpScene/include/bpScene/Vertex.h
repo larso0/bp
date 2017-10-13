@@ -11,9 +11,9 @@ class Vertex
 public:
 	Vertex() {}
 	Vertex(const glm::vec3& p, const glm::vec3& n, const glm::vec2& uv) :
-		position(p),
-		normal(n),
-		textureCoordinate(uv) {}
+		position{p},
+		normal{n},
+		textureCoordinate{uv} {}
 
 	bool operator==(const Vertex& other) const
 	{

@@ -11,6 +11,7 @@ Swapchain::Swapchain(Device& device, VkSurfaceKHR surface, uint32_t width, uint3
 	RenderTarget(device, VK_FORMAT_B8G8R8_UNORM, width, height, flags & Flags::DEPTH_IMAGE),
 	flags{flags},
 	surface{surface},
+	handle{nullptr},
 	colorSpace{VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}
 {
 	framebufferImageCount = 2;
