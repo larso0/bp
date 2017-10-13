@@ -2,33 +2,33 @@
 #define BP_SCENE_MESH_H
 
 #include "Vertex.h"
+#include <bp/FlagSet.h>
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <initializer_list>
 #include <string>
 
-extern "C" {
-	enum
-	{
-		BP_SCENE_MESH_LOAD_POSITION_BIT = 0x01,
-		BP_SCENE_MESH_LOAD_NORMAL_BIT = 0x02,
-		BP_SCENE_MESH_LOAD_TEXTURE_COORDINATE_BIT = 0x04
-	};
-};
-
 namespace bpScene
 {
-
-using MeshLoadFlags = int;
 
 class Mesh
 {
 public:
-	Mesh() :
-		topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST) {}
+	enum class LoadFlags : size_t
+	{
+		POSITION,
+		NORMAL,
+		TEXTURE_COORDINATE,
+		BP_FLAGSET_LAST
+	};
+
+	Mesh(VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST) :
+		topology{topology} {}
 
 	void loadObj(const std::string& filename,
-		     MeshLoadFlags flags = static_cast<MeshLoadFlags>(0x07));
+		     const bp::FlagSet<LoadFlags>& flags = bp::FlagSet<LoadFlags>()
+			     << LoadFlags::POSITION << LoadFlags::NORMAL
+			     << LoadFlags::TEXTURE_COORDINATE);
 
 	uint32_t addVertex(const Vertex& vertex)
 	{

@@ -15,7 +15,7 @@ public:
 		if (p) p->addChild(this);
 	}
 
-	virtual ~Node() {}
+	virtual ~Node() = default;
 
 	/*
 	 * Update the world matrix, position and orientation.

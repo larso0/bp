@@ -6,16 +6,8 @@ using namespace std;
 namespace bpView
 {
 
-Window::~Window()
-{
-	if (isReady())
-	{
-		vkDestroySurfaceKHR(instance, surface, nullptr);
-		glfwDestroyWindow(handle);
-	}
-}
-
-void Window::init()
+Window::Window(VkInstance instance, uint32_t width, uint32_t height, const std::string& title,
+	       GLFWmonitor* monitor, const bp::FlagSet<bpView::Window::Flags>& flags)
 {
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, flags & Flags::RESIZABLE);
@@ -43,88 +35,26 @@ void Window::init()
 	glfwSetDropCallback(handle, fileDropCallback);
 }
 
-void Window::setInstance(VkInstance instance)
+Window::~Window()
 {
-	if (isReady())
-		throw runtime_error("Failed to alter instance, window already created.");
-	this->instance = instance;
-}
-
-void Window::setMonitor(GLFWmonitor* monitor)
-{
-	if (isReady())
-		throw runtime_error("Failed to alter monitor, window already created.");
-	this->monitor = monitor;
-
-	const GLFWvidmode* vidMode = glfwGetVideoMode(monitor);
-	width = vidMode->width;
-	height = vidMode->height;
+	vkDestroySurfaceKHR(instance, surface, nullptr);
+	glfwDestroyWindow(handle);
 }
 
 void Window::setSize(int w, int h)
 {
-	if (isReady())
-		glfwSetWindowSize(handle, w, h);
-	else
-	{
-		width = w;
-		height = h;
-	}
+	glfwSetWindowSize(handle, w, h);
 }
 
 void Window::setPosition(int x, int y)
 {
-	if (isReady())
-		glfwSetWindowPos(handle, x, y);
+	glfwSetWindowPos(handle, x, y);
 }
 
 void Window::setTitle(const string& title)
 {
-	if (isReady())
-		glfwSetWindowTitle(handle, title.c_str());
+	glfwSetWindowTitle(handle, title.c_str());
 	this->title = title;
-}
-
-void Window::enable(Flags flag)
-{
-	if (isReady())
-		throw runtime_error("Failed to set flags, window already initialized.");
-	flags |= flag;
-}
-
-void Window::enable(const bp::FlagSet<Flags>& flags)
-{
-	if (isReady())
-		throw runtime_error("Failed to set flags, window already initialized.");
-	this->flags |= flags;
-}
-
-void Window::disable(Flags flag)
-{
-	if (isReady())
-		throw runtime_error("Failed to set flags, window already initialized.");
-	flags >> flag;
-}
-
-void Window::disable(const bp::FlagSet<Flags>& flags)
-{
-	if (isReady())
-		throw runtime_error("Failed to set flags, window already initialized.");
-	this->flags &= ~flags;
-}
-
-void Window::toggle(Flags flag)
-{
-	if (isReady())
-		throw runtime_error("Failed to set flags, window already initialized.");
-	flags ^= flag;
-}
-
-void Window::toggle(const bp::FlagSet<Flags>& flags)
-{
-	if (isReady())
-		throw runtime_error("Failed to set flags, window already initialized.");
-	this->flags ^= flags;
 }
 
 void Window::keyCallback(GLFWwindow* handle, int key, int, int action, int mods)

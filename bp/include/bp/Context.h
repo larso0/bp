@@ -20,6 +20,8 @@ public:
 		const VkApplicationInfo* applicationInfo = nullptr);
 	~Context();
 
+	operator VkInstance() { return instance; }
+
 	VkInstance getInstance() { return instance; }
 	std::vector<VkPhysicalDevice>& getPhysicalDevices() { return physicalDevices; }
 	const std::vector<VkPhysicalDevice>& getPhysicalDevices() const { return physicalDevices; }
