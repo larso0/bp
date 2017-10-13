@@ -23,8 +23,6 @@ public:
 private:
 	VkDevice device;
 	VkShaderStageFlagBits stage;
-	uint32_t codeSize;
-	const uint32_t* code;
 	VkShaderModule handle;
 	VkPipelineShaderStageCreateInfo pipelineShaderStageInfo;
 };

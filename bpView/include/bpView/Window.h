@@ -53,7 +53,6 @@ public:
 	bp::Event<const std::vector<std::string>&> fileDropEvent;
 private:
 	VkInstance instance;
-	GLFWmonitor* monitor;
 	GLFWwindow* handle;
 	VkSurfaceKHR surface;
 	int width, height;

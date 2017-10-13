@@ -7,7 +7,8 @@ namespace bpView
 {
 
 Window::Window(VkInstance instance, uint32_t width, uint32_t height, const std::string& title,
-	       GLFWmonitor* monitor, const bp::FlagSet<bpView::Window::Flags>& flags)
+	       GLFWmonitor* monitor, const bp::FlagSet<bpView::Window::Flags>& flags) :
+	instance{instance}
 {
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, flags & Flags::RESIZABLE);

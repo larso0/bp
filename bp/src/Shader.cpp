@@ -7,7 +7,10 @@ namespace bp
 {
 
 Shader::Shader(VkDevice device, VkShaderStageFlagBits stage, uint32_t codeSize,
-	       const uint32_t* code)
+	       const uint32_t* code) :
+	device{device},
+	stage{stage},
+	pipelineShaderStageInfo{}
 {
 	VkShaderModuleCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
