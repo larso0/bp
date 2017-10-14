@@ -17,7 +17,8 @@ RenderPass::RenderPass(RenderTarget& renderTarget, VkRect2D renderArea, bool ena
 	VkAttachmentDescription passAttachments[2] = {};
 	passAttachments[0].format = renderTarget.getFormat();
 	passAttachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
-	passAttachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	passAttachments[0].loadOp =  enableClear ? VK_ATTACHMENT_LOAD_OP_CLEAR
+						 : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	passAttachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	passAttachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	passAttachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -28,7 +29,8 @@ RenderPass::RenderPass(RenderTarget& renderTarget, VkRect2D renderArea, bool ena
 	{
 		passAttachments[1].format = VK_FORMAT_D16_UNORM;
 		passAttachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
-		passAttachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		passAttachments[1].loadOp =  enableClear ? VK_ATTACHMENT_LOAD_OP_CLEAR
+							 : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		passAttachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		passAttachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		passAttachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
