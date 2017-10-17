@@ -29,8 +29,7 @@ RenderPass::RenderPass(RenderTarget& renderTarget, VkRect2D renderArea, bool ena
 	{
 		passAttachments[1].format = VK_FORMAT_D16_UNORM;
 		passAttachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
-		passAttachments[1].loadOp =  enableClear ? VK_ATTACHMENT_LOAD_OP_CLEAR
-							 : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		passAttachments[1].loadOp =  VK_ATTACHMENT_LOAD_OP_CLEAR;
 		passAttachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		passAttachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		passAttachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -85,17 +84,25 @@ void RenderPass::recreateFramebuffers()
 
 void RenderPass::begin(VkCommandBuffer cmdBuffer)
 {
-	VkClearValue clearValues[2] = {clearValue, {1.f, 0.f}};
+	vector<VkClearValue> clearValues;
+	if (clearEnabled)
+	{
+		clearValues.push_back(clearValue);
+		if (renderTarget.isDepthImageEnabled()) clearValues.push_back({1.f, 0.f});
+	} else if (renderTarget.isDepthImageEnabled())
+	{
+		clearValues.push_back(clearValue);
+		clearValues.push_back({1.f, 0.f});
+	}
 	VkRenderPassBeginInfo beginInfo = {};
 	beginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	beginInfo.renderPass = handle;
 	beginInfo.framebuffer = framebuffers[renderTarget.getCurrentFramebufferIndex()];
 	beginInfo.renderArea = renderArea;
-	if (clearEnabled)
-	{
-		beginInfo.clearValueCount = renderTarget.isDepthImageEnabled() ? 2 : 1;
-		beginInfo.pClearValues = clearValues;
-	}
+
+	beginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	beginInfo.pClearValues = clearValues.data();
+
 	vkCmdBeginRenderPass(cmdBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
