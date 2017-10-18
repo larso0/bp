@@ -9,8 +9,8 @@ namespace bp
 class RenderPass
 {
 public:
-	RenderPass(RenderTarget& renderTarget, VkRect2D renderArea, bool enableClear = false,
-		   VkClearValue clearValue = {});
+	RenderPass(RenderTarget& renderTarget, VkRect2D renderArea);
+	RenderPass(RenderTarget& renderTarget, VkRect2D renderArea, VkClearValue clearValue);
 	~RenderPass();
 
 	void recreateFramebuffers();
@@ -35,6 +35,7 @@ private:
 	VkClearValue clearValue;
 	std::vector<VkFramebuffer> framebuffers;
 
+	void create();
 	void createFramebuffers();
 };
 
