@@ -1,5 +1,7 @@
 #include <bp/DescriptorSet.h>
 #include <stdexcept>
+#include <bp/ImageDescriptor.h>
+#include <bp/BufferDescriptor.h>
 
 using namespace std;
 
@@ -28,6 +30,48 @@ DescriptorSet::DescriptorSet(VkDevice device, VkDescriptorPool pool, DescriptorS
 DescriptorSet::~DescriptorSet()
 {
 	vkFreeDescriptorSets(device, pool, 1, &handle);
+}
+
+void DescriptorSet::bind(const Descriptor* descriptor)
+{
+	VkWriteDescriptorSet write = {};
+	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	write.dstSet = handle;
+	write.dstBinding = descriptor->getBinding();
+	write.dstArrayElement = descriptor->getFirstIndex();
+	write.descriptorType = descriptor->getType();
+
+	{
+		const ImageDescriptor* imageDescriptor =
+			dynamic_cast<const ImageDescriptor*>(descriptor);
+		if (imageDescriptor != nullptr)
+		{
+			const auto& infos = imageDescriptor->getDescriptorInfos();
+			write.descriptorCount = static_cast<uint32_t>(infos.size());
+			write.pImageInfo = infos.data();
+		}
+	}
+
+	{
+		const BufferDescriptor* bufferDescriptor =
+			dynamic_cast<const BufferDescriptor*>(descriptor);
+		if (bufferDescriptor != nullptr)
+		{
+			const auto& infos = bufferDescriptor->getDescriptorInfos();
+			write.descriptorCount = static_cast<uint32_t>(infos.size());
+			write.pBufferInfo = infos.data();
+		}
+	}
+
+	descriptorWrites.push_back(write);
+}
+
+void DescriptorSet::update()
+{
+	if (descriptorWrites.empty()) return;
+	vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()),
+			       descriptorWrites.data(), 0, nullptr);
+	descriptorWrites.clear();
 }
 
 }
