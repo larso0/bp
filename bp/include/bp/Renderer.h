@@ -9,14 +9,19 @@ namespace bp
 class Renderer
 {
 public:
-	explicit Renderer(RenderPass& renderPass) : renderPass{renderPass} {}
-	virtual ~Renderer() = default;
+	explicit Renderer(RenderPass& renderPass);
+	virtual ~Renderer();
+
+	void render();
 
 	virtual void update(float delta) {}
-	virtual void render(VkCommandBuffer cmdBuffer) = 0;
+	virtual void draw(VkCommandBuffer cmdBuffer) = 0;
 
 protected:
 	RenderPass& renderPass;
+
+	VkCommandBuffer cmdBuffer;
+	VkSemaphore renderCompleteSem;
 };
 
 }
