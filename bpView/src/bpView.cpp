@@ -36,4 +36,14 @@ void init()
 	atexit(glfwTerminate);
 }
 
+void pollEvents()
+{
+	glfwPollEvents();
+}
+
+void waitEvents()
+{
+	glfwWaitEvents();
+}
+
 }

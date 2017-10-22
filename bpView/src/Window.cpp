@@ -3,11 +3,11 @@
 
 using namespace std;
 
-namespace bpView
+namespace bp
 {
 
 Window::Window(VkInstance instance, uint32_t width, uint32_t height, const std::string& title,
-	       GLFWmonitor* monitor, const bp::FlagSet<bpView::Window::Flags>& flags) :
+	       GLFWmonitor* monitor, const FlagSet<Window::Flags>& flags) :
 	instance{instance}
 {
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -34,12 +34,36 @@ Window::Window(VkInstance instance, uint32_t width, uint32_t height, const std::
 	glfwSetCursorEnterCallback(handle, cursorEnterCallback);
 	glfwSetWindowSizeCallback(handle, windowSizeCallback);
 	glfwSetDropCallback(handle, fileDropCallback);
+
+	glfwGetCursorPos(handle, &motion.x, &motion.y);
+	connect(cursorPosEvent, motion, &Motion::update);
+
+	resize.width = width;
+	resize.height = height;
+	connect(sizeChangedEvent, resize, &Resize::update);
 }
 
 Window::~Window()
 {
 	vkDestroySurfaceKHR(instance, surface, nullptr);
 	glfwDestroyWindow(handle);
+}
+
+void Window::handleEvents()
+{
+	if (motion.updated)
+	{
+		cursorMotionEvent(motion.x - motion.previousX, motion.y - motion.previousY);
+		motion.previousX = motion.x;
+		motion.previousY = motion.y;
+		motion.updated = false;
+	}
+
+	if (resize.updated)
+	{
+		resizeEvent(resize.width, resize.height);
+		resize.updated = false;
+	}
 }
 
 void Window::setSize(int w, int h)

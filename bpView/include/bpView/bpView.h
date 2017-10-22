@@ -13,6 +13,9 @@ extern bp::Event<const std::string&> errorEvent;
 
 void init();
 
+void pollEvents();
+void waitEvents();
+
 }
 
 #endif
