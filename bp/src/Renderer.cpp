@@ -37,7 +37,7 @@ Renderer::~Renderer()
 	vkFreeCommandBuffers(device, pool, 1, &cmdBuffer);
 }
 
-void Renderer::render()
+void Renderer::render(VkSemaphore waitSem)
 {
 	VkCommandBufferBeginInfo beginInfo = {};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -53,7 +53,6 @@ void Renderer::render()
 
 	vkEndCommandBuffer(cmdBuffer);
 
-	VkSemaphore presentSem = renderPass.getRenderTarget().getPresentSemaphore();
 	VkPipelineStageFlags waitStages = {VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT};
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -61,15 +60,18 @@ void Renderer::render()
 	submitInfo.pCommandBuffers = &cmdBuffer;
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = &renderCompleteSem;
-	submitInfo.waitSemaphoreCount = 1;
-	submitInfo.pWaitSemaphores = &presentSem;
+
+	if (waitSem != VK_NULL_HANDLE)
+	{
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = &waitSem;
+	}
+	
 	submitInfo.pWaitDstStageMask = &waitStages;
 
 	Queue& queue = renderPass.getRenderTarget().getDevice().getGraphicsQueue();
 	vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(queue);
-
-	renderPass.getRenderTarget().present(renderCompleteSem);
 }
 
 }

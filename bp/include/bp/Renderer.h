@@ -12,10 +12,12 @@ public:
 	explicit Renderer(RenderPass& renderPass);
 	virtual ~Renderer();
 
-	void render();
+	void render(VkSemaphore waitSem = VK_NULL_HANDLE);
 
 	virtual void update(float delta) {}
 	virtual void draw(VkCommandBuffer cmdBuffer) = 0;
+
+	VkSemaphore getRenderCompleteSemaphore() { return renderCompleteSem; }
 
 protected:
 	RenderPass& renderPass;
