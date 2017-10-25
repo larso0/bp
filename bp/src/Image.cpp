@@ -119,8 +119,15 @@ void* Image::map(VkDeviceSize offset, VkDeviceSize size)
 
 void Image::unmap()
 {
-	vkFlushMappedMemoryRanges(device, 1, &mapped);
-	vkUnmapMemory(device, memory);
+	if (stagingImage != nullptr)
+	{
+		stagingImage->unmap();
+		transfer(*stagingImage);
+	} else
+	{
+		vkFlushMappedMemoryRanges(device, 1, &mapped);
+		vkUnmapMemory(device, memory);
+	}
 }
 
 void Image::transition(VkImageLayout dstLayout, VkAccessFlags dstAccess,
