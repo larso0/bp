@@ -18,7 +18,7 @@ public:
 	~Image();
 
 	void* map(VkDeviceSize offset, VkDeviceSize size);
-	void unmap();
+	void unmap(bool writeBack = true);
 	void transition(VkImageLayout dstLayout, VkAccessFlags dstAccess,
 			VkPipelineStageFlags dstStage, VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
 	void transfer(Image& fromImage, VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);

@@ -106,12 +106,13 @@ void* Buffer::map(VkDeviceSize offset, VkDeviceSize size)
 	return mappedMemory;
 }
 
-void Buffer::unmap()
+void Buffer::unmap(bool writeBack)
 {
 	if (stagingBuffer != nullptr)
 	{
 		stagingBuffer->unmap();
-		transfer(*stagingBuffer, mapped.offset, mapped.offset, mapped.size);
+		if (writeBack)
+			transfer(*stagingBuffer, mapped.offset, mapped.offset, mapped.size);
 	} else
 	{
 		vkFlushMappedMemoryRanges(device, 1, &mapped);

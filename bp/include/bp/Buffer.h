@@ -16,7 +16,7 @@ public:
 	~Buffer();
 
 	void* map(VkDeviceSize offset, VkDeviceSize size);
-	void unmap();
+	void unmap(bool writeBack = true);
 	void transfer(VkDeviceSize offset, VkDeviceSize size, const void* data,
 		      VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
 	void transfer(Buffer& src, VkDeviceSize srcOffset, VkDeviceSize dstOffset,

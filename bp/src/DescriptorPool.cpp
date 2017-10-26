@@ -12,6 +12,7 @@ DescriptorPool::DescriptorPool(VkDevice device, const std::vector<VkDescriptorPo
 {
 	VkDescriptorPoolCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 	info.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 	info.pPoolSizes = poolSizes.data();
 	info.maxSets = maxSets;

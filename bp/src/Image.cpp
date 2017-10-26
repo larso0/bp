@@ -13,6 +13,7 @@ Image::Image(Device& device, uint32_t width, uint32_t height, VkFormat format, V
 	device{device},
 	cmdPool{VK_NULL_HANDLE},
 	width{width}, height{height},
+	format{format},
 	tiling{tiling},
 	layout{initialLayout},
 	accessFlags{0},
@@ -120,12 +121,13 @@ void* Image::map(VkDeviceSize offset, VkDeviceSize size)
 	return mappedMemory;
 }
 
-void Image::unmap()
+void Image::unmap(bool writeBack)
 {
 	if (stagingImage != nullptr)
 	{
 		stagingImage->unmap();
-		transfer(*stagingImage);
+		if (writeBack)
+			transfer(*stagingImage);
 	} else
 	{
 		vkFlushMappedMemoryRanges(device, 1, &mapped);
