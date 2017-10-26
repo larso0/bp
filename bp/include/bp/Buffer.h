@@ -22,6 +22,8 @@ public:
 	void transfer(Buffer& src, VkDeviceSize srcOffset, VkDeviceSize dstOffset,
 		      VkDeviceSize size, VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
 
+	operator VkBuffer() { return handle; }
+
 	VkDeviceSize getSize() const { return size; }
 	VkBuffer getHandle() { return handle; }
 	VkMemoryPropertyFlags getMemoryProperties() const { return memoryProperties; }

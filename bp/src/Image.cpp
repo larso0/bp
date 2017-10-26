@@ -96,6 +96,9 @@ void* Image::map(VkDeviceSize offset, VkDeviceSize size)
 	if (tiling == VK_IMAGE_TILING_LINEAR &&
 	    memoryProperties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
 	{
+		transition(VK_IMAGE_LAYOUT_GENERAL,
+			   VK_ACCESS_HOST_READ_BIT | VK_ACCESS_HOST_WRITE_BIT,
+			   VK_PIPELINE_STAGE_HOST_BIT);
 		VkResult result = vkMapMemory(device, memory, offset, size, 0, &mappedMemory);
 		if (result != VK_SUCCESS)
 			throw runtime_error("Failed to map Image memory.");
