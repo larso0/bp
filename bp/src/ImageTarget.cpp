@@ -80,6 +80,7 @@ void ImageTarget::present(VkSemaphore renderCompleteSemaphore)
 
 	vkQueueSubmit(device.getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(device.getGraphicsQueue());
+	vkFreeCommandBuffers(device, cmdPool, 1, &cmdBuffer);
 }
 
 void ImageTarget::resize(uint32_t width, uint32_t height)
