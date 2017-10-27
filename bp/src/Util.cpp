@@ -2,6 +2,9 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <thread>
+#include <cstring>
+#include <future>
 
 using namespace std;
 
@@ -159,6 +162,31 @@ vector<char> readBinaryFile(const string& filename)
 	file.close();
 
 	return buffer;
+}
+
+void* parallelCopy(void* dest, const void* src, size_t count)
+{
+	if (count < 1536) return memcpy(dest, src, count);
+
+	size_t threadCount = thread::hardware_concurrency();
+	size_t chunkSize = count / threadCount;
+	if (chunkSize < 1024) chunkSize = 1024;
+	threadCount = count / chunkSize;
+
+	vector<future<void>> futures;
+	futures.reserve(threadCount);
+	for (auto i = 0; i < threadCount; i++)
+		futures.push_back(async(launch::async, [dest, src, i, chunkSize]{
+			memcpy(dest + i * chunkSize, src + i * chunkSize, chunkSize);
+		}));
+
+	size_t amountScheduled = threadCount * chunkSize;
+	if (amountScheduled < count)
+		memcpy(dest + amountScheduled, src + amountScheduled, count - amountScheduled);
+
+	for (auto& future : futures) future.wait();
+
+	return dest;
 }
 
 }

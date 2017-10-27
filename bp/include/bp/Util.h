@@ -52,6 +52,13 @@ void endSingleUseCmdBuffer(VkDevice device, VkQueue queue, VkCommandPool pool,
  */
 std::vector<char> readBinaryFile(const std::string& filename);
 
+/*
+ * Copy memory in parallel.
+ * Utilize multi-threaded CPUs for copying memory to exploit available memory bandwidth.
+ * Usage: same as memcpy
+ */
+void* parallelCopy(void* dest, const void* src, size_t count);
+
 }
 
 #endif
