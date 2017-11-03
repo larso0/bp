@@ -36,16 +36,15 @@ public:
 		node = n;
 	}
 
-	void setPerspectiveProjection(float fov, float ratio, float near,
-				      float far)
+	void setPerspectiveProjection(float fov, float ratio, float nearDist, float farDist)
 	{
-		projectionMatrix = glm::perspective(fov, ratio, near, far);
+		projectionMatrix = glm::perspective(fov, ratio, nearDist, farDist);
 	}
 
 	void setOrthoProjection(float left, float right, float top,
-				float bottom, float near, float far)
+				float bottom, float nearDist, float farDist)
 	{
-		projectionMatrix = glm::ortho(left, right, top, bottom, near, far);
+		projectionMatrix = glm::ortho(left, right, top, bottom, nearDist, farDist);
 	}
 
 	void update()
