@@ -32,7 +32,7 @@ Window::Window(VkInstance instance, uint32_t width, uint32_t height, const std::
 	glfwSetMouseButtonCallback(handle, mouseBtnCallback);
 	glfwSetCursorPosCallback(handle, cursorPosCallback);
 	glfwSetCursorEnterCallback(handle, cursorEnterCallback);
-	glfwSetWindowSizeCallback(handle, windowSizeCallback);
+	glfwSetFramebufferSizeCallback(handle, windowSizeCallback);
 	glfwSetDropCallback(handle, fileDropCallback);
 
 	glfwGetCursorPos(handle, &motion.x, &motion.y);
@@ -41,6 +41,10 @@ Window::Window(VkInstance instance, uint32_t width, uint32_t height, const std::
 	resize.width = width;
 	resize.height = height;
 	connect(sizeChangedEvent, resize, &Resize::update);
+	int w, h;
+	glfwGetFramebufferSize(handle, &w, &h);
+	width = w;
+	height = h;
 }
 
 Window::~Window()
@@ -138,6 +142,7 @@ void Window::cursorEnterCallback(GLFWwindow* handle, int entered)
 
 void Window::windowSizeCallback(GLFWwindow* handle, int width, int height)
 {
+	if (width <= 0 || height <= 0) return;
 	Window* w = static_cast<Window*>(glfwGetWindowUserPointer(handle));
 	w->resizeEvent(width, height);
 }
