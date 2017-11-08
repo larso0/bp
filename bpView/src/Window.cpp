@@ -144,7 +144,7 @@ void Window::windowSizeCallback(GLFWwindow* handle, int width, int height)
 {
 	if (width <= 0 || height <= 0) return;
 	Window* w = static_cast<Window*>(glfwGetWindowUserPointer(handle));
-	w->resizeEvent(width, height);
+	w->sizeChangedEvent(static_cast<uint32_t>(width), static_cast<uint32_t>(height));
 }
 
 void Window::fileDropCallback(GLFWwindow* handle, int count, const char** c_paths)

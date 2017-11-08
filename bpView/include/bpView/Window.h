@@ -40,8 +40,8 @@ public:
 
 	GLFWwindow* getHandle() { return handle; }
 	VkSurfaceKHR getSurface() { return surface; }
-	int getWidth() const { return width; }
-	int getHeight() const { return height; }
+	uint32_t getWidth() const { return width; }
+	uint32_t getHeight() const { return height; }
 	const std::string& getTitle() const { return title; }
 
 	Event<int, int> keyPressEvent;
@@ -53,7 +53,7 @@ public:
 	Event<double, double> cursorPosEvent;
 	Event<> cursorEnterEvent;
 	Event<> cursorLeaveEvent;
-	Event<int, int> sizeChangedEvent;
+	Event<uint32_t, uint32_t> sizeChangedEvent;
 	Event<const std::vector<std::string>&> fileDropEvent;
 
 	Event<double, double> cursorMotionEvent;
@@ -62,7 +62,7 @@ private:
 	VkInstance instance;
 	GLFWwindow* handle;
 	VkSurfaceKHR surface;
-	int width, height;
+	uint32_t width, height;
 	std::string title;
 	FlagSet<Flags> flags;
 
@@ -84,11 +84,11 @@ private:
 	struct Resize
 	{
 		Resize() : updated{false}, width{0}, height{0} {}
-		void update(int w, int h)
+		void update(uint32_t w, uint32_t h)
 		{
 			updated = true;
-			width = static_cast<uint32_t>(w);
-			height = static_cast<uint32_t>(h);
+			width = w;
+			height = h;
 		}
 
 		bool updated;
