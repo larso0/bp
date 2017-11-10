@@ -12,10 +12,9 @@ CompositeRenderer::CompositeRenderer(RenderPass& renderPass, const std::vector<V
 	Renderer{renderPass},
 	device{renderPass.getRenderTarget().getDevice()}
 {
-	uint32_t i = 0;
 	for (auto& area : areas)
 	{
-		sources.emplace_back(device, area, i++);
+		sources.emplace_back(device, area);
 	}
 
 	createShaders();
@@ -105,8 +104,7 @@ void CompositeRenderer::draw(VkCommandBuffer)
 	}
 }
 
-CompositeRenderer::CompositeSource::CompositeSource(bp::Device& device, const VkRect2D& area,
-						    uint32_t samplerIndex) :
+CompositeRenderer::CompositeSource::CompositeSource(bp::Device& device, const VkRect2D& area) :
 	device{device},
 	image{device, area.extent.width, area.extent.height, VK_FORMAT_R8G8B8A8_UNORM,
 	      VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT,
@@ -156,7 +154,6 @@ CompositeRenderer::CompositeSource::CompositeSource(bp::Device& device, const Vk
 	pushConstant.y = 2.f * static_cast<float>(area.offset.y) / static_cast<float>(height) - 1.f;
 	pushConstant.w = 2.f * static_cast<float>(area.extent.width) / static_cast<float>(width);
 	pushConstant.h = 2.f * static_cast<float>(area.extent.height) / static_cast<float>(height);
-	pushConstant.samplerIndex = samplerIndex;
 }
 
 CompositeRenderer::CompositeSource::~CompositeSource()
@@ -227,7 +224,8 @@ void CompositeRenderer::setupDescriptors()
 
 void CompositeRenderer::createPipelineLayout()
 {
-	VkPushConstantRange pushConstantRange = {VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(uint32_t)};
+	VkPushConstantRange pushConstantRange = {VK_SHADER_STAGE_VERTEX_BIT, 0,
+						 sizeof(PushConstant)};
 
 	VkDescriptorSetLayout setLayout = *descriptorSetLayout;
 

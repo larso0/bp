@@ -21,7 +21,7 @@ public:
 	explicit Compositor(RenderTarget& target);
 	~Compositor();
 
-	void composite();
+	void composite(bool waitForPresent = true);
 	void start();
 	void stop();
 

@@ -13,8 +13,9 @@ Compositor::Compositor(RenderTarget& target) :
 	renderPass{target, {{0, 0}, {target.getWidth(), target.getHeight()}}},
 	renderer{nullptr},
 	running{false},
-	waitSem{VK_NULL_HANDLE}
+	waitSem{target.getPresentSemaphore()}
 {
+
 }
 
 Compositor::~Compositor()
@@ -24,7 +25,7 @@ Compositor::~Compositor()
 	for (auto src : sources) delete src;
 }
 
-void Compositor::composite()
+void Compositor::composite(bool waitForPresent)
 {
 	if (renderer == nullptr)
 	{
@@ -44,8 +45,7 @@ void Compositor::composite()
 	}
 	nextFrameSem.signal(sources.size());
 
-	renderer->render(waitSem);
-	if (waitSem == VK_NULL_HANDLE) waitSem = renderPass.getRenderTarget().getPresentSemaphore();
+	renderer->render(waitForPresent ? waitSem : VK_NULL_HANDLE);
 	renderPass.getRenderTarget().present(renderer->getRenderCompleteSemaphore());
 }
 
@@ -89,19 +89,20 @@ void Compositor::start()
 	for (auto src : sources)
 	{
 		threads.emplace_back([&]{
-			renderThread(i++, running, queue, *src->target, *src->renderer,
+			renderThread(i, running, queue, *src->target, *src->renderer,
 				     nextFrameSem);
 		});
+		i++;
 	}
 }
 
 void Compositor::stop()
 {
+	if (!running) return;
 	running = false;
 	composite();
 	for (auto& thread : threads) thread.join();
 	threads.clear();
-	waitSem = VK_NULL_HANDLE;
 }
 
 }

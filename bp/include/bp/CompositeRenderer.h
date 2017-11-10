@@ -31,13 +31,12 @@ private:
 	struct PushConstant
 	{
 		float x, y, w, h;
-		uint32_t samplerIndex;
 	};
 
 	class CompositeSource
 	{
 	public:
-		CompositeSource(bp::Device& device, const VkRect2D& area, uint32_t samplerIndex);
+		CompositeSource(bp::Device& device, const VkRect2D& area);
 		~CompositeSource();
 		bp::Device& device;
 		bp::Image image;

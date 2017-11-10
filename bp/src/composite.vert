@@ -16,14 +16,13 @@ vec2 textureCoordinates[4] = vec2[](
 
 layout (push_constant) uniform _Area
 {
-	vec2 offset;
-	vec2 extent;
+	vec4 rect;
 } area;
 
 layout (location = 1) out vec2 textureCoordinate;
 
 void main()
 {
-	gl_Position = vec4(area.extent * positions[gl_VertexIndex] + area.offset, 0.0, 1.0);
+	gl_Position = vec4(area.rect.zw * positions[gl_VertexIndex] + area.rect.xy, 0.0, 1.0);
 	textureCoordinate = textureCoordinates[gl_VertexIndex];
 }
