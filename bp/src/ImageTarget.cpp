@@ -58,12 +58,22 @@ void ImageTarget::endFrame(VkCommandBuffer cmdBuffer)
 
 void ImageTarget::present(VkSemaphore renderCompleteSemaphore)
 {
-	if (!(flags & Flags::STAGING_IMAGE)) return;
+	if (!(flags & Flags::STAGING_IMAGE || flags & Flags::SHADER_READABLE)) return;
 
 	VkCommandBuffer cmdBuffer = beginSingleUseCmdBuffer(device, cmdPool);
-	stagingImage->transfer(*image, cmdBuffer);
-	stagingImage->transition(VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_HOST_READ_BIT,
-				 VK_PIPELINE_STAGE_HOST_BIT, cmdBuffer);
+
+	if (flags & Flags::STAGING_IMAGE)
+	{
+		stagingImage->transfer(*image, cmdBuffer);
+		stagingImage->transition(VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_HOST_READ_BIT,
+					 VK_PIPELINE_STAGE_HOST_BIT, cmdBuffer);
+	}
+	if (flags & Flags::SHADER_READABLE)
+	{
+		image->transition(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				  VK_ACCESS_TRANSFER_READ_BIT,
+				  VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, cmdBuffer);
+	}
 
 	vkEndCommandBuffer(cmdBuffer);
 
