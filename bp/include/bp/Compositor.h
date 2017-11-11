@@ -27,8 +27,8 @@ public:
 
 	template <class DerivedRenderer, typename... ParamTypes>
 	std::pair<DerivedRenderer*, std::mutex*> addSource(Device& device, const VkRect2D& area,
-						    const VkClearValue& clearValue,
-						    ParamTypes... constructArgs)
+							   const VkClearValue& clearValue,
+							   ParamTypes... constructArgs)
 	{
 		static_assert(std::is_base_of<Renderer, DerivedRenderer>::value,
 			      "DerivedRenderer must derive bp::Renderer");

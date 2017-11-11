@@ -1,4 +1,5 @@
 #include <bp/Shader.h>
+#include <shaderc/shaderc.hpp>
 #include <stdexcept>
 
 using namespace std;
@@ -6,11 +7,64 @@ using namespace std;
 namespace bp
 {
 
+Shader::Shader(VkDevice device, VkShaderStageFlagBits stage, const std::string& glslSource) :
+	device{device},
+	stage{stage},
+	pipelineShaderStageInfo{}
+{
+	shaderc::Compiler compiler;
+
+	shaderc_shader_kind kind;
+	switch (stage)
+	{
+	case VK_SHADER_STAGE_VERTEX_BIT:
+		kind = shaderc_vertex_shader;
+		break;
+	case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
+		kind = shaderc_tess_control_shader;
+		break;
+	case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
+		kind = shaderc_tess_evaluation_shader;
+		break;
+	case VK_SHADER_STAGE_GEOMETRY_BIT:
+		kind = shaderc_geometry_shader;
+		break;
+	case VK_SHADER_STAGE_FRAGMENT_BIT:
+		kind = shaderc_fragment_shader;
+		break;
+	case VK_SHADER_STAGE_COMPUTE_BIT:
+		kind = shaderc_compute_shader;
+		break;
+	default:
+		kind = shaderc_glsl_infer_from_source;
+		break;
+	}
+
+	auto result = compiler.CompileGlslToSpv(glslSource, kind, "bp Shader");
+
+	if (result.GetNumErrors() > 0)
+		throw runtime_error(result.GetErrorMessage());
+
+	const uint32_t* code = result.begin();
+	uint32_t size = static_cast<uint32_t>(result.end() - code);
+	createModule(size, code);
+}
+
 Shader::Shader(VkDevice device, VkShaderStageFlagBits stage, uint32_t codeSize,
 	       const uint32_t* code) :
 	device{device},
 	stage{stage},
 	pipelineShaderStageInfo{}
+{
+	createModule(codeSize, code);
+}
+
+Shader::~Shader()
+{
+	vkDestroyShaderModule(device, handle, nullptr);
+}
+
+void Shader::createModule(uint32_t codeSize, const uint32_t* code)
 {
 	VkShaderModuleCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -27,11 +81,6 @@ Shader::Shader(VkDevice device, VkShaderStageFlagBits stage, uint32_t codeSize,
 	pipelineShaderStageInfo.module = handle;
 	pipelineShaderStageInfo.pName = "main";
 	pipelineShaderStageInfo.pSpecializationInfo = nullptr;
-}
-
-Shader::~Shader()
-{
-	vkDestroyShaderModule(device, handle, nullptr);
 }
 
 }

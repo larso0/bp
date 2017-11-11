@@ -27,11 +27,6 @@ Compositor::~Compositor()
 
 void Compositor::composite(bool waitForPresent)
 {
-	if (renderer == nullptr)
-	{
-		renderer = new CompositeRenderer(renderPass, areas);
-	}
-
 	for (uint32_t i = 0; i < sources.size(); i++)
 	{
 		CompositeJob job = queue.dequeue();
@@ -83,6 +78,10 @@ void Compositor::renderThread(uint32_t jobIndex, atomic<bool>& running,
 
 void Compositor::start()
 {
+	if (renderer == nullptr)
+	{
+		renderer = new CompositeRenderer(renderPass, areas);
+	}
 	nextFrameSem.signal(sources.size());
 	running = true;
 	uint32_t i = 0;
