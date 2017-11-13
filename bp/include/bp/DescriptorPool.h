@@ -1,7 +1,8 @@
 #ifndef BP_DESCRIPTORPOOL_H
 #define BP_DESCRIPTORPOOL_H
 
-#include <vulkan/vulkan.h>
+#include "Device.h"
+#include "Pointer.h"
 #include <vector>
 
 namespace bp
@@ -10,16 +11,28 @@ namespace bp
 class DescriptorPool
 {
 public:
-	DescriptorPool(VkDevice device, const std::vector<VkDescriptorPoolSize>& poolSizes,
-		       uint32_t maxSets);
+	DescriptorPool() :
+		device{VK_NULL_HANDLE},
+		handle{VK_NULL_HANDLE} {}
+	DescriptorPool(NotNull<Device> device, const std::vector<VkDescriptorPoolSize>& poolSizes,
+		       uint32_t maxSets) :
+		DescriptorPool()
+	{
+		init(device, poolSizes, maxSets);
+	}
 	~DescriptorPool();
+
+	void init(NotNull<Device> device, const std::vector<VkDescriptorPoolSize>& poolSizes,
+		  uint32_t maxSets);
 
 	operator VkDescriptorPool() { return handle; }
 
 	VkDescriptorPool getHandle() { return handle; }
 
+	bool isReady() const { return handle != VK_NULL_HANDLE; }
+
 private:
-	VkDevice device;
+	Device* device;
 	VkDescriptorPool handle;
 };
 

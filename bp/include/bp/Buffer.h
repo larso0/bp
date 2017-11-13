@@ -2,6 +2,7 @@
 #define BP_BUFFER_H
 
 #include "Device.h"
+#include "Pointer.h"
 #include <vulkan/vulkan.h>
 
 namespace bp
@@ -10,10 +11,27 @@ namespace bp
 class Buffer
 {
 public:
-	Buffer(Device& device, VkDeviceSize size, VkBufferUsageFlags usage,
+	Buffer() :
+		device{nullptr},
+		size{0},
+		handle{VK_NULL_HANDLE},
+		cmdPool{VK_NULL_HANDLE},
+		memoryProperties{0},
+		memory{VK_NULL_HANDLE},
+		mapped{},
+		stagingBuffer{nullptr} {}
+	Buffer(NotNull<Device> device, VkDeviceSize size, VkBufferUsageFlags usage,
 	       VkMemoryPropertyFlags requiredMemoryProperties,
-	       VkMemoryPropertyFlags optimalMemoryProperties = 0);
+	       VkMemoryPropertyFlags optimalMemoryProperties = 0) :
+		Buffer()
+	{
+		init(device, size, usage, requiredMemoryProperties, optimalMemoryProperties);
+	}
 	~Buffer();
+
+	void init(NotNull<Device> device, VkDeviceSize size, VkBufferUsageFlags usage,
+		  VkMemoryPropertyFlags requiredMemoryProperties,
+		  VkMemoryPropertyFlags optimalMemoryProperties = 0);
 
 	void* map(VkDeviceSize offset, VkDeviceSize size);
 	void unmap(bool writeBack = true);
@@ -27,9 +45,10 @@ public:
 	VkDeviceSize getSize() const { return size; }
 	VkBuffer getHandle() { return handle; }
 	VkMemoryPropertyFlags getMemoryProperties() const { return memoryProperties; }
+	bool isReady() const { return handle != VK_NULL_HANDLE; }
 
 private:
-	Device& device;
+	Device* device;
 	VkDeviceSize size;
 	VkBuffer handle;
 	VkCommandPool cmdPool;
@@ -39,6 +58,7 @@ private:
 	Buffer* stagingBuffer;
 
 	void createCommandPool();
+	void assertReady();
 };
 
 }

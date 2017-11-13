@@ -6,10 +6,11 @@ using namespace std;
 namespace bp
 {
 
-DescriptorPool::DescriptorPool(VkDevice device, const std::vector<VkDescriptorPoolSize>& poolSizes,
-			       uint32_t maxSets) :
-	device{device}
+void DescriptorPool::init(NotNull<Device> device, const std::vector<VkDescriptorPoolSize>& poolSizes,
+			  uint32_t maxSets)
 {
+	if (isReady()) throw runtime_error("Descriptor pool is already initialized.");
+	this->device = device;
 	VkDescriptorPoolCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
@@ -17,12 +18,12 @@ DescriptorPool::DescriptorPool(VkDevice device, const std::vector<VkDescriptorPo
 	info.pPoolSizes = poolSizes.data();
 	info.maxSets = maxSets;
 
-	VkResult result = vkCreateDescriptorPool(device, &info, nullptr, &handle);
+	VkResult result = vkCreateDescriptorPool(*device, &info, nullptr, &handle);
 }
 
 DescriptorPool::~DescriptorPool()
 {
-	vkDestroyDescriptorPool(device, handle, nullptr);
+	vkDestroyDescriptorPool(*device, handle, nullptr);
 }
 
 }
