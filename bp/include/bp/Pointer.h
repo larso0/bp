@@ -35,7 +35,7 @@ class Scoped
 {
 public:
 	Scoped() : t{nullptr} {}
-	explicit Scoped(T* t, std::function<void(T*)> deleter = [](T* t){ delete t; }) :
+	Scoped(T* t, std::function<void(T*)> deleter = [](T* t){ delete t; }) :
 		t{t},
 		deleter{deleter} {}
 

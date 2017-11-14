@@ -21,6 +21,7 @@ public:
 	Swapchain() :
 		RenderTarget{},
 		surface{VK_NULL_HANDLE},
+		handle{VK_NULL_HANDLE},
 		colorSpace{VK_COLOR_SPACE_SRGB_NONLINEAR_KHR} {}
 	Swapchain(NotNull<Device> device, VkSurfaceKHR surface, uint32_t width, uint32_t height,
 		  const FlagSet<Flags>& flags =

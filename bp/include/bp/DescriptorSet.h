@@ -28,7 +28,7 @@ public:
 
 	void init(NotNull<Device> device, NotNull<DescriptorPool> pool,
 		  NotNull<DescriptorSetLayout> layout);
-	void bind(const Descriptor* descriptor);
+	void bind(const NotNull<Descriptor> descriptor);
 	void update();
 
 	operator VkDescriptorSet() { return handle; }

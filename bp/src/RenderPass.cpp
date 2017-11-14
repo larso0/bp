@@ -16,14 +16,14 @@ void RenderPass::init(NotNull<RenderTarget> target, const VkRect2D& area)
 RenderPass::~RenderPass()
 {
 	for (VkFramebuffer fb : framebuffers)
-		vkDestroyFramebuffer(renderTarget->getDevice(), fb, nullptr);
-	vkDestroyRenderPass(renderTarget->getDevice(), handle, nullptr);
+		vkDestroyFramebuffer(*renderTarget->getDevice(), fb, nullptr);
+	vkDestroyRenderPass(*renderTarget->getDevice(), handle, nullptr);
 }
 
 void RenderPass::recreateFramebuffers()
 {
 	for (VkFramebuffer fb : framebuffers)
-		vkDestroyFramebuffer(renderTarget->getDevice(), fb, nullptr);
+		vkDestroyFramebuffer(*renderTarget->getDevice(), fb, nullptr);
 	createFramebuffers();
 }
 
@@ -121,7 +121,7 @@ void RenderPass::create()
 	info.subpassCount = 1;
 	info.pSubpasses = &subpass;
 
-	VkResult result = vkCreateRenderPass(renderTarget->getDevice(), &info, nullptr, &handle);
+	VkResult result = vkCreateRenderPass(*renderTarget->getDevice(), &info, nullptr, &handle);
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to create render pass.");
 
@@ -147,7 +147,7 @@ void RenderPass::createFramebuffers()
 	for (uint32_t i = 0; i < n; i++)
 	{
 		attachments[0] = renderTarget->getFramebufferImageViews()[i];
-		VkResult result = vkCreateFramebuffer(renderTarget->getDevice(), &info, nullptr,
+		VkResult result = vkCreateFramebuffer(*renderTarget->getDevice(), &info, nullptr,
 						      framebuffers.data() + i);
 		if (result != VK_SUCCESS)
 			throw runtime_error("Failed to create framebuffer.");

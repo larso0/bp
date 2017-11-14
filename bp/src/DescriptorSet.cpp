@@ -33,7 +33,7 @@ DescriptorSet::~DescriptorSet()
 	vkFreeDescriptorSets(*device, *pool, 1, &handle);
 }
 
-void DescriptorSet::bind(const Descriptor* descriptor)
+void DescriptorSet::bind(const NotNull<Descriptor> descriptor)
 {
 	VkWriteDescriptorSet write = {};
 	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -44,7 +44,7 @@ void DescriptorSet::bind(const Descriptor* descriptor)
 
 	{
 		const ImageDescriptor* imageDescriptor =
-			dynamic_cast<const ImageDescriptor*>(descriptor);
+			dynamic_cast<const ImageDescriptor*>(descriptor.get());
 		if (imageDescriptor != nullptr)
 		{
 			const auto& infos = imageDescriptor->getDescriptorInfos();
@@ -55,7 +55,7 @@ void DescriptorSet::bind(const Descriptor* descriptor)
 
 	{
 		const BufferDescriptor* bufferDescriptor =
-			dynamic_cast<const BufferDescriptor*>(descriptor);
+			dynamic_cast<const BufferDescriptor*>(descriptor.get());
 		if (bufferDescriptor != nullptr)
 		{
 			const auto& infos = bufferDescriptor->getDescriptorInfos();

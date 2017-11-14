@@ -27,7 +27,7 @@ public:
 	Window(VkInstance instance, uint32_t width, uint32_t height, const std::string& title,
 	       GLFWmonitor* monitor = nullptr, const FlagSet<Flags>& flags =
 			FlagSet<Flags>() << Flags::RESIZABLE << Flags::VISIBLE
-					     << Flags::DECORATED << Flags::AUTO_ICONIFY);
+					 << Flags::DECORATED << Flags::AUTO_ICONIFY);
 	~Window();
 
 	void handleEvents();

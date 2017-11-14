@@ -38,7 +38,7 @@ public:
 	virtual void present(VkSemaphore renderCompleteSemaphore) = 0;
 	virtual void resize(uint32_t width, uint32_t height);
 
-	Device& getDevice() { return *device; }
+	Device* getDevice() { return device; }
 	VkCommandPool getCmdPool() { return cmdPool; }
 	bool isDepthImageEnabled() const { return depthImage != nullptr; }
 	Image* getDepthImage() { return depthImage; }

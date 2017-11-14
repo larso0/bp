@@ -12,6 +12,7 @@ void ImageTarget::init(NotNull<Device> device, uint32_t width, uint32_t height,
 {
 	RenderTarget::init(device, VK_FORMAT_R8G8B8A8_UNORM, width, height,
 			   flags & Flags::DEPTH_IMAGE);
+	this->flags = flags;
 	framebufferImageCount = 1;
 	createImage();
 	if (flags & Flags::STAGING_IMAGE) createStagingImage();
@@ -98,7 +99,6 @@ void ImageTarget::resize(uint32_t width, uint32_t height)
 {
 	RenderTarget::resize(width, height);
 	vkDestroyImageView(*device, framebufferImageViews[0], nullptr);
-	delete image;
 	createImage();
 	if (flags & Flags::STAGING_IMAGE)
 	{

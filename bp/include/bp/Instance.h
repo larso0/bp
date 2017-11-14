@@ -28,6 +28,11 @@ public:
 	}
 	~Instance();
 
+	template <typename Iterator>
+	void enableExtensions(Iterator begin, Iterator end)
+	{
+		enabledExtensions.insert(enabledExtensions.end(), begin, end);
+	}
 	void enableExtension(const std::string& extensionName);
 	void init(bool enableDebug, std::initializer_list<std::string> enabledExtensions,
 		  const VkApplicationInfo* applicationInfo = nullptr);
