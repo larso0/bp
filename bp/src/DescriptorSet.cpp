@@ -8,28 +8,29 @@ using namespace std;
 namespace bp
 {
 
-DescriptorSet::DescriptorSet(VkDevice device, VkDescriptorPool pool, DescriptorSetLayout& setLayout)
-	:
-	device{device},
-	pool{pool},
-	setLayout{setLayout}
+void DescriptorSet::init(NotNull<Device> device, NotNull<DescriptorPool> pool,
+			 NotNull<DescriptorSetLayout> layout)
 {
-	VkDescriptorSetLayout layoutHandle = setLayout;
+	if (isReady()) throw runtime_error("Descriptor set already initialized.");
+	this->device = device;
+	this->pool = pool;
+
+	VkDescriptorSetLayout layoutHandle = *layout;
 
 	VkDescriptorSetAllocateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	info.descriptorPool = pool;
+	info.descriptorPool = *pool;
 	info.descriptorSetCount = 1;
 	info.pSetLayouts = &layoutHandle;
 
-	VkResult result = vkAllocateDescriptorSets(device, &info, &handle);
+	VkResult result = vkAllocateDescriptorSets(*device, &info, &handle);
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to allocate descriptor set.");
 }
 
 DescriptorSet::~DescriptorSet()
 {
-	vkFreeDescriptorSets(device, pool, 1, &handle);
+	vkFreeDescriptorSets(*device, *pool, 1, &handle);
 }
 
 void DescriptorSet::bind(const Descriptor* descriptor)
@@ -69,7 +70,7 @@ void DescriptorSet::bind(const Descriptor* descriptor)
 void DescriptorSet::update()
 {
 	if (descriptorWrites.empty()) return;
-	vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()),
+	vkUpdateDescriptorSets(*device, static_cast<uint32_t>(descriptorWrites.size()),
 			       descriptorWrites.data(), 0, nullptr);
 	descriptorWrites.clear();
 }

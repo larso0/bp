@@ -3,6 +3,7 @@
 
 #include <vulkan/vulkan.h>
 #include <string>
+#include <initializer_list>
 #include <vector>
 #include "Event.h"
 
@@ -16,15 +17,29 @@ namespace bp
 class Instance
 {
 public:
-	Instance(bool enableDebug, const std::vector<std::string>& enabledExtensions,
-		const VkApplicationInfo* applicationInfo = nullptr);
+	Instance() :
+		handle{VK_NULL_HANDLE},
+		debugReportCallback{VK_NULL_HANDLE} {}
+	Instance(bool enableDebug, std::initializer_list<std::string> enabledExtensions,
+		const VkApplicationInfo* applicationInfo = nullptr) :
+		Instance{}
+	{
+		init(enableDebug, enabledExtensions, applicationInfo);
+	}
 	~Instance();
 
-	operator VkInstance() { return instance; }
+	void enableExtension(const std::string& extensionName);
+	void init(bool enableDebug, std::initializer_list<std::string> enabledExtensions,
+		  const VkApplicationInfo* applicationInfo = nullptr);
+	void init(bool enableDebug, const VkApplicationInfo* applicationInfo = nullptr);
 
-	VkInstance getInstance() { return instance; }
+	operator VkInstance() { return handle; }
+
+	VkInstance getHandle() { return handle; }
 	std::vector<VkPhysicalDevice>& getPhysicalDevices() { return physicalDevices; }
 	const std::vector<VkPhysicalDevice>& getPhysicalDevices() const { return physicalDevices; }
+	const std::vector<std::string>& getEnabledExtensions() const { return enabledExtensions; }
+	bool isReady() const { return handle != VK_NULL_HANDLE; }
 
 	/*
 	 * Events for information, warning and error messages.
@@ -35,9 +50,11 @@ public:
 	Event<const std::string&> warningEvent;
 	Event<const std::string&> errorEvent;
 private:
-	VkInstance instance;
+	VkInstance handle;
 	std::vector<VkPhysicalDevice> physicalDevices;
 	VkDebugReportCallbackEXT debugReportCallback;
+
+	std::vector<std::string> enabledExtensions;
 };
 
 }

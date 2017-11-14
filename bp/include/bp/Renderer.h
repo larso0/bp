@@ -9,21 +9,9 @@ namespace bp
 class Renderer
 {
 public:
-	explicit Renderer(RenderPass& renderPass);
-	virtual ~Renderer();
-
-	virtual void render(VkSemaphore waitSem = VK_NULL_HANDLE);
-
+	virtual void render(VkSemaphore waitSem = VK_NULL_HANDLE) = 0;
 	virtual void update(float delta) {}
-	virtual void draw(VkCommandBuffer cmdBuffer) = 0;
-
-	VkSemaphore getRenderCompleteSemaphore() { return renderCompleteSem; }
-
-protected:
-	RenderPass& renderPass;
-
-	VkCommandBuffer cmdBuffer;
-	VkSemaphore renderCompleteSem;
+	virtual VkSemaphore getRenderCompleteSemaphore() = 0;
 };
 
 }

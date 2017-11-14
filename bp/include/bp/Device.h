@@ -35,9 +35,23 @@ std::vector<VkPhysicalDevice> queryDevices(const Instance& instance,
 class Device
 {
 public:
-	Device(const Instance& instance, const DeviceRequirements& requirements);
-	Device(VkPhysicalDevice physicalDevice, const DeviceRequirements& requirements);
+	Device() :
+		physical{VK_NULL_HANDLE},
+		logical{VK_NULL_HANDLE} {}
+	Device(const Instance& instance, const DeviceRequirements& requirements) :
+		Device()
+	{
+		init(instance, requirements);
+	}
+	Device(VkPhysicalDevice physicalDevice, const DeviceRequirements& requirements) :
+		Device()
+	{
+		init(physicalDevice, requirements);
+	}
 	~Device();
+
+	void init(const Instance& instance, const DeviceRequirements& requirements);
+	void init(VkPhysicalDevice physicalDevice, const DeviceRequirements& requirements);
 
 	operator VkPhysicalDevice() { return physical; }
 	operator VkDevice() { return logical; }
@@ -50,6 +64,7 @@ public:
 	Queue& getComputeQueue();
 	Queue& getTransferQueue();
 	Queue& getSparseBindingQueue();
+	bool isReady() const { return logical != VK_NULL_HANDLE; }
 
 private:
 	VkPhysicalDevice physical;
@@ -68,6 +83,7 @@ private:
 
 	std::vector<VkDeviceQueueCreateInfo>
 	setupQueueCreateInfos(const DeviceRequirements& requirements);
+	void assertReady();
 };
 
 }

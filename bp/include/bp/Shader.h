@@ -1,7 +1,8 @@
 #ifndef BP_SHADER_H
 #define BP_SHADER_H
 
-#include <vulkan/vulkan.h>
+#include "Device.h"
+#include "Pointer.h"
 
 namespace bp
 {
@@ -9,19 +10,34 @@ namespace bp
 class Shader
 {
 public:
-	Shader(VkDevice device, VkShaderStageFlagBits stage, uint32_t codeSize,
-	       const uint32_t* code);
+	Shader() :
+		device{nullptr},
+		stage{VK_SHADER_STAGE_ALL},
+		handle{VK_NULL_HANDLE},
+		pipelineShaderStageInfo{} {}
+	Shader(NotNull<Device> device, VkShaderStageFlagBits stage, uint32_t codeSize,
+	       const uint32_t* code) :
+		Shader{}
+	{
+		init(device, stage, codeSize, code);
+	}
 	~Shader();
 
-	VkShaderStageFlags getStage() const { return stage; }
+	void init(NotNull<Device> device, VkShaderStageFlagBits stage, uint32_t codeSize,
+		  const uint32_t* code);
+
+	operator VkShaderModule() { return handle; }
+
 	VkShaderModule getHandle() { return handle; }
+	VkShaderStageFlags getStage() const { return stage; }
 	const VkPipelineShaderStageCreateInfo& getPipelineShaderStageInfo() const
 	{
 		return pipelineShaderStageInfo;
 	}
+	bool isReady() const { return handle != VK_NULL_HANDLE; }
 
 private:
-	VkDevice device;
+	Device* device;
 	VkShaderStageFlagBits stage;
 	VkShaderModule handle;
 	VkPipelineShaderStageCreateInfo pipelineShaderStageInfo;

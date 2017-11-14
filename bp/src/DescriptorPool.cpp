@@ -19,6 +19,8 @@ void DescriptorPool::init(NotNull<Device> device, const std::vector<VkDescriptor
 	info.maxSets = maxSets;
 
 	VkResult result = vkCreateDescriptorPool(*device, &info, nullptr, &handle);
+	if (result != VK_SUCCESS)
+		throw runtime_error("Failed to create descriptor pool.");
 }
 
 DescriptorPool::~DescriptorPool()

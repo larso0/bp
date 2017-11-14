@@ -8,51 +8,71 @@ using namespace std;
 namespace bp
 {
 
-RenderTarget::RenderTarget(Device& device, VkFormat format, uint32_t width, uint32_t height,
-			   bool enableDepthImage) :
-	device{device},
-	format{format},
-	width{width}, height{height},
-	depthImage{nullptr},
-	depthImageView{VK_NULL_HANDLE},
-	framebufferImageCount{0},
-	currentFramebufferIndex{0}
+void RenderTarget::init(NotNull<Device> device, VkFormat format, uint32_t width, uint32_t height,
+			bool enableDepthImage)
 {
+	if (isReady()) throw runtime_error("Render target already initialized.");
+	this->device = device;
+	this->format = format;
+	this->width = width;
+	this->height = height;
+
 	VkCommandPoolCreateInfo cmdPoolInfo = {};
 	cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	cmdPoolInfo.queueFamilyIndex = device.getGraphicsQueue().getQueueFamilyIndex();
+	cmdPoolInfo.queueFamilyIndex = device->getGraphicsQueue().getQueueFamilyIndex();
 
-	VkResult result = vkCreateCommandPool(device, &cmdPoolInfo, nullptr, &cmdPool);
+	VkResult result = vkCreateCommandPool(*device, &cmdPoolInfo, nullptr, &cmdPool);
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to create command pool.");
 
 	VkSemaphoreCreateInfo semInfo =
 		{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, nullptr, 0};
-	vkCreateSemaphore(device, &semInfo, nullptr, &presentSemaphore);
+	result = vkCreateSemaphore(*device, &semInfo, nullptr, &presentSemaphore);
+	if (result != VK_SUCCESS)
+	{
+		vkDestroyCommandPool(*device, cmdPool, nullptr);
+		cmdPool = VK_NULL_HANDLE;
+		throw runtime_error("Failed to create present semaphore.");
+	}
 
-	if (enableDepthImage) createDepthImage();
+	if (enableDepthImage)
+	{
+		try
+		{
+			createDepthImage();
+		} catch (exception& e)
+		{
+			vkDestroySemaphore(*device, presentSemaphore, nullptr);
+			vkDestroyCommandPool(*device, cmdPool, nullptr);
+			presentSemaphore = VK_NULL_HANDLE;
+			cmdPool = VK_NULL_HANDLE;
+			throw e;
+		}
+	}
 }
 
 RenderTarget::~RenderTarget()
 {
-	vkDestroySemaphore(device, presentSemaphore, nullptr);
+	if (!isReady()) return;
+	vkDestroySemaphore(*device, presentSemaphore, nullptr);
 	if (isDepthImageEnabled())
 	{
-		vkDestroyImageView(device, depthImageView, nullptr);
+		vkDestroyImageView(*device, depthImageView, nullptr);
 		delete depthImage;
 	}
-	vkDestroyCommandPool(device, cmdPool, nullptr);
+	vkDestroyCommandPool(*device, cmdPool, nullptr);
 }
 
 
 void RenderTarget::resize(uint32_t w, uint32_t h)
 {
+	assertReady();
 	width = w;
 	height = h;
 	if (isDepthImageEnabled())
 	{
-		vkDestroyImageView(device, depthImageView, nullptr);
+		vkDestroyImageView(*device, depthImageView, nullptr);
 		delete depthImage;
 		createDepthImage();
 	}
@@ -82,9 +102,15 @@ void RenderTarget::createDepthImage()
 	};
 	viewInfo.subresourceRange = {VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1};
 
-	VkResult result = vkCreateImageView(device, &viewInfo, nullptr, &depthImageView);
+	VkResult result = vkCreateImageView(*device, &viewInfo, nullptr, &depthImageView);
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to create depth image view.");
+}
+
+void RenderTarget::assertReady()
+{
+	if (!isReady())
+		throw runtime_error("Renter target not ready. Must be initialized before use.");
 }
 
 }

@@ -6,14 +6,15 @@ using namespace std;
 namespace bp
 {
 
-Swapchain::Swapchain(Device& device, VkSurfaceKHR surface, uint32_t width, uint32_t height,
-		     const FlagSet<Flags>& flags) :
-	RenderTarget(device, VK_FORMAT_B8G8R8_UNORM, width, height, flags & Flags::DEPTH_IMAGE),
-	flags{flags},
-	surface{surface},
-	handle{nullptr},
-	colorSpace{VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}
+void Swapchain::init(NotNull<Device> device, VkSurfaceKHR surface, uint32_t width, uint32_t height,
+		     const FlagSet<Flags>& flags)
 {
+	if (isReady()) throw runtime_error("Swapchain already initialized.");
+	if (surface == VK_NULL_HANDLE) throw invalid_argument("Surface must be a valid handle.");
+	this->surface = surface;
+	this->flags = flags;
+	RenderTarget::init(device, VK_FORMAT_B8G8R8_UNORM, width, height,
+			   flags & Flags::DEPTH_IMAGE);
 	framebufferImageCount = 2;
 	create();
 }
@@ -21,23 +22,26 @@ Swapchain::Swapchain(Device& device, VkSurfaceKHR surface, uint32_t width, uint3
 Swapchain::~Swapchain()
 {
 	for (VkImageView imageView : framebufferImageViews)
-		vkDestroyImageView(device, imageView, nullptr);
-	vkDestroySwapchainKHR(device, handle, nullptr);
+		vkDestroyImageView(*device, imageView, nullptr);
+	vkDestroySwapchainKHR(*device, handle, nullptr);
 }
 
 void Swapchain::beginFrame(VkCommandBuffer cmdBuffer)
 {
+	assertReady();
 	nextImage();
 	transitionColor(cmdBuffer);
 }
 
 void Swapchain::endFrame(VkCommandBuffer cmdBuffer)
 {
+	assertReady();
 	transitionPresent(cmdBuffer);
 }
 
 void Swapchain::present(VkSemaphore waitSemaphore)
 {
+	assertReady();
 	VkPresentInfoKHR presentInfo = {};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	presentInfo.waitSemaphoreCount = 1;
@@ -46,17 +50,18 @@ void Swapchain::present(VkSemaphore waitSemaphore)
 	presentInfo.pSwapchains = &handle;
 	presentInfo.pImageIndices = &currentFramebufferIndex;
 	presentInfo.pResults = nullptr;
-	vkQueuePresentKHR(device.getGraphicsQueue(), &presentInfo);
+	vkQueuePresentKHR(device->getGraphicsQueue(), &presentInfo);
 }
 
 void Swapchain::resize(uint32_t w, uint32_t h)
 {
+	assertReady();
 	width = w;
 	height = h;
 	create();
 	if (isDepthImageEnabled())
 	{
-		vkDestroyImageView(device, depthImageView, nullptr);
+		vkDestroyImageView(*device, depthImageView, nullptr);
 		delete depthImage;
 		createDepthImage();
 	}
@@ -65,9 +70,9 @@ void Swapchain::resize(uint32_t w, uint32_t h)
 void Swapchain::create()
 {
 	uint32_t n;
-	vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &n, nullptr);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(*device, surface, &n, nullptr);
 	vector<VkSurfaceFormatKHR> surfaceFormats(n);
-	vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &n, surfaceFormats.data());
+	vkGetPhysicalDeviceSurfaceFormatsKHR(*device, surface, &n, surfaceFormats.data());
 
 	if (n == 1 && surfaceFormats[0].format == VK_FORMAT_UNDEFINED)
 	{
@@ -84,7 +89,7 @@ void Swapchain::create()
 	}
 
 	VkSurfaceCapabilitiesKHR surfaceCapabilities = {};
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface,
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(*device, surface,
 						  &surfaceCapabilities);
 
 	if (framebufferImageCount < surfaceCapabilities.minImageCount)
@@ -110,9 +115,9 @@ void Swapchain::create()
 	    VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
 		preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 
-	vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &n, nullptr);
+	vkGetPhysicalDeviceSurfacePresentModesKHR(*device, surface, &n, nullptr);
 	vector<VkPresentModeKHR> present_modes(n);
-	vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &n,
+	vkGetPhysicalDeviceSurfacePresentModesKHR(*device, surface, &n,
 						  present_modes.data());
 
 	VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR;
@@ -151,20 +156,20 @@ void Swapchain::create()
 	createInfo.clipped = VK_TRUE;
 	createInfo.oldSwapchain = oldSwapchain;
 
-	VkResult result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &handle);
+	VkResult result = vkCreateSwapchainKHR(*device, &createInfo, nullptr, &handle);
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to create swapchain.");
 
 	if (oldSwapchain != VK_NULL_HANDLE)
 	{
 		for (VkImageView imageView : framebufferImageViews)
-			vkDestroyImageView(device, imageView, nullptr);
-		vkDestroySwapchainKHR(device, oldSwapchain, nullptr);
+			vkDestroyImageView(*device, imageView, nullptr);
+		vkDestroySwapchainKHR(*device, oldSwapchain, nullptr);
 	}
 
-	vkGetSwapchainImagesKHR(device, handle, &n, nullptr);
+	vkGetSwapchainImagesKHR(*device, handle, &n, nullptr);
 	framebufferImages.resize(n);
-	vkGetSwapchainImagesKHR(device, handle, &n, framebufferImages.data());
+	vkGetSwapchainImagesKHR(*device, handle, &n, framebufferImages.data());
 
 	transitionStatus = vector<bool>(n, false);
 
@@ -188,7 +193,7 @@ void Swapchain::create()
 	for (uint32_t i = 0; i < framebufferImageCount; i++)
 	{
 		imageViewInfo.image = framebufferImages[i];
-		result = vkCreateImageView(device, &imageViewInfo, nullptr,
+		result = vkCreateImageView(*device, &imageViewInfo, nullptr,
 					   framebufferImageViews.data() + i);
 		if (result != VK_SUCCESS)
 			throw runtime_error("Failed to create swapchain image view.");
@@ -197,7 +202,7 @@ void Swapchain::create()
 
 void Swapchain::nextImage()
 {
-	vkAcquireNextImageKHR(device, handle, UINT64_MAX, presentSemaphore, VK_NULL_HANDLE,
+	vkAcquireNextImageKHR(*device, handle, UINT64_MAX, presentSemaphore, VK_NULL_HANDLE,
 			      &currentFramebufferIndex);
 }
 

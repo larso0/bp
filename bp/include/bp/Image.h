@@ -2,7 +2,7 @@
 #define BP_IMAGE_H
 
 #include "Device.h"
-#include <vulkan/vulkan.h>
+#include "Pointer.h"
 
 namespace bp
 {
@@ -10,18 +10,44 @@ namespace bp
 class Image
 {
 public:
-	Image(Device& device, uint32_t width, uint32_t height, VkFormat format,
+	Image() :
+		device{nullptr},
+		handle{VK_NULL_HANDLE},
+		cmdPool{VK_NULL_HANDLE},
+		width{0}, height{0},
+		format{VK_FORMAT_UNDEFINED},
+		tiling{VK_IMAGE_TILING_LINEAR},
+		accessFlags{0},
+		memoryProperties{0},
+		memorySize{0},
+		memory{VK_NULL_HANDLE},
+		mapped{},
+		stagingImage{nullptr} {}
+	Image(NotNull<Device> device, uint32_t width, uint32_t height, VkFormat format,
 	      VkImageTiling tiling, VkImageUsageFlags usage,
 	      VkMemoryPropertyFlags requiredMemoryProperties,
 	      VkMemoryPropertyFlags optimalMemoryProperties = 0,
-	      VkImageLayout initialLayout = VK_IMAGE_LAYOUT_UNDEFINED);
+	      VkImageLayout initialLayout = VK_IMAGE_LAYOUT_UNDEFINED) :
+		Image()
+	{
+		init(device, width, height, format, tiling, usage, requiredMemoryProperties,
+		     optimalMemoryProperties, initialLayout);
+	}
 	~Image();
+
+	void init(NotNull<Device> device, uint32_t width, uint32_t height, VkFormat format,
+		  VkImageTiling tiling, VkImageUsageFlags usage,
+		  VkMemoryPropertyFlags requiredMemoryProperties,
+		  VkMemoryPropertyFlags optimalMemoryProperties = 0,
+		  VkImageLayout initialLayout = VK_IMAGE_LAYOUT_UNDEFINED);
 
 	void* map(VkDeviceSize offset, VkDeviceSize size);
 	void unmap(bool writeBack = true);
 	void transition(VkImageLayout dstLayout, VkAccessFlags dstAccess,
 			VkPipelineStageFlags dstStage, VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
 	void transfer(Image& fromImage, VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
+
+	operator VkImage() { return handle; }
 
 	VkImage getHandle() { return handle; }
 	uint32_t getWidth() const { return width; }
@@ -31,8 +57,9 @@ public:
 	VkImageLayout getLayout() const { return layout; }
 	VkMemoryPropertyFlags getMemoryProperties() const { return memoryProperties; }
 	VkDeviceSize getMemorySize() const { return memorySize; }
+	bool isReady() const { return handle != VK_NULL_HANDLE; }
 private:
-	Device& device;
+	Device* device;
 	VkImage handle;
 	VkCommandPool cmdPool;
 	uint32_t width, height;
@@ -47,6 +74,7 @@ private:
 	Image* stagingImage;
 
 	void createCommandPool();
+	void assertReady();
 };
 
 }

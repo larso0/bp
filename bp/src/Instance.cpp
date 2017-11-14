@@ -32,22 +32,35 @@ Instance::~Instance()
 	{
 		PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallback =
 			reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
-				vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT"));
-		vkDestroyDebugReportCallback(instance, debugReportCallback, nullptr);
+				vkGetInstanceProcAddr(handle, "vkDestroyDebugReportCallbackEXT"));
+		vkDestroyDebugReportCallback(handle, debugReportCallback, nullptr);
 	}
-	vkDestroyInstance(instance, nullptr);
+	vkDestroyInstance(handle, nullptr);
 }
 
-Instance::Instance(bool enableDebug, const vector<string>& enabledExtensions,
-		 const VkApplicationInfo* applicationInfo) :
-	debugReportCallback{VK_NULL_HANDLE}
+void Instance::enableExtension(const std::string& extensionName)
+{
+	if (isReady())
+		throw runtime_error("Failed to enable extension, instance already initialized.");
+	enabledExtensions.push_back(extensionName);
+}
+
+void Instance::init(bool enableDebug, std::initializer_list<std::string> enabledExtensions,
+		    const VkApplicationInfo* applicationInfo)
+{
+	this->enabledExtensions.insert(this->enabledExtensions.end(), enabledExtensions.begin(),
+				       enabledExtensions.end());
+	init(enableDebug, applicationInfo);
+}
+
+void Instance::init(bool enableDebug, const VkApplicationInfo* applicationInfo)
 {
 	VkInstanceCreateInfo instanceInfo = {};
 	instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	instanceInfo.pApplicationInfo = applicationInfo;
 
 	vector<const char*> extensions;
-	for (const string& ext : enabledExtensions)
+	for (const string& ext : this->enabledExtensions)
 		extensions.push_back(ext.c_str());
 
 	if (enableDebug)
@@ -60,21 +73,21 @@ Instance::Instance(bool enableDebug, const vector<string>& enabledExtensions,
 	instanceInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	instanceInfo.ppEnabledExtensionNames = extensions.data();
 
-	VkResult result = vkCreateInstance(&instanceInfo, nullptr, &instance);
+	VkResult result = vkCreateInstance(&instanceInfo, nullptr, &handle);
 
 	if (result != VK_SUCCESS)
-		throw runtime_error("Failed to create Vulkan instance.");
+		throw runtime_error("Failed to create instance.");
 
 	uint32_t n = 0;
-	vkEnumeratePhysicalDevices(instance, &n, nullptr);
+	vkEnumeratePhysicalDevices(handle, &n, nullptr);
 	physicalDevices.resize(n);
-	vkEnumeratePhysicalDevices(instance, &n, physicalDevices.data());
+	vkEnumeratePhysicalDevices(handle, &n, physicalDevices.data());
 
 	if (enableDebug)
 	{
 		PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallback =
 			reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(
-				vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT"));
+				vkGetInstanceProcAddr(handle, "vkCreateDebugReportCallbackEXT"));
 
 		VkDebugReportCallbackCreateInfoEXT info = {};
 		info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
@@ -83,12 +96,13 @@ Instance::Instance(bool enableDebug, const vector<string>& enabledExtensions,
 		info.pfnCallback = debugCallback;
 		info.pUserData = static_cast<void*>(this);
 
-		result = vkCreateDebugReportCallback(instance, &info, nullptr,
+		result = vkCreateDebugReportCallback(handle, &info, nullptr,
 						     &debugReportCallback);
 
 		if (result != VK_SUCCESS)
 		{
-			vkDestroyInstance(instance, nullptr);
+			vkDestroyInstance(handle, nullptr);
+			handle = VK_NULL_HANDLE;
 			throw runtime_error("Failed to create debug report callback.");
 		}
 	}

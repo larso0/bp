@@ -141,8 +141,9 @@ vector<VkPhysicalDevice> queryDevices(const Instance& instance,
 	return results;
 }
 
-Device::Device(const Instance& instance, const DeviceRequirements& requirements)
+void Device::init(const Instance& instance, const DeviceRequirements& requirements)
 {
+	if (isReady()) throw runtime_error("Device is already initialized.");
 	auto result = queryDevices(instance, requirements);
 	if (result.empty())
 		throw runtime_error("No suitable physical device found.");
@@ -152,15 +153,32 @@ Device::Device(const Instance& instance, const DeviceRequirements& requirements)
 	createQueues();
 }
 
-Device::Device(VkPhysicalDevice physicalDevice, const DeviceRequirements& requirements)
+void Device::init(VkPhysicalDevice physicalDevice, const DeviceRequirements& requirements)
 {
+	if (physicalDevice == VK_NULL_HANDLE)
+		throw invalid_argument("Physical device must be a valid handle.");
+
 	bool suitable = queryDevice(physicalDevice, requirements);
 	if (!suitable)
 		throw runtime_error("Given physical device is not suitable.");
 	physical = physicalDevice;
 
-	createLogicalDevice(requirements);
-	createQueues();
+	try
+	{
+		createLogicalDevice(requirements);
+		createQueues();
+	} catch (exception& e)
+	{
+		if (isReady())
+		{
+			queueInfos.clear();
+			queues.clear();
+			vkDestroyDevice(logical, nullptr);
+		}
+		physical = VK_NULL_HANDLE;
+		logical = VK_NULL_HANDLE;
+		throw e;
+	}
 }
 
 Device::~Device()
@@ -171,6 +189,7 @@ Device::~Device()
 
 Queue& Device::getQueue(uint32_t index)
 {
+	assertReady();
 	if (index >= getQueueCount())
 		throw out_of_range("Invalid queue index.");
 	return queues[index];
@@ -178,6 +197,7 @@ Queue& Device::getQueue(uint32_t index)
 
 Queue& Device::getGraphicsQueue()
 {
+	assertReady();
 	for (auto i = 0; i < getQueueCount(); i++)
 		if (queueInfos[i].flags & VK_QUEUE_GRAPHICS_BIT) return queues[i];
 	throw runtime_error("No graphics queue available.");
@@ -185,6 +205,7 @@ Queue& Device::getGraphicsQueue()
 
 Queue& Device::getComputeQueue()
 {
+	assertReady();
 	for (auto i = 0; i < getQueueCount(); i++)
 		if (queueInfos[i].flags & VK_QUEUE_COMPUTE_BIT) return queues[i];
 	throw runtime_error("No compute queue available.");
@@ -192,6 +213,7 @@ Queue& Device::getComputeQueue()
 
 Queue& Device::getTransferQueue()
 {
+	assertReady();
 	for (auto i = 0; i < getQueueCount(); i++)
 		if (queueInfos[i].flags & VK_QUEUE_TRANSFER_BIT) return queues[i];
 	throw runtime_error("No transfer queue available.");
@@ -199,6 +221,7 @@ Queue& Device::getTransferQueue()
 
 Queue& Device::getSparseBindingQueue()
 {
+	assertReady();
 	for (auto i = 0; i < getQueueCount(); i++)
 		if (queueInfos[i].flags & VK_QUEUE_SPARSE_BINDING_BIT) return queues[i];
 	throw runtime_error("No sparse binding queue available.");
@@ -332,6 +355,12 @@ Device::setupQueueCreateInfos(const DeviceRequirements& requirements)
 	}
 
 	return queueCreateInfos;
+}
+
+void Device::assertReady()
+{
+	if (!isReady())
+		throw runtime_error("Device not ready. Must initialize before use.");
 }
 
 }

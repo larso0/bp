@@ -50,7 +50,11 @@ void Buffer::init(NotNull<Device> device, VkDeviceSize size, VkBufferUsageFlags 
 		memoryProperties = requiredMemoryProperties;
 	}
 	if (memType == -1)
+	{
+		vkDestroyBuffer(*device, handle, nullptr);
+		handle = VK_NULL_HANDLE;
 		throw runtime_error("No suitable memory type.");
+	}
 
 	VkMemoryAllocateInfo memInfo = {};
 	memInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -59,11 +63,20 @@ void Buffer::init(NotNull<Device> device, VkDeviceSize size, VkBufferUsageFlags 
 
 	result = vkAllocateMemory(*device, &memInfo, nullptr, &memory);
 	if (result != VK_SUCCESS)
+	{
+		vkDestroyBuffer(*device, handle, nullptr);
+		handle = VK_NULL_HANDLE;
 		throw runtime_error("Failed to allocate buffer memory.");
+	}
 
 	result = vkBindBufferMemory(*device, handle, memory, 0);
 	if (result != VK_SUCCESS)
+	{
+		vkFreeMemory(*device, memory, nullptr);
+		vkDestroyBuffer(*device, handle, nullptr);
+		handle = VK_NULL_HANDLE;
 		throw runtime_error("Failed to bind buffer memory.");
+	}
 
 	mapped.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 	mapped.pNext = nullptr;

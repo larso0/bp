@@ -1,7 +1,9 @@
 #ifndef BP_DESCRIPTORSETLAYOUT_H
 #define BP_DESCRIPTORSETLAYOUT_H
 
-#include <vulkan/vulkan.h>
+#include "Device.h"
+#include "Pointer.h"
+#include <initializer_list>
 #include <vector>
 
 namespace bp
@@ -10,17 +12,31 @@ namespace bp
 class DescriptorSetLayout
 {
 public:
-	DescriptorSetLayout(VkDevice device,
-			    const std::vector<VkDescriptorSetLayoutBinding>& bindings);
+	DescriptorSetLayout() :
+		device{nullptr},
+		handle{VK_NULL_HANDLE} {}
+	DescriptorSetLayout(NotNull<Device> device,
+			    std::initializer_list<VkDescriptorSetLayoutBinding> bindings) :
+		DescriptorSetLayout()
+	{
+		this->bindings = std::vector<VkDescriptorSetLayoutBinding>(bindings);
+		init(device);
+	}
 	~DescriptorSetLayout();
+
+	void addLayoutBinding(const VkDescriptorSetLayoutBinding& binding);
+	void init(NotNull<Device> device);
 
 	operator VkDescriptorSetLayout() { return handle; }
 
 	VkDescriptorSetLayout getHandle() { return handle; }
+
 	const std::vector<VkDescriptorSetLayoutBinding>& getBindings() const { return bindings; }
 
+	bool isReady() const { return handle != VK_NULL_HANDLE; }
+
 private:
-	VkDevice device;
+	Device* device;
 	VkDescriptorSetLayout handle;
 	std::vector<VkDescriptorSetLayoutBinding> bindings;
 };

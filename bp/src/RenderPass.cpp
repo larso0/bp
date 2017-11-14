@@ -6,35 +6,24 @@ using namespace std;
 namespace bp
 {
 
-RenderPass::RenderPass(RenderTarget& renderTarget, VkRect2D renderArea) :
-	renderTarget{renderTarget},
-	renderArea{renderArea},
-	clearEnabled{false},
-	clearValue{}
+void RenderPass::init(NotNull<RenderTarget> target, const VkRect2D& area)
 {
-	create();
-}
-
-RenderPass::RenderPass(RenderTarget& renderTarget, VkRect2D renderArea, VkClearValue clearValue) :
-	renderTarget{renderTarget},
-	renderArea{renderArea},
-	clearEnabled{true},
-	clearValue{clearValue}
-{
+	renderTarget = target;
+	renderArea = area;
 	create();
 }
 
 RenderPass::~RenderPass()
 {
 	for (VkFramebuffer fb : framebuffers)
-		vkDestroyFramebuffer(renderTarget.getDevice(), fb, nullptr);
-	vkDestroyRenderPass(renderTarget.getDevice(), handle, nullptr);
+		vkDestroyFramebuffer(renderTarget->getDevice(), fb, nullptr);
+	vkDestroyRenderPass(renderTarget->getDevice(), handle, nullptr);
 }
 
 void RenderPass::recreateFramebuffers()
 {
 	for (VkFramebuffer fb : framebuffers)
-		vkDestroyFramebuffer(renderTarget.getDevice(), fb, nullptr);
+		vkDestroyFramebuffer(renderTarget->getDevice(), fb, nullptr);
 	createFramebuffers();
 }
 
@@ -44,8 +33,8 @@ void RenderPass::begin(VkCommandBuffer cmdBuffer)
 	if (clearEnabled)
 	{
 		clearValues.push_back(clearValue);
-		if (renderTarget.isDepthImageEnabled()) clearValues.push_back({1.f, 0.f});
-	} else if (renderTarget.isDepthImageEnabled())
+		if (renderTarget->isDepthImageEnabled()) clearValues.push_back({1.f, 0.f});
+	} else if (renderTarget->isDepthImageEnabled())
 	{
 		clearValues.push_back(clearValue);
 		clearValues.push_back({1.f, 0.f});
@@ -53,7 +42,7 @@ void RenderPass::begin(VkCommandBuffer cmdBuffer)
 	VkRenderPassBeginInfo beginInfo = {};
 	beginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	beginInfo.renderPass = handle;
-	beginInfo.framebuffer = framebuffers[renderTarget.getCurrentFramebufferIndex()];
+	beginInfo.framebuffer = framebuffers[renderTarget->getCurrentFramebufferIndex()];
 	beginInfo.renderArea = renderArea;
 
 	beginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -77,7 +66,7 @@ void RenderPass::setClearEnabled(bool enabled)
 	clearEnabled = enabled;
 }
 
-void RenderPass::setClearValue(VkClearValue value)
+void RenderPass::setClearValue(const VkClearValue& value)
 {
 	clearValue = value;
 }
@@ -86,7 +75,7 @@ void RenderPass::create()
 {
 	uint32_t attachmentCount = 1;
 	VkAttachmentDescription passAttachments[2] = {};
-	passAttachments[0].format = renderTarget.getFormat();
+	passAttachments[0].format = renderTarget->getFormat();
 	passAttachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
 	passAttachments[0].loadOp =  clearEnabled ? VK_ATTACHMENT_LOAD_OP_CLEAR
 						  : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -96,7 +85,7 @@ void RenderPass::create()
 	passAttachments[0].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	passAttachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-	if (renderTarget.isDepthImageEnabled())
+	if (renderTarget->isDepthImageEnabled())
 	{
 		passAttachments[1].format = VK_FORMAT_D16_UNORM;
 		passAttachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
@@ -122,7 +111,7 @@ void RenderPass::create()
 	subpass.colorAttachmentCount = 1;
 	subpass.pColorAttachments = &colorAttachment;
 
-	if (renderTarget.isDepthImageEnabled())
+	if (renderTarget->isDepthImageEnabled())
 		subpass.pDepthStencilAttachment = &depthAttachment;
 
 	VkRenderPassCreateInfo info = {};
@@ -132,7 +121,7 @@ void RenderPass::create()
 	info.subpassCount = 1;
 	info.pSubpasses = &subpass;
 
-	VkResult result = vkCreateRenderPass(renderTarget.getDevice(), &info, nullptr, &handle);
+	VkResult result = vkCreateRenderPass(renderTarget->getDevice(), &info, nullptr, &handle);
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to create render pass.");
 
@@ -142,23 +131,23 @@ void RenderPass::create()
 void RenderPass::createFramebuffers()
 {
 	VkImageView attachments[2];
-	attachments[1] = renderTarget.getDepthImageView();
+	attachments[1] = renderTarget->getDepthImageView();
 
 	VkFramebufferCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 	info.renderPass = handle;
-	info.attachmentCount = renderTarget.isDepthImageEnabled() ? 2 : 1;
+	info.attachmentCount = renderTarget->isDepthImageEnabled() ? 2 : 1;
 	info.pAttachments = attachments;
-	info.width = renderTarget.getWidth();
-	info.height = renderTarget.getHeight();
+	info.width = renderTarget->getWidth();
+	info.height = renderTarget->getHeight();
 	info.layers = 1;
 
-	uint32_t n = renderTarget.getFramebufferImageCount();
+	uint32_t n = renderTarget->getFramebufferImageCount();
 	framebuffers.resize(n);
 	for (uint32_t i = 0; i < n; i++)
 	{
-		attachments[0] = renderTarget.getFramebufferImageViews()[i];
-		VkResult result = vkCreateFramebuffer(renderTarget.getDevice(), &info, nullptr,
+		attachments[0] = renderTarget->getFramebufferImageViews()[i];
+		VkResult result = vkCreateFramebuffer(renderTarget->getDevice(), &info, nullptr,
 						      framebuffers.data() + i);
 		if (result != VK_SUCCESS)
 			throw runtime_error("Failed to create framebuffer.");

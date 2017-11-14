@@ -19,8 +19,8 @@ public:
 
 	operator T*() { return t;}
 	operator const T*() const { return t; }
-	T& operator ->() { return *t; }
-	const T& operator ->() const { return *t; }
+	T* operator ->() { return t; }
+	const T* operator ->() const { return t; }
 	T& operator *() { return *t; }
 	const T& operator *() const { return *t; }
 	T* get() { return t; }
@@ -46,8 +46,8 @@ public:
 
 	operator T*() { return t;}
 	operator const T*() const { return t; }
-	T& operator ->() { return *t; }
-	const T& operator ->() const { return *t; }
+	T* operator ->() { return t; }
+	const T* operator ->() const { return t; }
 	T& operator *() { return *t; }
 	const T& operator *() const { return *t; }
 	T* get() { return t; }
