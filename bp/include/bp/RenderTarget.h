@@ -4,6 +4,7 @@
 #include "Device.h"
 #include "Pointer.h"
 #include "Image.h"
+#include "FlagSet.h"
 #include <vector>
 
 namespace bp
@@ -12,26 +13,37 @@ namespace bp
 class RenderTarget
 {
 public:
+	enum class Flags : size_t
+	{
+		DEPTH_IMAGE,
+		DEPTH_STAGING_IMAGE,
+		STAGING_IMAGE,
+		SHADER_READABLE,
+		VERTICAL_SYNC,
+		BP_FLAGSET_LAST
+	};
+
 	RenderTarget() :
 		device{nullptr},
 		format{VK_FORMAT_UNDEFINED},
 		width{0}, height{0},
 		cmdPool{VK_NULL_HANDLE},
-		depthImage{VK_NULL_HANDLE},
+		depthImage{nullptr},
 		depthImageView{VK_NULL_HANDLE},
+		depthStagingImage{nullptr},
 		framebufferImageCount{0},
 		currentFramebufferIndex{0},
 		presentSemaphore{VK_NULL_HANDLE} {}
 	RenderTarget(NotNull<Device> device, VkFormat format, uint32_t width, uint32_t height,
-		     bool enableDepthImage) :
+		     FlagSet<Flags> flags) :
 		RenderTarget{}
 	{
-		init(device, format, width, height, enableDepthImage);
+		init(device, format, width, height, flags);
 	}
 	virtual ~RenderTarget();
 
 	void init(NotNull<Device> device, VkFormat format, uint32_t width, uint32_t height,
-		  bool enableDepthImage);
+		  FlagSet<Flags> flags);
 
 	virtual void beginFrame(VkCommandBuffer cmdBuffer) = 0;
 	virtual void endFrame(VkCommandBuffer cmdBuffer) = 0;
@@ -42,6 +54,7 @@ public:
 	VkCommandPool getCmdPool() { return cmdPool; }
 	bool isDepthImageEnabled() const { return depthImage != nullptr; }
 	Image* getDepthImage() { return depthImage; }
+	Image* getDepthStagingImage() { return depthStagingImage; }
 	VkImageView getDepthImageView() { return depthImageView; }
 	VkFormat getFormat() const { return format; }
 	uint32_t getWidth() const { return width; }
@@ -53,6 +66,7 @@ public:
 	bool isReady() const { return cmdPool != VK_NULL_HANDLE; }
 
 protected:
+	FlagSet<Flags> flags;
 	Device* device;
 	VkFormat format;
 	uint32_t width, height;
@@ -60,6 +74,7 @@ protected:
 	VkCommandPool cmdPool;
 	Image* depthImage;
 	VkImageView depthImageView;
+	Image* depthStagingImage;
 
 	uint32_t framebufferImageCount;
 	std::vector<VkImageView> framebufferImageViews;
@@ -67,6 +82,7 @@ protected:
 	VkSemaphore presentSemaphore;
 
 	void createDepthImage();
+	void createDepthStagingImage();
 	void assertReady();
 };
 

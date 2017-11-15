@@ -20,7 +20,7 @@ void Image::init(NotNull<Device> device, uint32_t width, uint32_t height, VkForm
 	this->layout = initialLayout;
 
 	if (!(requiredMemoryProperties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT))
-		usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
 	VkImageCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

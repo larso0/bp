@@ -13,14 +13,6 @@ namespace bp
 class ImageTarget : public RenderTarget
 {
 public:
-	enum class Flags : size_t
-	{
-		DEPTH_IMAGE,
-		STAGING_IMAGE,
-		SHADER_READABLE,
-		BP_FLAGSET_LAST
-	};
-
 	ImageTarget() :
 		RenderTarget{},
 		stagingImage{nullptr} {}
@@ -42,11 +34,11 @@ public:
 	void present(VkSemaphore renderCompleteSemaphore) override;
 	void resize(uint32_t width, uint32_t height) override;
 
+	Image* getImage() { return image; }
 	Image* getStagingImage() { return stagingImage; }
 
 private:
-	FlagSet<Flags> flags;
-	Image image;
+	Image* image;
 	Image* stagingImage;
 
 	void createImage();

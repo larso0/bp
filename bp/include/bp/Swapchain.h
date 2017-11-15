@@ -11,13 +11,6 @@ namespace bp
 class Swapchain : public RenderTarget
 {
 public:
-	enum class Flags : size_t
-	{
-		DEPTH_IMAGE,
-		VERTICAL_SYNC,
-		BP_FLAGSET_LAST
-	};
-
 	Swapchain() :
 		RenderTarget{},
 		surface{VK_NULL_HANDLE},
@@ -48,7 +41,6 @@ public:
 	VkSurfaceKHR getSurface() { return surface; }
 
 private:
-	FlagSet<Flags> flags;
 	VkSurfaceKHR surface;
 	VkSwapchainKHR handle;
 	VkColorSpaceKHR colorSpace;

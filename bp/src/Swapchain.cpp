@@ -1,4 +1,5 @@
 #include <bp/Swapchain.h>
+#include <bp/Util.h>
 #include <stdexcept>
 
 using namespace std;
@@ -51,20 +52,20 @@ void Swapchain::present(VkSemaphore waitSemaphore)
 	presentInfo.pImageIndices = &currentFramebufferIndex;
 	presentInfo.pResults = nullptr;
 	vkQueuePresentKHR(device->getGraphicsQueue(), &presentInfo);
+	if (flags & Flags::DEPTH_STAGING_IMAGE)
+	{
+		VkCommandBuffer cmdBuffer = beginSingleUseCmdBuffer(*device, cmdPool);
+		depthStagingImage->transfer(*depthImage, cmdBuffer);
+		depthStagingImage->transition(VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_HOST_READ_BIT,
+					      VK_PIPELINE_STAGE_HOST_BIT, cmdBuffer);
+		endSingleUseCmdBuffer(*device, device->getGraphicsQueue(), cmdPool, cmdBuffer);
+	}
 }
 
 void Swapchain::resize(uint32_t w, uint32_t h)
 {
-	assertReady();
-	width = w;
-	height = h;
+	RenderTarget::resize(w, h);
 	create();
-	if (isDepthImageEnabled())
-	{
-		vkDestroyImageView(*device, depthImageView, nullptr);
-		delete depthImage;
-		createDepthImage();
-	}
 }
 
 void Swapchain::create()

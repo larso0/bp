@@ -9,9 +9,11 @@ namespace bp
 {
 
 void RenderTarget::init(NotNull<Device> device, VkFormat format, uint32_t width, uint32_t height,
-			bool enableDepthImage)
+			FlagSet<Flags> flags)
 {
 	if (isReady()) throw runtime_error("Render target already initialized.");
+	if (flags & Flags::DEPTH_STAGING_IMAGE) flags << Flags::DEPTH_IMAGE;
+	this->flags = flags;
 	this->device = device;
 	this->format = format;
 	this->width = width;
@@ -36,13 +38,29 @@ void RenderTarget::init(NotNull<Device> device, VkFormat format, uint32_t width,
 		throw runtime_error("Failed to create present semaphore.");
 	}
 
-	if (enableDepthImage)
+	if (flags & Flags::DEPTH_IMAGE)
 	{
 		try
 		{
 			createDepthImage();
 		} catch (exception& e)
 		{
+			vkDestroySemaphore(*device, presentSemaphore, nullptr);
+			vkDestroyCommandPool(*device, cmdPool, nullptr);
+			presentSemaphore = VK_NULL_HANDLE;
+			cmdPool = VK_NULL_HANDLE;
+			throw e;
+		}
+	}
+	if (flags & Flags::DEPTH_STAGING_IMAGE)
+	{
+		try
+		{
+			createDepthStagingImage();
+		} catch (exception& e)
+		{
+			vkDestroyImageView(*device, depthImageView, nullptr);
+			delete depthImage;
 			vkDestroySemaphore(*device, presentSemaphore, nullptr);
 			vkDestroyCommandPool(*device, cmdPool, nullptr);
 			presentSemaphore = VK_NULL_HANDLE;
@@ -61,6 +79,7 @@ RenderTarget::~RenderTarget()
 		vkDestroyImageView(*device, depthImageView, nullptr);
 		delete depthImage;
 	}
+	if (flags & Flags::DEPTH_STAGING_IMAGE) delete depthStagingImage;
 	vkDestroyCommandPool(*device, cmdPool, nullptr);
 }
 
@@ -75,6 +94,11 @@ void RenderTarget::resize(uint32_t w, uint32_t h)
 		vkDestroyImageView(*device, depthImageView, nullptr);
 		delete depthImage;
 		createDepthImage();
+	}
+	if (flags & Flags::DEPTH_STAGING_IMAGE)
+	{
+		delete depthStagingImage;
+		createDepthStagingImage();
 	}
 }
 
@@ -111,6 +135,18 @@ void RenderTarget::assertReady()
 {
 	if (!isReady())
 		throw runtime_error("Renter target not ready. Must be initialized before use.");
+}
+
+void RenderTarget::createDepthStagingImage()
+{
+	depthStagingImage = new Image(device, width, height, VK_FORMAT_D16_UNORM,
+				      VK_IMAGE_TILING_LINEAR, VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+				      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+				      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 0,
+				      VK_IMAGE_LAYOUT_PREINITIALIZED);
+
+	depthStagingImage->transition(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				      VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 }
 
 }
