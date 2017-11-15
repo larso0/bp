@@ -80,8 +80,12 @@ void ImageTarget::present(VkSemaphore renderCompleteSemaphore)
 	if (flags & Flags::SHADER_READABLE)
 	{
 		image->transition(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-				  VK_ACCESS_TRANSFER_READ_BIT,
+				  VK_ACCESS_SHADER_READ_BIT,
 				  VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, cmdBuffer);
+		if (isDepthImageEnabled())
+			depthImage->transition(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+					       VK_ACCESS_SHADER_READ_BIT,
+					       VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, cmdBuffer);
 	}
 
 	vkEndCommandBuffer(cmdBuffer);
