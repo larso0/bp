@@ -17,6 +17,7 @@ public:
 		width{0}, height{0},
 		format{VK_FORMAT_UNDEFINED},
 		tiling{VK_IMAGE_TILING_LINEAR},
+		usage{0},
 		accessFlags{0},
 		memoryProperties{0},
 		memorySize{0},
@@ -54,6 +55,7 @@ public:
 	uint32_t getHeight() const { return height; }
 	VkFormat getFormat() const { return format; }
 	VkImageTiling getTiling() const { return tiling; }
+	VkImageUsageFlags getUsage() const { return usage; }
 	VkImageLayout getLayout() const { return layout; }
 	VkMemoryPropertyFlags getMemoryProperties() const { return memoryProperties; }
 	VkDeviceSize getMemorySize() const { return memorySize; }
@@ -65,6 +67,7 @@ private:
 	uint32_t width, height;
 	VkFormat format;
 	VkImageTiling tiling;
+	VkImageUsageFlags usage;
 	VkImageLayout layout;
 	VkAccessFlags accessFlags;
 	VkMemoryPropertyFlags memoryProperties;

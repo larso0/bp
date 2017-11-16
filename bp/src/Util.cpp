@@ -2,6 +2,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <streambuf>
 #include <thread>
 #include <cstring>
 #include <future>
@@ -142,14 +143,14 @@ void endSingleUseCmdBuffer(VkDevice device, VkQueue queue, VkCommandPool pool,
 	vkFreeCommandBuffers(device, pool, 1, &cmdBuffer);
 }
 
-vector<char> readBinaryFile(const string& filename)
+vector<char> readBinaryFile(const string& path)
 {
-	ifstream file(filename, ios::ate | ios::binary);
+	ifstream file(path, ios::ate | ios::binary);
 
 	if (!file.is_open())
 	{
 		stringstream ss;
-		ss << "Failed to open file \"" << filename << "\".";
+		ss << "Failed to open file \"" << path << "\".";
 		throw runtime_error(ss.str());
 	}
 
@@ -162,6 +163,32 @@ vector<char> readBinaryFile(const string& filename)
 	file.close();
 
 	return buffer;
+}
+
+string readTextFile(const string& path)
+{
+	ifstream file(path);
+
+	string str;
+
+	file.seekg(0, ios::end);
+	str.reserve(file.tellg());
+	file.seekg(0, ios::beg);
+
+	str.assign((istreambuf_iterator<char>(file)),
+		   istreambuf_iterator<char>());
+
+	return str;
+}
+
+void replaceSubstrings(std::string& str, const std::string& find, const std::string& replaced)
+{
+	std::string::size_type n = 0;
+	while ((n = str.find(find, n)) != std::string::npos)
+	{
+		str.replace(n, find.size(), replaced);
+		n += replaced.size();
+	}
 }
 
 void* parallelCopy(void* dest, const void* src, size_t count)

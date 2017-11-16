@@ -50,7 +50,17 @@ void endSingleUseCmdBuffer(VkDevice device, VkQueue queue, VkCommandPool pool,
  * Read a binary file into a vector.
  * Useful for loading SPIR-V binary code from files.
  */
-std::vector<char> readBinaryFile(const std::string& filename);
+std::vector<char> readBinaryFile(const std::string& path);
+
+/*
+ * Read a text file into a string.
+ */
+std::string readTextFile(const std::string& path);
+
+/*
+ * Find all occurences of find in str and replace them with replaced.
+ */
+void replaceSubstrings(std::string& str, const std::string& find, const std::string& replaced);
 
 /*
  * Copy memory in parallel.

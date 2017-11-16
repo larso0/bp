@@ -3,6 +3,7 @@
 
 #include "Device.h"
 #include "Pointer.h"
+#include <string>
 
 namespace bp
 {
@@ -21,10 +22,17 @@ public:
 	{
 		init(device, stage, codeSize, code);
 	}
+	Shader(NotNull<Device> device, VkShaderStageFlagBits stage, const std::string& glslSource) :
+		Shader{}
+	{
+		init(device, stage, glslSource);
+	}
 	~Shader();
 
 	void init(NotNull<Device> device, VkShaderStageFlagBits stage, uint32_t codeSize,
 		  const uint32_t* code);
+	void init(NotNull<Device> device, VkShaderStageFlagBits stage,
+		  const std::string& glslSource);
 
 	operator VkShaderModule() { return handle; }
 

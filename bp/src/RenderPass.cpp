@@ -90,7 +90,7 @@ void RenderPass::create()
 		passAttachments[1].format = VK_FORMAT_D16_UNORM;
 		passAttachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
 		passAttachments[1].loadOp =  VK_ATTACHMENT_LOAD_OP_CLEAR;
-		passAttachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		passAttachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		passAttachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		passAttachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		passAttachments[1].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;

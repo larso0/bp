@@ -17,6 +17,8 @@ void Image::init(NotNull<Device> device, uint32_t width, uint32_t height, VkForm
 	this->width = width;
 	this->height = height;
 	this->format = format;
+	this->tiling = tiling;
+	this->usage = usage;
 	this->layout = initialLayout;
 
 	if (!(requiredMemoryProperties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT))
@@ -174,7 +176,7 @@ void Image::transition(VkImageLayout dstLayout, VkAccessFlags dstAccess,
 	barrier.srcAccessMask = accessFlags;
 	barrier.dstAccessMask = dstAccess;
 
-	if (dstLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+	if (format == VK_FORMAT_D16_UNORM)
 		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 
 	vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, dstStage, 0, 0, nullptr,
@@ -202,15 +204,23 @@ void Image::transfer(Image& fromImage, VkCommandBuffer cmdBuffer)
 	transition(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT,
 		   VK_PIPELINE_STAGE_TRANSFER_BIT, cmdBuffer);
 
-	VkImageSubresourceLayers subResource = {};
-	subResource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	subResource.baseArrayLayer = 0;
-	subResource.mipLevel = 0;
-	subResource.layerCount = 1;
+	VkImageSubresourceLayers srcSubResource = {};
+	srcSubResource.aspectMask = fromImage.format == VK_FORMAT_D16_UNORM ?
+				    VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+	srcSubResource.baseArrayLayer = 0;
+	srcSubResource.mipLevel = 0;
+	srcSubResource.layerCount = 1;
+
+	VkImageSubresourceLayers dstSubResource = {};
+	dstSubResource.aspectMask = format == VK_FORMAT_D16_UNORM ?
+				    VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+	dstSubResource.baseArrayLayer = 0;
+	dstSubResource.mipLevel = 0;
+	dstSubResource.layerCount = 1;
 
 	VkImageCopy region = {};
-	region.srcSubresource = subResource;
-	region.dstSubresource = subResource;
+	region.srcSubresource = srcSubResource;
+	region.dstSubresource = dstSubResource;
 	region.srcOffset = {0, 0, 0};
 	region.dstOffset = {0, 0, 0};
 	region.extent.width = width;
