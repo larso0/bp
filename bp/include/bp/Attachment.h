@@ -6,7 +6,7 @@
 
 namespace bp
 {
-hd 55
+
 class Attachment
 {
 public:
