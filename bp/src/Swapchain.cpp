@@ -32,7 +32,7 @@ void Swapchain::beginFrame(VkCommandBuffer cmdBuffer)
 	assertReady();
 	nextImage();
 	transitionColor(cmdBuffer);
-	if (flags & Flags::DEPTH_STAGING_IMAGE)
+	if (flags & Flags::DEPTH_STAGING_BUFFER)
 	{
 		depthImage->transition(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 				       VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
@@ -45,7 +45,7 @@ void Swapchain::endFrame(VkCommandBuffer cmdBuffer)
 {
 	assertReady();
 	transitionPresent(cmdBuffer);
-	if (flags & Flags::DEPTH_STAGING_IMAGE)
+	if (flags & Flags::DEPTH_STAGING_BUFFER)
 	{
 		depthImage->transition(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 				       VK_ACCESS_TRANSFER_READ_BIT,
@@ -56,12 +56,10 @@ void Swapchain::endFrame(VkCommandBuffer cmdBuffer)
 void Swapchain::present(VkSemaphore waitSemaphore)
 {
 	assertReady();
-	if (flags & Flags::DEPTH_STAGING_IMAGE)
+	if (flags & Flags::DEPTH_STAGING_BUFFER)
 	{
 		VkCommandBuffer cmdBuffer = beginSingleUseCmdBuffer(*device, cmdPool);
-		depthStagingImage->transfer(*depthImage, cmdBuffer);
-		depthStagingImage->transition(VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_HOST_READ_BIT,
-					      VK_PIPELINE_STAGE_HOST_BIT, cmdBuffer);
+		depthStagingBuffer->transfer(*depthImage, cmdBuffer);
 		endSingleUseCmdBuffer(*device, device->getGraphicsQueue(), cmdPool, cmdBuffer);
 	}
 	VkPresentInfoKHR presentInfo = {};

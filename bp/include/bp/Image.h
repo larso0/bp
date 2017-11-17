@@ -7,6 +7,8 @@
 namespace bp
 {
 
+class Buffer;
+
 class Image
 {
 public:
@@ -23,7 +25,7 @@ public:
 		memorySize{0},
 		memory{VK_NULL_HANDLE},
 		mapped{},
-		stagingImage{nullptr} {}
+		stagingBuffer{nullptr} {}
 	Image(NotNull<Device> device, uint32_t width, uint32_t height, VkFormat format,
 	      VkImageTiling tiling, VkImageUsageFlags usage,
 	      VkMemoryPropertyFlags requiredMemoryProperties,
@@ -47,6 +49,7 @@ public:
 	void transition(VkImageLayout dstLayout, VkAccessFlags dstAccess,
 			VkPipelineStageFlags dstStage, VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
 	void transfer(Image& fromImage, VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
+	void transfer(Buffer& src, VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
 
 	operator VkImage() { return handle; }
 
@@ -61,6 +64,8 @@ public:
 	VkDeviceSize getMemorySize() const { return memorySize; }
 	bool isReady() const { return handle != VK_NULL_HANDLE; }
 private:
+	friend class Buffer;
+
 	Device* device;
 	VkImage handle;
 	VkCommandPool cmdPool;
@@ -74,7 +79,7 @@ private:
 	VkDeviceSize memorySize;
 	VkDeviceMemory memory;
 	VkMappedMemoryRange mapped;
-	Image* stagingImage;
+	Buffer* stagingBuffer;
 
 	void createCommandPool();
 	void assertReady();

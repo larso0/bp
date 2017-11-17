@@ -192,6 +192,36 @@ void Buffer::transfer(Buffer& src, VkDeviceSize srcOffset, VkDeviceSize dstOffse
 		endSingleUseCmdBuffer(*device, device->getTransferQueue(), cmdPool, cmdBuffer);
 }
 
+void Buffer::transfer(Image& src, VkCommandBuffer cmdBuffer)
+{
+	assertReady();
+	bool useOwnBuffer = cmdBuffer == VK_NULL_HANDLE;
+	if (useOwnBuffer)
+	{
+		if (cmdPool == VK_NULL_HANDLE) createCommandPool();
+		cmdBuffer = beginSingleUseCmdBuffer(*device, cmdPool);
+	}
+
+	src.transition(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT,
+		       VK_PIPELINE_STAGE_TRANSFER_BIT, cmdBuffer);
+
+	VkImageSubresourceLayers subResource = {};
+	subResource.aspectMask = src.format == VK_FORMAT_D16_UNORM ? VK_IMAGE_ASPECT_DEPTH_BIT
+								   : VK_IMAGE_ASPECT_COLOR_BIT;
+	subResource.baseArrayLayer = 0;
+	subResource.mipLevel = 0;
+	subResource.layerCount = 1;
+
+	VkBufferImageCopy region = {};
+	region.imageSubresource = subResource;
+	region.imageExtent = {src.width, src.height, 1};
+
+	vkCmdCopyImageToBuffer(cmdBuffer, src, src.layout, handle, 1, &region);
+
+	if (useOwnBuffer)
+		endSingleUseCmdBuffer(*device, device->getTransferQueue(), cmdPool, cmdBuffer);
+}
+
 void Buffer::createCommandPool()
 {
 	VkCommandPoolCreateInfo cmdPoolInfo = {};

@@ -1,4 +1,5 @@
 #include <bp/Image.h>
+#include <bp/Buffer.h>
 #include <stdexcept>
 #include <bp/Util.h>
 
@@ -101,7 +102,7 @@ Image::~Image()
 {
 	if (!isReady()) return;
 	if (cmdPool != VK_NULL_HANDLE) vkDestroyCommandPool(*device, cmdPool, nullptr);
-	if (stagingImage != nullptr) delete stagingImage;
+	if (stagingBuffer != nullptr) delete stagingBuffer;
 	vkFreeMemory(*device, memory, nullptr);
 	vkDestroyImage(*device, handle, nullptr);
 }
@@ -121,15 +122,15 @@ void* Image::map(VkDeviceSize offset, VkDeviceSize size)
 			throw runtime_error("Failed to map Image memory.");
 	} else
 	{
-		if (stagingImage == nullptr)
+		if (stagingBuffer == nullptr)
 		{
-			stagingImage = new Image(device, width, height, format,
-						 VK_IMAGE_TILING_LINEAR,
-						 VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-						 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-						 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			stagingBuffer = new Buffer(device, memorySize,
+						   VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+						   VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+						   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+						   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		}
-		mappedMemory = stagingImage->map(offset, size);
+		mappedMemory = stagingBuffer->map(offset, size);
 	}
 
 	mapped.offset = offset;
@@ -140,11 +141,11 @@ void* Image::map(VkDeviceSize offset, VkDeviceSize size)
 void Image::unmap(bool writeBack)
 {
 	assertReady();
-	if (stagingImage != nullptr)
+	if (stagingBuffer != nullptr)
 	{
-		stagingImage->unmap();
+		stagingBuffer->unmap();
 		if (writeBack)
-			transfer(*stagingImage);
+			transfer(*stagingBuffer);
 	} else
 	{
 		vkFlushMappedMemoryRanges(*device, 1, &mapped);
@@ -204,23 +205,16 @@ void Image::transfer(Image& fromImage, VkCommandBuffer cmdBuffer)
 	transition(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT,
 		   VK_PIPELINE_STAGE_TRANSFER_BIT, cmdBuffer);
 
-	VkImageSubresourceLayers srcSubResource = {};
-	srcSubResource.aspectMask = fromImage.format == VK_FORMAT_D16_UNORM ?
+	VkImageSubresourceLayers subResource = {};
+	subResource.aspectMask = format == VK_FORMAT_D16_UNORM ?
 				    VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
-	srcSubResource.baseArrayLayer = 0;
-	srcSubResource.mipLevel = 0;
-	srcSubResource.layerCount = 1;
-
-	VkImageSubresourceLayers dstSubResource = {};
-	dstSubResource.aspectMask = format == VK_FORMAT_D16_UNORM ?
-				    VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
-	dstSubResource.baseArrayLayer = 0;
-	dstSubResource.mipLevel = 0;
-	dstSubResource.layerCount = 1;
+	subResource.baseArrayLayer = 0;
+	subResource.mipLevel = 0;
+	subResource.layerCount = 1;
 
 	VkImageCopy region = {};
-	region.srcSubresource = srcSubResource;
-	region.dstSubresource = dstSubResource;
+	region.srcSubresource = subResource;
+	region.dstSubresource = subResource;
 	region.srcOffset = {0, 0, 0};
 	region.dstOffset = {0, 0, 0};
 	region.extent.width = width;
@@ -229,6 +223,37 @@ void Image::transfer(Image& fromImage, VkCommandBuffer cmdBuffer)
 
 	vkCmdCopyImage(cmdBuffer, fromImage.getHandle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		       handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+	if (useOwnBuffer)
+		endSingleUseCmdBuffer(*device, device->getGraphicsQueue(), cmdPool, cmdBuffer);
+}
+
+void Image::transfer(Buffer& src, VkCommandBuffer cmdBuffer)
+{
+	assertReady();
+	bool useOwnBuffer = cmdBuffer == VK_NULL_HANDLE;
+	if (useOwnBuffer)
+	{
+		if (cmdPool == VK_NULL_HANDLE) createCommandPool();
+		cmdBuffer = beginSingleUseCmdBuffer(*device, cmdPool);
+	}
+
+	transition(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT,
+		   VK_PIPELINE_STAGE_TRANSFER_BIT, cmdBuffer);
+
+	VkImageSubresourceLayers subResource = {};
+	subResource.aspectMask = format == VK_FORMAT_D16_UNORM ? VK_IMAGE_ASPECT_DEPTH_BIT
+							       : VK_IMAGE_ASPECT_COLOR_BIT;
+	subResource.baseArrayLayer = 0;
+	subResource.mipLevel = 0;
+	subResource.layerCount = 1;
+
+	VkBufferImageCopy region = {};
+	region.imageSubresource = subResource;
+	region.imageExtent = {width, height, 1};
+
+	vkCmdCopyBufferToImage(cmdBuffer, src, handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
+			       &region);
 
 	if (useOwnBuffer)
 		endSingleUseCmdBuffer(*device, device->getGraphicsQueue(), cmdPool, cmdBuffer);

@@ -4,6 +4,7 @@
 #include "Device.h"
 #include "Pointer.h"
 #include "Image.h"
+#include "Buffer.h"
 #include "FlagSet.h"
 #include <vector>
 
@@ -16,7 +17,7 @@ public:
 	enum class Flags : size_t
 	{
 		DEPTH_IMAGE,
-		DEPTH_STAGING_IMAGE,
+		DEPTH_STAGING_BUFFER,
 		STAGING_IMAGE,
 		SHADER_READABLE,
 		VERTICAL_SYNC,
@@ -30,7 +31,7 @@ public:
 		cmdPool{VK_NULL_HANDLE},
 		depthImage{nullptr},
 		depthImageView{VK_NULL_HANDLE},
-		depthStagingImage{nullptr},
+		depthStagingBuffer{nullptr},
 		framebufferImageCount{0},
 		currentFramebufferIndex{0},
 		presentSemaphore{VK_NULL_HANDLE} {}
@@ -54,7 +55,7 @@ public:
 	VkCommandPool getCmdPool() { return cmdPool; }
 	bool isDepthImageEnabled() const { return depthImage != nullptr; }
 	Image* getDepthImage() { return depthImage; }
-	Image* getDepthStagingImage() { return depthStagingImage; }
+	Buffer* getDepthStagingBuffer() { return depthStagingBuffer; }
 	VkImageView getDepthImageView() { return depthImageView; }
 	VkFormat getFormat() const { return format; }
 	uint32_t getWidth() const { return width; }
@@ -74,7 +75,7 @@ protected:
 	VkCommandPool cmdPool;
 	Image* depthImage;
 	VkImageView depthImageView;
-	Image* depthStagingImage;
+	Buffer* depthStagingBuffer;
 
 	uint32_t framebufferImageCount;
 	std::vector<VkImageView> framebufferImageViews;
@@ -82,7 +83,7 @@ protected:
 	VkSemaphore presentSemaphore;
 
 	void createDepthImage();
-	void createDepthStagingImage();
+	void createDepthStagingBuffer();
 	void assertReady();
 };
 

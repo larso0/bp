@@ -15,7 +15,6 @@ void ImageTarget::init(NotNull<Device> device, uint32_t width, uint32_t height,
 	framebufferImageCount = 1;
 	createImage();
 	if (flags & Flags::STAGING_IMAGE) createStagingImage();
-	if (flags & Flags::DEPTH_STAGING_IMAGE) createDepthStagingImage();
 
 	VkCommandBuffer cmdBuffer = beginSingleUseCmdBuffer(*device, cmdPool);
 	image->transition(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -41,7 +40,7 @@ void ImageTarget::beginFrame(VkCommandBuffer cmdBuffer)
 			  VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
 			  VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			  VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, cmdBuffer);
-	if (flags & Flags::DEPTH_STAGING_IMAGE)
+	if (flags & Flags::DEPTH_STAGING_BUFFER)
 	{
 		depthImage->transition(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 				       VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
@@ -64,7 +63,7 @@ void ImageTarget::endFrame(VkCommandBuffer cmdBuffer)
 				  VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, cmdBuffer);
 	}
 
-	if (flags & Flags::DEPTH_STAGING_IMAGE)
+	if (flags & Flags::DEPTH_STAGING_BUFFER)
 	{
 		depthImage->transition(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 				       VK_ACCESS_TRANSFER_READ_BIT,
@@ -75,7 +74,7 @@ void ImageTarget::endFrame(VkCommandBuffer cmdBuffer)
 void ImageTarget::present(VkSemaphore renderCompleteSemaphore)
 {
 	assertReady();
-	if (!(flags & Flags::STAGING_IMAGE || flags & Flags::DEPTH_STAGING_IMAGE)) return;
+	if (!(flags & Flags::STAGING_IMAGE || flags & Flags::DEPTH_STAGING_BUFFER)) return;
 
 	VkCommandBuffer cmdBuffer = beginSingleUseCmdBuffer(*device, cmdPool);
 
@@ -85,11 +84,9 @@ void ImageTarget::present(VkSemaphore renderCompleteSemaphore)
 		stagingImage->transition(VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_HOST_READ_BIT,
 					 VK_PIPELINE_STAGE_HOST_BIT, cmdBuffer);
 	}
-	if (flags & Flags::DEPTH_STAGING_IMAGE)
+	if (flags & Flags::DEPTH_STAGING_BUFFER)
 	{
-		depthStagingImage->transfer(*depthImage, cmdBuffer);
-		depthStagingImage->transition(VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_HOST_READ_BIT,
-					      VK_PIPELINE_STAGE_HOST_BIT, cmdBuffer);
+		depthStagingBuffer->transfer(*depthImage, cmdBuffer);
 	}
 	if (flags & Flags::SHADER_READABLE)
 	{

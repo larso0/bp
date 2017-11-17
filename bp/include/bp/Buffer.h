@@ -3,7 +3,7 @@
 
 #include "Device.h"
 #include "Pointer.h"
-#include <vulkan/vulkan.h>
+#include "Image.h"
 
 namespace bp
 {
@@ -39,6 +39,7 @@ public:
 		      VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
 	void transfer(Buffer& src, VkDeviceSize srcOffset, VkDeviceSize dstOffset,
 		      VkDeviceSize size, VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
+	void transfer(Image& src, VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
 
 	operator VkBuffer() { return handle; }
 

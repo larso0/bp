@@ -12,7 +12,7 @@ void RenderTarget::init(NotNull<Device> device, VkFormat format, uint32_t width,
 			FlagSet<Flags> flags)
 {
 	if (isReady()) throw runtime_error("Render target already initialized.");
-	if (flags & Flags::DEPTH_STAGING_IMAGE) flags << Flags::DEPTH_IMAGE;
+	if (flags & Flags::DEPTH_STAGING_BUFFER) flags << Flags::DEPTH_IMAGE;
 	this->flags = flags;
 	this->device = device;
 	this->format = format;
@@ -52,11 +52,11 @@ void RenderTarget::init(NotNull<Device> device, VkFormat format, uint32_t width,
 			throw e;
 		}
 	}
-	if (flags & Flags::DEPTH_STAGING_IMAGE)
+	if (flags & Flags::DEPTH_STAGING_BUFFER)
 	{
 		try
 		{
-			createDepthStagingImage();
+			createDepthStagingBuffer();
 		} catch (exception& e)
 		{
 			vkDestroyImageView(*device, depthImageView, nullptr);
@@ -79,7 +79,7 @@ RenderTarget::~RenderTarget()
 		vkDestroyImageView(*device, depthImageView, nullptr);
 		delete depthImage;
 	}
-	if (flags & Flags::DEPTH_STAGING_IMAGE) delete depthStagingImage;
+	if (flags & Flags::DEPTH_STAGING_BUFFER) delete depthStagingBuffer;
 	vkDestroyCommandPool(*device, cmdPool, nullptr);
 }
 
@@ -95,10 +95,10 @@ void RenderTarget::resize(uint32_t w, uint32_t h)
 		delete depthImage;
 		createDepthImage();
 	}
-	if (flags & Flags::DEPTH_STAGING_IMAGE)
+	if (flags & Flags::DEPTH_STAGING_BUFFER)
 	{
-		delete depthStagingImage;
-		createDepthStagingImage();
+		delete depthStagingBuffer;
+		createDepthStagingBuffer();
 	}
 }
 
@@ -137,16 +137,12 @@ void RenderTarget::assertReady()
 		throw runtime_error("Renter target not ready. Must be initialized before use.");
 }
 
-void RenderTarget::createDepthStagingImage()
+void RenderTarget::createDepthStagingBuffer()
 {
-	depthStagingImage = new Image(device, width, height, VK_FORMAT_D16_UNORM,
-				      VK_IMAGE_TILING_LINEAR, VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-				      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-				      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 0,
-				      VK_IMAGE_LAYOUT_PREINITIALIZED);
-
-	depthStagingImage->transition(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-				      VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+	depthStagingBuffer = new Buffer(device, depthImage->getMemorySize(),
+					VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+					VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 }
 
 }
