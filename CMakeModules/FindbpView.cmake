@@ -16,8 +16,11 @@ find_library(BP_VIEW_LIBRARY NAMES bpView
 	     	${BP_VIEW_ROOT_DIR}/lib
 	     	${BP_VIEW_ROOT_DIR}/cmake-build-debug
 	     	${BP_ROOT_DIR}/cmake-build-debug
+	     PATHS
 	     	${BP_VIEW_LIBRARY_DIR}
-	     PATHS ../bp/lib ../bp/cmake-build-debug)
+	     	${BP_LIBRARY_DIR}
+	     	../bp/lib
+	     	../bp/cmake-build-debug)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(BP_VIEW DEFAULT_MSG

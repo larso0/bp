@@ -16,8 +16,11 @@ find_library(BP_SCENE_LIBRARY NAMES bpScene
 	     	${BP_SCENE_ROOT_DIR}/lib
 	     	${BP_SCENE_ROOT_DIR}/cmake-build-debug
 	     	${BP_ROOT_DIR}/cmake-build-debug
+	     PATHS
 	     	${BP_SCENE_LIBRARY_DIR}
-	     PATHS ../bp/lib ../bp/cmake-build-debug)
+	     	${BP_LIBRARY_DIR}
+	     	../bp/lib
+	     	../bp/cmake-build-debug)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(BP_SCENE DEFAULT_MSG
