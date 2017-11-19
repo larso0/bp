@@ -14,8 +14,7 @@ void Swapchain::init(NotNull<Device> device, VkSurfaceKHR surface, uint32_t widt
 	if (surface == VK_NULL_HANDLE) throw invalid_argument("Surface must be a valid handle.");
 	this->surface = surface;
 	this->flags = flags;
-	RenderTarget::init(device, VK_FORMAT_B8G8R8_UNORM, width, height,
-			   flags & Flags::DEPTH_IMAGE);
+	RenderTarget::init(device, VK_FORMAT_B8G8R8_UNORM, width, height, flags);
 	framebufferImageCount = 2;
 	create();
 }
