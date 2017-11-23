@@ -12,9 +12,7 @@ class Renderer
 public:
 	virtual ~Renderer() = default;
 	virtual void init(NotNull<RenderTarget> target) = 0;
-	virtual void render(VkSemaphore waitSem = VK_NULL_HANDLE) = 0;
-	virtual void update(float delta) {}
-	virtual VkSemaphore getRenderCompleteSemaphore() = 0;
+	virtual void render(VkCommandBuffer cmdBuffer) = 0;
 };
 
 }
