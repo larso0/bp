@@ -11,7 +11,7 @@ class Renderer
 {
 public:
 	virtual ~Renderer() = default;
-	virtual void init(NotNull<RenderTarget> target) = 0;
+	virtual void init(NotNull<RenderTarget> target, const VkRect2D& area) = 0;
 	virtual void render(VkCommandBuffer cmdBuffer) = 0;
 };
 
