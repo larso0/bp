@@ -15,7 +15,6 @@ void Buffer::init(NotNull<Device> device, VkDeviceSize size, VkBufferUsageFlags 
 {
 	if (isReady()) throw runtime_error("Buffer already initialized.");
 	this->device = device;
-	this->size = size;
 
 	if (!(requiredMemoryProperties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT))
 		usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
@@ -81,6 +80,7 @@ void Buffer::init(NotNull<Device> device, VkDeviceSize size, VkBufferUsageFlags 
 	mapped.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 	mapped.pNext = nullptr;
 	mapped.memory = memory;
+	this->size = memoryRequirements.size;
 }
 
 Buffer::~Buffer()
