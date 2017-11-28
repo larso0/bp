@@ -1,7 +1,6 @@
 #include <bp/Buffer.h>
 #include <stdexcept>
 #include <bp/Util.h>
-#include <cstring>
 #include <algorithm>
 
 using namespace std;
@@ -143,7 +142,7 @@ void Buffer::transfer(VkDeviceSize offset, VkDeviceSize size, const void* data,
 	if (stagingBuffer != nullptr)
 	{
 		void* mapped = stagingBuffer->map(offset, size);
-		memcpy(mapped, data, size);
+		parallelCopy(mapped, data, size);
 		stagingBuffer->unmap();
 
 		bool useOwnBuffer = cmdBuffer == VK_NULL_HANDLE;
@@ -161,7 +160,7 @@ void Buffer::transfer(VkDeviceSize offset, VkDeviceSize size, const void* data,
 	} else
 	{
 		void* mapped = map(offset, size);
-		memcpy(mapped, data, size);
+		parallelCopy(mapped, data, size);
 		unmap();
 	}
 }

@@ -193,7 +193,7 @@ void replaceSubstrings(std::string& str, const std::string& find, const std::str
 
 void* parallelCopy(void* dest, const void* src, size_t count)
 {
-	if (count < 1536) return memcpy(dest, src, count);
+	if (count < 1536) return memmove(dest, src, count);
 
 	size_t threadCount = thread::hardware_concurrency();
 	size_t chunkSize = count / threadCount;
@@ -204,12 +204,12 @@ void* parallelCopy(void* dest, const void* src, size_t count)
 	futures.reserve(threadCount);
 	for (auto i = 0; i < threadCount; i++)
 		futures.push_back(async(launch::async, [dest, src, i, chunkSize]{
-			memcpy(dest + i * chunkSize, src + i * chunkSize, chunkSize);
+			memmove(dest + i * chunkSize, src + i * chunkSize, chunkSize);
 		}));
 
 	size_t amountScheduled = threadCount * chunkSize;
 	if (amountScheduled < count)
-		memcpy(dest + amountScheduled, src + amountScheduled, count - amountScheduled);
+		memmove(dest + amountScheduled, src + amountScheduled, count - amountScheduled);
 
 	for (auto& future : futures) future.wait();
 
