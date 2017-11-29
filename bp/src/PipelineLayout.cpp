@@ -8,8 +8,7 @@ namespace bp
 
 PipelineLayout::~PipelineLayout()
 {
-	if (handle != VK_NULL_HANDLE) vkDestroyPipelineLayout(device->getLogicalHandle(), handle,
-							      nullptr);
+	if (handle != VK_NULL_HANDLE) vkDestroyPipelineLayout(*device, handle, nullptr);
 }
 
 void PipelineLayout::init(NotNull<Device> device)
