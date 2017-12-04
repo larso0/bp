@@ -40,6 +40,8 @@ public:
 	void setClearEnabled(bool enabled);
 	void setClearValue(const VkClearValue& clearValue);
 
+	operator VkRenderPass() { return handle; }
+
 	RenderTarget& getRenderTarget() { return *renderTarget; }
 	VkRenderPass getHandle() { return handle; }
 	const VkRect2D& getRenderArea() const { return renderArea; }

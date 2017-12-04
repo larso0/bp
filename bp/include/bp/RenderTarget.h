@@ -53,7 +53,7 @@ public:
 
 	Device* getDevice() { return device; }
 	VkCommandPool getCmdPool() { return cmdPool; }
-	bool isDepthImageEnabled() const { return depthImage != nullptr; }
+	bool isDepthImageEnabled() const { return flags & Flags::DEPTH_IMAGE; }
 	Image* getDepthImage() { return depthImage; }
 	Buffer* getDepthStagingBuffer() { return depthStagingBuffer; }
 	VkImageView getDepthImageView() { return depthImageView; }
