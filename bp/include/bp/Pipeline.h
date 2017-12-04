@@ -26,6 +26,11 @@ public:
 		addShaderStageInfos(shaderStageInfos.begin(), shaderStageInfos.end());
 		init(device, renderPass, layout);
 	}
+	virtual ~Pipeline()
+	{
+		if (isReady())
+			vkDestroyPipeline(*device, handle, nullptr);
+	}
 
 	void addShaderStageInfo(const VkPipelineShaderStageCreateInfo& info)
 	{
@@ -38,7 +43,13 @@ public:
 		shaderStageInfos.insert(shaderStageInfos.end(), begin, end);
 	}
 
-	void init(NotNull<Device> device, NotNull<RenderPass> renderPass, VkPipelineLayout layout);
+	void init(NotNull<Device> device, NotNull<RenderPass> renderPass, VkPipelineLayout layout)
+	{
+		this->device = device;
+		this->renderPass = renderPass;
+		this->layout = layout;
+		create();
+	}
 	void init(NotNull<Device> device, NotNull<RenderPass> renderPass, VkPipelineLayout layout,
 		  std::initializer_list<VkPipelineShaderStageCreateInfo> shaderStageInfos)
 	{
@@ -52,13 +63,14 @@ public:
 
 	VkPipeline getHandle() { return handle; }
 
-private:
+protected:
 	Device* device;
 	VkPipeline handle;
 	VkPipelineLayout layout;
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStageInfos;
 	RenderPass* renderPass;
 
+	virtual void create() = 0;
 };
 
 }
