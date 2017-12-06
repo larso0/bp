@@ -108,8 +108,9 @@ void* Buffer::map(VkDeviceSize offset, VkDeviceSize size)
 		{
 			stagingBuffer = new Buffer(device, this->size,
 						   VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-						   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-						   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+						   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+						   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT |
+						   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 		}
 		mappedMemory = stagingBuffer->map(offset, size);
 	}
