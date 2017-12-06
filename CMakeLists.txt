@@ -67,7 +67,7 @@ if (Qt IN_LIST BP_MODULES)
 
 	include_directories(${Qt5Core_INCLUDE_DIRS}
 			    ${Qt5Gui_INCLUDE_DIRS}
-			    ${Qt5Widgets_INCLUDE_DIR}
+			    ${Qt5Widgets_INCLUDE_DIRS}
 			    ${BP_QT_INCLUDE_DIR})
 	add_library(bpQt STATIC ${BP_QT_SRC})
 endif()
