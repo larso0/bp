@@ -3,6 +3,7 @@
 
 #include "RenderTarget.h"
 #include "FlagSet.h"
+#include "Event.h"
 #include <vector>
 
 namespace bp
@@ -39,6 +40,8 @@ public:
 
 	VkSwapchainKHR getHandle() { return handle; }
 	VkSurfaceKHR getSurface() { return surface; }
+
+	Event<> presentQueuedEvent;
 
 private:
 	VkSurfaceKHR surface;

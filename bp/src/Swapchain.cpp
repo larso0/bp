@@ -70,6 +70,7 @@ void Swapchain::present(VkSemaphore waitSemaphore)
 	presentInfo.pImageIndices = &currentFramebufferIndex;
 	presentInfo.pResults = nullptr;
 	vkQueuePresentKHR(device->getGraphicsQueue(), &presentInfo);
+	presentQueuedEvent();
 }
 
 void Swapchain::resize(uint32_t w, uint32_t h)
