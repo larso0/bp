@@ -24,6 +24,8 @@ VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flags,
 		instance->warningEvent(ss.str());
 	else
 		instance->errorEvent(ss.str());
+
+	return VK_FALSE;
 }
 
 Instance::~Instance()

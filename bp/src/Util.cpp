@@ -204,12 +204,14 @@ void* parallelCopy(void* dest, const void* src, size_t count)
 	futures.reserve(threadCount);
 	for (auto i = 0; i < threadCount; i++)
 		futures.push_back(async(launch::async, [dest, src, i, chunkSize]{
-			memmove(dest + i * chunkSize, src + i * chunkSize, chunkSize);
+			memmove(static_cast<char*>(dest) + i * chunkSize,
+					static_cast<const char*>(src) + i * chunkSize, chunkSize);
 		}));
 
 	size_t amountScheduled = threadCount * chunkSize;
 	if (amountScheduled < count)
-		memmove(dest + amountScheduled, src + amountScheduled, count - amountScheduled);
+		memmove(static_cast<char*>(dest) + amountScheduled,
+				static_cast<const char*>(src) + amountScheduled, count - amountScheduled);
 
 	for (auto& future : futures) future.wait();
 

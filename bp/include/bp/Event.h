@@ -46,7 +46,7 @@ void connect(Event<ParamTypes...>& e, Functor f)
 /*
  * Forward an event a to b.
  */
-template<typename... ParamTypes, typename Functor>
+template<typename... ParamTypes>
 void connect(Event<ParamTypes...>& a, Event<ParamTypes...>& b)
 {
 	a.attach([a, b](ParamTypes... args){ b(args...); });
