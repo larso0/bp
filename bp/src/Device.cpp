@@ -129,16 +129,22 @@ bool queryDevice(VkPhysicalDevice device, const DeviceRequirements& requirements
 	return true;
 }
 
-vector<VkPhysicalDevice> queryDevices(const Instance& instance,
+vector<VkPhysicalDevice> queryDevices(const vector<VkPhysicalDevice>& devices,
 				      const DeviceRequirements& requirements)
 {
 	vector<VkPhysicalDevice> results;
-	for (VkPhysicalDevice device : instance.getPhysicalDevices())
+	for (VkPhysicalDevice device : devices)
 	{
 		if (queryDevice(device, requirements))
 			results.push_back(device);
 	}
 	return results;
+}
+
+vector<VkPhysicalDevice> queryDevices(const Instance& instance,
+				      const DeviceRequirements& requirements)
+{
+	return queryDevices(instance.getPhysicalDevices(), requirements);
 }
 
 void Device::init(const Instance& instance, const DeviceRequirements& requirements)

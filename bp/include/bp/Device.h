@@ -29,6 +29,8 @@ struct DeviceRequirements
 };
 
 bool queryDevice(VkPhysicalDevice device, const DeviceRequirements& requirements);
+std::vector<VkPhysicalDevice> queryDevices(const std::vector<VkPhysicalDevice>& devices,
+					   const DeviceRequirements& requirements);
 std::vector<VkPhysicalDevice> queryDevices(const Instance& instance,
 					   const DeviceRequirements& requirements);
 

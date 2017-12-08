@@ -79,6 +79,23 @@ void Swapchain::resize(uint32_t w, uint32_t h)
 	create();
 }
 
+void Swapchain::recreate(VkSurfaceKHR newSurface)
+{
+	if (newSurface != VK_NULL_HANDLE)
+	{
+		invalidate();
+		surface = newSurface;
+	}
+	create();
+}
+
+void Swapchain::invalidate()
+{
+	if (invalidated) return;
+	invalidated = true;
+	destroy();
+}
+
 void Swapchain::create()
 {
 	uint32_t n;
@@ -210,6 +227,15 @@ void Swapchain::create()
 		if (result != VK_SUCCESS)
 			throw runtime_error("Failed to create swapchain image view.");
 	}
+	invalidated = false;
+}
+
+void Swapchain::destroy()
+{
+	for (VkImageView imageView : framebufferImageViews)
+		vkDestroyImageView(*device, imageView, nullptr);
+	vkDestroySwapchainKHR(*device, handle, nullptr);
+	handle = VK_NULL_HANDLE;
 }
 
 void Swapchain::nextImage()

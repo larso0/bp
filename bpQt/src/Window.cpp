@@ -1,0 +1,148 @@
+#include <bpQt/Window.h>
+#include <stdexcept>
+#include <QPlatformSurfaceEvent>
+
+using namespace std;
+using namespace bp;
+
+namespace bpQt
+{
+
+static const char* SWAPCHAIN_EXTENSION = "VK_KHR_swapchain";
+static const VkPipelineStageFlags WAIT_STAGE = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+
+Window::~Window()
+{
+	if (renderCompleteSem != VK_NULL_HANDLE)
+		vkDestroySemaphore(device, renderCompleteSem, nullptr);
+
+}
+
+VkPhysicalDevice Window::selectDevice(const vector<VkPhysicalDevice>& devices)
+{
+	if (devices.empty()) throw runtime_error("No suitable devices available.");
+	return devices[0];
+}
+
+void Window::init()
+{
+	surface = vulkanInstance()->surfaceForWindow(this);
+
+	DeviceRequirements requirements;
+	requirements.queues |= VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT;
+	requirements.surface = surface;
+	requirements.extensions.push_back(SWAPCHAIN_EXTENSION);
+	specifyDeviceRequirements(requirements);
+	
+	VkPhysicalDevice physical = selectDevice(queryDevices(*vulkanInstance(), requirements));
+	device.init(physical, requirements);
+	swapchain.init(&device, surface, static_cast<uint32_t>(width()),
+		       static_cast<uint32_t>(height()), swapchainFlags);
+
+	bp::connect(swapchain.presentQueuedEvent, *this, &Window::presentQueued);
+
+	VkCommandBufferAllocateInfo cmdBufferInfo = {};
+	cmdBufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	cmdBufferInfo.commandPool = swapchain.getCmdPool();
+	cmdBufferInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	cmdBufferInfo.commandBufferCount = 1;
+	VkResult result = vkAllocateCommandBuffers(device, &cmdBufferInfo, &frameCmdBuffer);
+	if (result != VK_SUCCESS)
+		throw runtime_error("Failed to allocate command buffer.");
+
+	VkSemaphoreCreateInfo semInfo = {};
+	semInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	result = vkCreateSemaphore(device, &semInfo, nullptr, &renderCompleteSem);
+	if (result != VK_SUCCESS)
+		throw runtime_error("Failed to create render complete semaphore.");
+
+	frameCmdBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	frameCmdBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	frameSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	frameSubmitInfo.commandBufferCount = 1;
+	frameSubmitInfo.pCommandBuffers = &frameCmdBuffer;
+	frameSubmitInfo.signalSemaphoreCount = 1;
+	frameSubmitInfo.pSignalSemaphores = &renderCompleteSem;
+	frameSubmitInfo.waitSemaphoreCount = 1;
+	frameSubmitInfo.pWaitDstStageMask = &WAIT_STAGE;
+
+	initRenderResources();
+}
+
+void Window::frame()
+{
+	if (swapchain.isInvalidated()) return;
+	if (resizedSinceLastFrame)
+	{
+		swapchain.resize(static_cast<uint32_t>(width()),
+				 static_cast<uint32_t>(height()));
+		resizedSinceLastFrame = false;
+		resizeRenderResources(width(), height());
+	}
+
+	Queue& queue = device.getGraphicsQueue();
+	VkSemaphore presentSem = swapchain.getPresentSemaphore();
+	frameSubmitInfo.pWaitSemaphores = &presentSem;
+
+	vkBeginCommandBuffer(frameCmdBuffer, &frameCmdBufferBeginInfo);
+	swapchain.beginFrame(frameCmdBuffer);
+	render(frameCmdBuffer);
+	swapchain.endFrame(frameCmdBuffer);
+	vkEndCommandBuffer(frameCmdBuffer);
+	vkQueueSubmit(queue, 1, &frameSubmitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(queue);
+	swapchain.present(renderCompleteSem);
+}
+
+void Window::exposeEvent(QExposeEvent*)
+{
+	if (isExposed())
+	{
+		if (!swapchain.isReady())
+		{
+			init();
+		} else if (swapchain.isInvalidated())
+		{
+			if (surfaceDestroyed)
+			{
+				surface = vulkanInstance()->surfaceForWindow(this);
+				swapchain.recreate(surface);
+			}
+			else swapchain.recreate();
+		}
+		frame();
+	} else
+	{
+		swapchain.invalidate();
+	}
+}
+
+void Window::resizeEvent(QResizeEvent*)
+{
+	resizedSinceLastFrame = true;
+}
+
+bool Window::event(QEvent* event)
+{
+	switch(event->type())
+	{
+	case QEvent::UpdateRequest:
+		frame();
+		break;
+	case QEvent::PlatformSurface:
+		if (static_cast<QPlatformSurfaceEvent*>(event)->surfaceEventType()
+		    == QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed)
+		{
+			swapchain.invalidate();
+			surfaceDestroyed = true;
+		}
+		break;
+	default:
+		break;
+	}
+
+	return QWindow::event(event);
+}
+
+}

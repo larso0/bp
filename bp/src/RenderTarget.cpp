@@ -89,17 +89,7 @@ void RenderTarget::resize(uint32_t w, uint32_t h)
 	assertReady();
 	width = w;
 	height = h;
-	if (isDepthImageEnabled())
-	{
-		vkDestroyImageView(*device, depthImageView, nullptr);
-		delete depthImage;
-		createDepthImage();
-	}
-	if (flags & Flags::DEPTH_STAGING_BUFFER)
-	{
-		delete depthStagingBuffer;
-		createDepthStagingBuffer();
-	}
+	recreateDepthObjects();
 }
 
 void RenderTarget::createDepthImage()
@@ -129,6 +119,21 @@ void RenderTarget::createDepthImage()
 	VkResult result = vkCreateImageView(*device, &viewInfo, nullptr, &depthImageView);
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to create depth image view.");
+}
+
+void RenderTarget::recreateDepthObjects()
+{
+	if (isDepthImageEnabled())
+	{
+		vkDestroyImageView(*device, depthImageView, nullptr);
+		delete depthImage;
+		createDepthImage();
+	}
+	if (flags & Flags::DEPTH_STAGING_BUFFER)
+	{
+		delete depthStagingBuffer;
+		createDepthStagingBuffer();
+	}
 }
 
 void RenderTarget::assertReady()

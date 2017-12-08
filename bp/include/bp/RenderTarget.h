@@ -64,7 +64,7 @@ public:
 	std::vector<VkImageView>& getFramebufferImageViews() { return framebufferImageViews; };
 	uint32_t getCurrentFramebufferIndex() const { return currentFramebufferIndex; }
 	VkSemaphore getPresentSemaphore() { return presentSemaphore; }
-	bool isReady() const { return cmdPool != VK_NULL_HANDLE; }
+	virtual bool isReady() const { return cmdPool != VK_NULL_HANDLE; }
 
 protected:
 	FlagSet<Flags> flags;
@@ -84,6 +84,7 @@ protected:
 
 	void createDepthImage();
 	void createDepthStagingBuffer();
+	void recreateDepthObjects();
 	void assertReady();
 };
 
