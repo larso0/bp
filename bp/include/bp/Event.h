@@ -49,7 +49,7 @@ void connect(Event<ParamTypes...>& e, Functor f)
 template<typename... ParamTypes>
 void connect(Event<ParamTypes...>& a, Event<ParamTypes...>& b)
 {
-	a.attach([a, b](ParamTypes... args){ b(args...); });
+	a.attach([&b](ParamTypes... args){ b(args...); });
 }
 
 /*
