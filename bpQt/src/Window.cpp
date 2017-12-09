@@ -1,6 +1,7 @@
 #include <bpQt/Window.h>
 #include <stdexcept>
 #include <QPlatformSurfaceEvent>
+#include <QCoreApplication>
 
 using namespace std;
 using namespace bp;
@@ -20,7 +21,7 @@ Window::~Window()
 
 VkPhysicalDevice Window::selectDevice(const vector<VkPhysicalDevice>& devices)
 {
-	if (devices.empty()) throw runtime_error("No suitable devices available.");
+	if (devices.empty()) return VK_NULL_HANDLE;
 	return devices[0];
 }
 
@@ -35,6 +36,7 @@ void Window::init()
 	specifyDeviceRequirements(requirements);
 	
 	VkPhysicalDevice physical = selectDevice(queryDevices(*vulkanInstance(), requirements));
+	if (physical == VK_NULL_HANDLE) throw runtime_error("No suitable device available.");
 	device.init(physical, requirements);
 	swapchain.init(&device, surface, static_cast<uint32_t>(width()),
 		       static_cast<uint32_t>(height()), swapchainFlags);
@@ -68,16 +70,16 @@ void Window::init()
 	frameSubmitInfo.pWaitDstStageMask = &WAIT_STAGE;
 
 	initRenderResources();
+	inited = true;
 }
 
 void Window::frame()
 {
-	if (swapchain.isInvalidated()) return;
-	if (resizedSinceLastFrame)
+	if (!swapchain.isReady()) return;
+	if (swapchain.getWidth() != width() || swapchain.getHeight() != height())
 	{
 		swapchain.resize(static_cast<uint32_t>(width()),
 				 static_cast<uint32_t>(height()));
-		resizedSinceLastFrame = false;
 		resizeRenderResources(width(), height());
 	}
 
@@ -93,16 +95,18 @@ void Window::frame()
 	vkQueueSubmit(queue, 1, &frameSubmitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(queue);
 	swapchain.present(renderCompleteSem);
+	if (continuousAnimation)
+		QCoreApplication::postEvent(this, new QEvent(QEvent::UpdateRequest));
 }
 
 void Window::exposeEvent(QExposeEvent*)
 {
 	if (isExposed())
 	{
-		if (!swapchain.isReady())
+		if (!inited)
 		{
 			init();
-		} else if (swapchain.isInvalidated())
+		} else if (!swapchain.isReady())
 		{
 			if (surfaceDestroyed)
 			{
@@ -114,13 +118,8 @@ void Window::exposeEvent(QExposeEvent*)
 		frame();
 	} else
 	{
-		swapchain.invalidate();
+		swapchain.destroy();
 	}
-}
-
-void Window::resizeEvent(QResizeEvent*)
-{
-	resizedSinceLastFrame = true;
 }
 
 bool Window::event(QEvent* event)
@@ -134,7 +133,7 @@ bool Window::event(QEvent* event)
 		if (static_cast<QPlatformSurfaceEvent*>(event)->surfaceEventType()
 		    == QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed)
 		{
-			swapchain.invalidate();
+			swapchain.destroy();
 			surfaceDestroyed = true;
 		}
 		break;

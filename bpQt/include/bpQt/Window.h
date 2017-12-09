@@ -16,7 +16,8 @@ class Window : public QWindow
 public:
 	Window() :
 		surfaceDestroyed{false},
-		resizedSinceLastFrame{false},
+		inited{false},
+		continuousAnimation{false},
 		surface{VK_NULL_HANDLE},
 		frameCmdBuffer{VK_NULL_HANDLE},
 		renderCompleteSem{VK_NULL_HANDLE},
@@ -38,9 +39,12 @@ public:
 		swapchainFlags = flags;
 	}
 
+	void enableContinuousAnimation() { continuousAnimation = true; }
+	void disableContinuousAnimation() { continuousAnimation = false; }
+
 protected:
-	bp::Swapchain swapchain;
 	bp::Device device;
+	bp::Swapchain swapchain;
 
 	virtual void initRenderResources() = 0;
 	virtual void resizeRenderResources(int width, int height) {}
@@ -49,7 +53,7 @@ protected:
 	virtual void render(VkCommandBuffer cmdBuffer) = 0;
 
 private:
-	bool surfaceDestroyed, resizedSinceLastFrame;
+	bool surfaceDestroyed, inited, continuousAnimation;
 	VkSurfaceKHR surface;
 	bp::FlagSet<bp::Swapchain::Flags> swapchainFlags;
 
@@ -67,7 +71,6 @@ private:
 	void init();
 	void frame();
 	void exposeEvent(QExposeEvent*) override;
-	void resizeEvent(QResizeEvent* event) override;
 	bool event(QEvent* event) override;
 };
 

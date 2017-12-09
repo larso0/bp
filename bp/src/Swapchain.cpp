@@ -21,9 +21,7 @@ void Swapchain::init(NotNull<Device> device, VkSurfaceKHR surface, uint32_t widt
 
 Swapchain::~Swapchain()
 {
-	for (VkImageView imageView : framebufferImageViews)
-		vkDestroyImageView(*device, imageView, nullptr);
-	vkDestroySwapchainKHR(*device, handle, nullptr);
+	destroy();
 }
 
 void Swapchain::beginFrame(VkCommandBuffer cmdBuffer)
@@ -83,17 +81,10 @@ void Swapchain::recreate(VkSurfaceKHR newSurface)
 {
 	if (newSurface != VK_NULL_HANDLE)
 	{
-		invalidate();
+		destroy();
 		surface = newSurface;
 	}
 	create();
-}
-
-void Swapchain::invalidate()
-{
-	if (invalidated) return;
-	invalidated = true;
-	destroy();
 }
 
 void Swapchain::create()
@@ -227,11 +218,11 @@ void Swapchain::create()
 		if (result != VK_SUCCESS)
 			throw runtime_error("Failed to create swapchain image view.");
 	}
-	invalidated = false;
 }
 
 void Swapchain::destroy()
 {
+	if (!isReady()) return;
 	for (VkImageView imageView : framebufferImageViews)
 		vkDestroyImageView(*device, imageView, nullptr);
 	vkDestroySwapchainKHR(*device, handle, nullptr);

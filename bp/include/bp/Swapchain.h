@@ -14,7 +14,6 @@ class Swapchain : public RenderTarget
 public:
 	Swapchain() :
 		RenderTarget{},
-		invalidated{false},
 		surface{VK_NULL_HANDLE},
 		handle{VK_NULL_HANDLE},
 		colorSpace{VK_COLOR_SPACE_SRGB_NONLINEAR_KHR} {}
@@ -37,7 +36,7 @@ public:
 	void present(VkSemaphore waitSemaphore) override;
 	void resize(uint32_t width, uint32_t height) override;
 	void recreate(VkSurfaceKHR newSurface = VK_NULL_HANDLE);
-	void invalidate();
+	void destroy();
 
 	operator VkSwapchainKHR() { return handle; }
 
@@ -45,11 +44,9 @@ public:
 	VkSurfaceKHR getSurface() { return surface; }
 
 	bool isReady() const override { return handle != VK_NULL_HANDLE; }
-	bool isInvalidated() const { return invalidated; }
 
 	Event<> presentQueuedEvent;
 private:
-	bool invalidated;
 	VkSurfaceKHR surface;
 	VkSwapchainKHR handle;
 	VkColorSpaceKHR colorSpace;
@@ -57,7 +54,6 @@ private:
 	std::vector<bool> transitionStatus;
 
 	void create();
-	void destroy();
 	void nextImage();
 	void transitionColor(VkCommandBuffer cmdBuffer);
 	void transitionPresent(VkCommandBuffer cmdBuffer);
