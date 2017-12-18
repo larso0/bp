@@ -3,43 +3,23 @@
 
 #include "Instance.h"
 #include "Queue.h"
+#include "DeviceRequirements.h"
 #include <vulkan/vulkan.h>
 #include <vector>
 
 namespace bp
 {
 
-struct DeviceRequirements
-{
-	DeviceRequirements(VkQueueFlags queues, const VkPhysicalDeviceFeatures& features,
-			   VkSurfaceKHR surface, const std::vector<const char*>& extensions) :
-		queues{queues},
-		features{features},
-		surface{surface},
-		extensions{extensions} {}
-	DeviceRequirements() :
-		queues{0},
-		features{},
-		surface{VK_NULL_HANDLE} {}
-
-	VkQueueFlags queues;
-	VkPhysicalDeviceFeatures features;
-	VkSurfaceKHR surface;
-	std::vector<const char*> extensions;
-};
-
-bool queryDevice(VkPhysicalDevice device, const DeviceRequirements& requirements);
-std::vector<VkPhysicalDevice> queryDevices(const std::vector<VkPhysicalDevice>& devices,
-					   const DeviceRequirements& requirements);
-std::vector<VkPhysicalDevice> queryDevices(const Instance& instance,
-					   const DeviceRequirements& requirements);
-
 class Device
 {
 public:
 	Device() :
 		physical{VK_NULL_HANDLE},
-		logical{VK_NULL_HANDLE} {}
+		logical{VK_NULL_HANDLE},
+		graphicsQueue{nullptr},
+		computeQueue{nullptr},
+		transferQueue{nullptr},
+		sparseBindingQueue{nullptr} {}
 	Device(const Instance& instance, const DeviceRequirements& requirements) :
 		Device()
 	{
@@ -75,10 +55,15 @@ private:
 	struct QueueInfo
 	{
 		uint32_t familyIndex;
+		uint32_t queueIndex;
 		VkQueueFlags flags;
 	};
 	std::vector<QueueInfo> queueInfos;
 	std::vector<Queue> queues;
+	Queue* graphicsQueue;
+	Queue* computeQueue;
+	Queue* transferQueue;
+	Queue* sparseBindingQueue;
 
 	void createLogicalDevice(const DeviceRequirements& requirements);
 	void createQueues();

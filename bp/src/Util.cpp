@@ -12,7 +12,8 @@ using namespace std;
 namespace bp
 {
 
-int32_t findQueueFamilyIndex(VkPhysicalDevice device, VkQueueFlags flags)
+bool findQueueFamilyIndex(VkPhysicalDevice device, VkQueueFlags flags, uint32_t* qfi,
+			  uint32_t queueCount, VkSurfaceKHR surface, uint32_t i)
 {
 	uint32_t n;
 	vkGetPhysicalDeviceQueueFamilyProperties(device, &n, NULL);
@@ -20,9 +21,20 @@ int32_t findQueueFamilyIndex(VkPhysicalDevice device, VkQueueFlags flags)
 	vkGetPhysicalDeviceQueueFamilyProperties(device, &n, queueFamilyProperties.data());
 
 	int32_t idx = -1;
-	for (uint32_t i = 0; i < n; i++)
+	for (; i < n; i++)
 	{
-		if (queueFamilyProperties[i].queueFlags == flags)
+		if (surface != VK_NULL_HANDLE)
+		{
+			// The queue family index must support the given surface.
+			if (!(queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)) break;
+
+			VkBool32 surfaceSupported;
+			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &surfaceSupported);
+			if (!surfaceSupported) break;
+		}
+
+		if (queueFamilyProperties[i].queueFlags == flags &&
+		    queueCount < queueFamilyProperties[i].queueCount)
 		{
 			/*
 			 * Assume that a queue family that matches exactly is more efficient.
@@ -34,7 +46,8 @@ int32_t findQueueFamilyIndex(VkPhysicalDevice device, VkQueueFlags flags)
 			break;
 		} else if ((flags & VK_QUEUE_GRAPHICS_BIT) && !(flags & VK_QUEUE_COMPUTE_BIT) &&
 			   !(queueFamilyProperties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) &&
-			   (queueFamilyProperties[i].queueFlags & flags) == flags)
+			   (queueFamilyProperties[i].queueFlags & flags) == flags &&
+			   queueCount < queueFamilyProperties[i].queueCount)
 		{
 			/*
 			 * Assume that a graphics capable queue family that does not support compute
@@ -44,7 +57,8 @@ int32_t findQueueFamilyIndex(VkPhysicalDevice device, VkQueueFlags flags)
 			idx = i;
 		} else if ((flags & VK_QUEUE_COMPUTE_BIT) && !(flags & VK_QUEUE_GRAPHICS_BIT) &&
 			   !(queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) &&
-			   (queueFamilyProperties[i].queueFlags & flags) == flags)
+			   (queueFamilyProperties[i].queueFlags & flags) == flags &&
+			   queueCount < queueFamilyProperties[i].queueCount)
 		{
 			/*
 			 * Assume that a compute capable queue family that does not support graphics
@@ -55,7 +69,8 @@ int32_t findQueueFamilyIndex(VkPhysicalDevice device, VkQueueFlags flags)
 		} else if (!(flags & (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT)) &&
 			   !(queueFamilyProperties[i].queueFlags &
 			     (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT)) &&
-			   (queueFamilyProperties[i].queueFlags & flags) == flags)
+			   (queueFamilyProperties[i].queueFlags & flags) == flags &&
+			   queueCount < queueFamilyProperties[i].queueCount)
 		{
 			/*
 			 * If graphics or compute is not required, prefer queue families that does
@@ -68,32 +83,9 @@ int32_t findQueueFamilyIndex(VkPhysicalDevice device, VkQueueFlags flags)
 		}
 	}
 
-	return idx;
-}
+	if (qfi != nullptr) *qfi = i;
 
-int32_t findSurfaceQueueFamilyIndex(VkPhysicalDevice device, VkSurfaceKHR surface)
-{
-	uint32_t n;
-	vkGetPhysicalDeviceQueueFamilyProperties(device, &n, NULL);
-	vector<VkQueueFamilyProperties> queueFamilyProperties(n);
-	vkGetPhysicalDeviceQueueFamilyProperties(device, &n, queueFamilyProperties.data());
-
-	int32_t idx = -1;
-	for (uint32_t i = 0; i < n; i++)
-	{
-		if (queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
-		{
-			VkBool32 surfaceSupported;
-			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &surfaceSupported);
-			if (surfaceSupported)
-			{
-				idx = i;
-				break;
-			}
-		}
-	}
-
-	return idx;
+	return idx != -1;
 }
 
 int32_t findPhysicalDeviceMemoryType(VkPhysicalDevice physicalDevice, uint32_t memoryTypeBits,

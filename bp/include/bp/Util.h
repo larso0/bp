@@ -9,17 +9,17 @@ namespace bp
 {
 
 /*
- * Find the index of a queue family that matches the flags.
- * Returns a valid queue family index, or -1 if no suitable queue family was found.
- */
-int32_t findQueueFamilyIndex(VkPhysicalDevice device, VkQueueFlags flags);
-
-/*
- * Find the index of a queue family that support graphics queues and is capabale of presenting to
+ * Find the index of a queue family that matches the flags, have a queue count of at least
+ * queueCount.
+ * If surface is not VK_NULL_HANDLE, the queue family index must support presenting to
  * the given surface.
- * Returns a valid queue family index, or -1 if no suitable queue family was found.
+ * If qfi is not a null pointer, the found queue family index is stored there.
+ * Starts looking for matching queue families at the startAt queue family index.
+ * Returns true if if a matching queue family index was found, false otherwise.
  */
-int32_t findSurfaceQueueFamilyIndex(VkPhysicalDevice device, VkSurfaceKHR surface);
+bool findQueueFamilyIndex(VkPhysicalDevice device, VkQueueFlags flags, uint32_t* qfi,
+			  uint32_t queueCount = 1, VkSurfaceKHR surface = VK_NULL_HANDLE,
+			  uint32_t startAt = 0);
 
 /*
  * Find the index of a memory type for the physical device.
