@@ -4,6 +4,7 @@
 #include "Attachment.h"
 #include "DepthAttachment.h"
 #include <vector>
+#include <utility>
 
 namespace bp
 {
@@ -12,10 +13,13 @@ class Subpass
 {
 	friend class RenderPass;
 public:
-	struct AttachmentReference
+	struct DependencyInfo
 	{
-		Attachment* attachment;
-		VkImageLayout layout;
+		VkPipelineStageFlags srcStageMask;
+		VkPipelineStageFlags dstStageMask;
+		VkAccessFlags srcAccessMask;
+		VkAccessFlags dstAccessMask;
+		VkDependencyFlags dependencyFlags;
 	};
 
 	Subpass() :
@@ -25,20 +29,23 @@ public:
 
 	virtual void render(VkCommandBuffer cmdBuffer) = 0;
 
+	void addDependency(NotNull<Subpass> subpass, const DependencyInfo& dependencyInfo);
+	void addInputAttachment(NotNull<Attachment> attachment);
+	void addColorAttachment(NotNull<Attachment> attachment,
+				Attachment* resolveAttachment = nullptr);
 	void setDepthAttachment(NotNull<DepthAttachment> depthAttachment);
-	void addAttachment(NotNull<Attachment> attachment, VkImageLayout layout);
-	void addSubpass(NotNull<Subpass> subpass)
-	{
-		dependentSubpasses.push_back(subpass.get());
-	}
 
 protected:
 	Device* device;
 
 private:
+	std::vector<std::pair<Subpass*, DependencyInfo>> dependencies;
+	std::vector<Subpass*> dependents;
+	std::vector<Attachment*> inputAttachments;
+	std::vector<Attachment*> colorAttachments;
+	std::vector<Attachment*> resolveAttachments;
 	DepthAttachment* depthAttachment;
-	std::vector<AttachmentReference> attachments;
-	std::vector<Subpass*> dependentSubpasses;
+
 };
 
 }

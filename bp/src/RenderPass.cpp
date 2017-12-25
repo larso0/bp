@@ -1,127 +1,222 @@
 #include <bp/RenderPass.h>
+#include <bp/Swapchain.h>
 #include <stdexcept>
+#include <algorithm>
 
 using namespace std;
 
 namespace bp
 {
 
-void RenderPass::init(NotNull<RenderTarget> target, const VkRect2D& area)
-{
-	renderTarget = target;
-	renderArea = area;
-	create();
-}
-
 RenderPass::~RenderPass()
 {
-	for (VkFramebuffer fb : framebuffers)
-		vkDestroyFramebuffer(*renderTarget->getDevice(), fb, nullptr);
-	vkDestroyRenderPass(*renderTarget->getDevice(), handle, nullptr);
+	if (isReady())
+	{
+		destroyFramebuffers();
+		vkDestroyRenderPass(*device, handle, nullptr);
+	}
+}
+
+void RenderPass::addSubpassGraph(NotNull<Subpass> subpass)
+{
+	if (device == nullptr) device = subpass->device;
+	subpasses.push_back(subpass.get());
+
+	addAttachments(subpass->inputAttachments.begin(), subpass->inputAttachments.end());
+	addAttachments(subpass->colorAttachments.begin(), subpass->colorAttachments.end());
+	addAttachments(subpass->resolveAttachments.begin(), subpass->resolveAttachments.end());
+	if (subpass->depthAttachment != nullptr) addAttachment(subpass->depthAttachment);
+
+	for (auto& s : subpass->dependents)
+	{
+		addSubpassGraph(s);
+	}
+}
+
+void RenderPass::init()
+{
+	if (subpasses.empty())
+		throw runtime_error("No subpasses added to render pass.");
+
+	for (Attachment* attachment : attachments)
+		attachmentDescriptions.push_back(attachment->getDescription());
+
+	for (Subpass* subpass : subpasses)
+	{
+		VkSubpassDescription description = {};
+		description.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+
+		if (!subpass->inputAttachments.empty())
+		{
+			auto attachmentReferences = addAttachmentReferences(
+				subpass->inputAttachments,
+				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			description.inputAttachmentCount =
+				static_cast<uint32_t>(subpass->inputAttachments.size());
+			description.pInputAttachments = attachmentReferences;
+		}
+
+		if (!subpass->colorAttachments.empty())
+		{
+			auto attachmentReferences = addAttachmentReferences(
+				subpass->colorAttachments,
+				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+			description.colorAttachmentCount =
+				static_cast<uint32_t>(subpass->colorAttachments.size());
+			description.pColorAttachments = attachmentReferences;
+		}
+
+		if (!subpass->resolveAttachments.empty())
+		{
+			auto attachmentReferences = addAttachmentReferences(
+				subpass->resolveAttachments,
+				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			description.pResolveAttachments = attachmentReferences;
+		}
+
+		if (subpass->depthAttachment != nullptr)
+		{
+			auto attachmentReference = addAttachmentReference(
+				subpass->depthAttachment,
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+			description.pDepthStencilAttachment = attachmentReference;
+		}
+
+		subpassDescriptions.push_back(description);
+	}
+
+	for (auto i = 0; i < subpasses.size(); i++)
+	{
+		for (auto& dependency : subpasses[i]->dependencies)
+		{
+			VkSubpassDependency dep = {};
+			dep.srcSubpass = static_cast<uint32_t>(i);
+
+			bool found = false;
+			auto j = i;
+			for (; j < subpasses.size(); j++)
+			{
+				if (subpasses[j] == dependency.first)
+				{
+					found = true;
+					break;
+				}
+			}
+			if (!found) throw runtime_error("Dependency subpass not found.");
+
+			dep.dstSubpass = static_cast<uint32_t>(j);
+			dep.srcStageMask = dependency.second.srcStageMask;
+			dep.dstStageMask = dependency.second.dstStageMask;
+			dep.srcAccessMask = dependency.second.srcAccessMask;
+			dep.dstAccessMask = dependency.second.dstAccessMask;
+			dep.dependencyFlags = dependency.second.dependencyFlags;
+
+			subpassDependencies.push_back(dep);
+		}
+	}
+
+	create();
 }
 
 void RenderPass::recreateFramebuffers()
 {
-	for (VkFramebuffer fb : framebuffers)
-		vkDestroyFramebuffer(*renderTarget->getDevice(), fb, nullptr);
+	destroyFramebuffers();
 	createFramebuffers();
 }
 
-void RenderPass::begin(VkCommandBuffer cmdBuffer)
+void RenderPass::render(VkCommandBuffer cmdBuffer)
 {
 	vector<VkClearValue> clearValues;
-	if (clearEnabled)
-	{
-		clearValues.push_back(clearValue);
-		if (renderTarget->isDepthImageEnabled()) clearValues.push_back({1.f, 0.f});
-	} else if (renderTarget->isDepthImageEnabled())
-	{
-		clearValues.push_back(clearValue);
-		clearValues.push_back({1.f, 0.f});
-	}
+	auto framebufferIndex = swapchain != nullptr ? swapchain->getCurrentFramebufferIndex() : 0;
+
 	VkRenderPassBeginInfo beginInfo = {};
 	beginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	beginInfo.renderPass = handle;
-	beginInfo.framebuffer = framebuffers[renderTarget->getCurrentFramebufferIndex()];
+	beginInfo.framebuffer = framebuffers[framebufferIndex];
 	beginInfo.renderArea = renderArea;
 
-	beginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-	beginInfo.pClearValues = clearValues.data();
+	if (clearEnabled)
+	{
+		for (auto i = 0; i < attachments.size(); i++)
+		{
+			const auto& description = attachmentDescriptions[i];
+			if (description.loadOp == VK_ATTACHMENT_LOAD_OP_CLEAR
+			    || description.stencilLoadOp == VK_ATTACHMENT_LOAD_OP_CLEAR)
+			{
+				clearValues.push_back(attachments[i]->getClearValue());
+			}
+		}
+
+		beginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+		beginInfo.pClearValues = clearValues.data();
+	}
 
 	vkCmdBeginRenderPass(cmdBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
-}
 
-void RenderPass::end(VkCommandBuffer cmdBuffer)
-{
+	subpasses[0]->render(cmdBuffer);
+
+	for (auto i = 1; i < subpasses.size(); i++)
+	{
+		vkCmdNextSubpass(cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);
+		subpasses[i]->render(cmdBuffer);
+	}
+
 	vkCmdEndRenderPass(cmdBuffer);
 }
 
-void RenderPass::setRenderArea(VkRect2D area)
+uint32_t RenderPass::getAttachmentIndex(Attachment* a)
 {
-	renderArea = area;
+	auto found = lower_bound(attachments.begin(), attachments.end(), a);
+	if (*found != a)
+		throw runtime_error("No such attachment.");
+	return static_cast<uint32_t>(distance(attachments.begin(), found));
 }
 
-void RenderPass::setClearEnabled(bool enabled)
+void RenderPass::addAttachment(Attachment* a)
 {
-	clearEnabled = enabled;
+	auto pos = lower_bound(attachments.begin(), attachments.end(), a);
+	if (*pos != a)
+	{
+		attachments.insert(pos, a);
+	}
+	auto swapchainAttachment = dynamic_cast<Swapchain*>(a);
+	if (swapchainAttachment != nullptr)
+	{
+		if (swapchain != nullptr) throw runtime_error(
+			"Can only use one swapchain attachment per render pass.");
+		swapchain = swapchainAttachment;
+	}
 }
 
-void RenderPass::setClearValue(const VkClearValue& value)
+const VkAttachmentReference* RenderPass::addAttachmentReference(Attachment* attachment,
+								VkImageLayout layout)
 {
-	clearValue = value;
+	auto index = attachmentReferences.size();
+	attachmentReferences.push_back({getAttachmentIndex(attachment), layout});
+	return attachmentReferences.data() + index;
+}
+
+const VkAttachmentReference* RenderPass::addAttachmentReferences(
+	std::vector<Attachment*>& attachments, VkImageLayout layout)
+{
+	auto index = attachmentReferences.size();
+	for (Attachment* attachment : attachments)
+		attachmentReferences.push_back({getAttachmentIndex(attachment), layout});
+	return attachmentReferences.data() + index;
 }
 
 void RenderPass::create()
 {
-	uint32_t attachmentCount = 1;
-	VkAttachmentDescription passAttachments[2] = {};
-	passAttachments[0].format = renderTarget->getFormat();
-	passAttachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
-	passAttachments[0].loadOp =  clearEnabled ? VK_ATTACHMENT_LOAD_OP_CLEAR
-						  : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	passAttachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	passAttachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	passAttachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	passAttachments[0].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	passAttachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	if (renderTarget->isDepthImageEnabled())
-	{
-		passAttachments[1].format = VK_FORMAT_D16_UNORM;
-		passAttachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
-		passAttachments[1].loadOp =  VK_ATTACHMENT_LOAD_OP_CLEAR;
-		passAttachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		passAttachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		passAttachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		passAttachments[1].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		passAttachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		attachmentCount++;
-	}
-
-	VkAttachmentReference colorAttachment = {};
-	colorAttachment.attachment = 0;
-	colorAttachment.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	VkAttachmentReference depthAttachment = {};
-	depthAttachment.attachment = 1;
-	depthAttachment.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-	VkSubpassDescription subpass = {};
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &colorAttachment;
-
-	if (renderTarget->isDepthImageEnabled())
-		subpass.pDepthStencilAttachment = &depthAttachment;
-
 	VkRenderPassCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	info.attachmentCount = attachmentCount;
-	info.pAttachments = passAttachments;
-	info.subpassCount = 1;
-	info.pSubpasses = &subpass;
+	info.attachmentCount = static_cast<uint32_t>(attachmentDescriptions.size());
+	info.pAttachments = attachmentDescriptions.data();
+	info.subpassCount = static_cast<uint32_t>(subpassDescriptions.size());
+	info.pSubpasses = subpassDescriptions.data();
+	info.dependencyCount = static_cast<uint32_t>(subpassDependencies.size());
+	info.pDependencies = subpassDependencies.data();
 
-	VkResult result = vkCreateRenderPass(*renderTarget->getDevice(), &info, nullptr, &handle);
+	VkResult result = vkCreateRenderPass(*device, &info, nullptr, &handle);
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to create render pass.");
 
@@ -130,28 +225,53 @@ void RenderPass::create()
 
 void RenderPass::createFramebuffers()
 {
-	VkImageView attachments[2];
-	attachments[1] = renderTarget->getDepthImageView();
+	vector<VkImageView> attachmentViews;
+	int swapchainIndex = -1;
+	for (int i = 0; i < attachments.size(); i++)
+	{
+		if (swapchain != nullptr && attachments[i] == static_cast<Attachment*>(swapchain))
+		{
+			swapchainIndex = i;
+			attachmentViews.push_back(VK_NULL_HANDLE);
+			continue;
+		}
+		auto imageAttachment = dynamic_cast<ImageAttachment*>(attachments[i]);
+		if (imageAttachment == nullptr)
+			throw runtime_error("Unsupported attachment subclass.");
+		attachmentViews.push_back(imageAttachment->getImageView());
+	}
+	if (swapchain != nullptr && swapchainIndex == -1)
+		throw runtime_error("This should never happen.");
 
 	VkFramebufferCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 	info.renderPass = handle;
-	info.attachmentCount = renderTarget->isDepthImageEnabled() ? 2 : 1;
-	info.pAttachments = attachments;
-	info.width = renderTarget->getWidth();
-	info.height = renderTarget->getHeight();
+	info.attachmentCount = static_cast<uint32_t>(attachmentViews.size());
+	info.pAttachments = attachmentViews.data();
+	info.width = renderExtent.width;
+	info.height = renderExtent.height;
 	info.layers = 1;
 
-	uint32_t n = renderTarget->getFramebufferImageCount();
-	framebuffers.resize(n);
-	for (uint32_t i = 0; i < n; i++)
+	auto framebufferCount = swapchain != nullptr ? swapchain->getFramebufferImageCount() : 1;
+	framebuffers.resize(framebufferCount);
+	for (auto i = 0; i < framebufferCount; i++)
 	{
-		attachments[0] = renderTarget->getFramebufferImageViews()[i];
-		VkResult result = vkCreateFramebuffer(*renderTarget->getDevice(), &info, nullptr,
+		if (swapchain != nullptr)
+		{
+			attachmentViews[swapchainIndex] =
+				swapchain->getFramebufferImageView(static_cast<uint32_t>(i));
+		}
+		VkResult result = vkCreateFramebuffer(*device, &info, nullptr,
 						      framebuffers.data() + i);
 		if (result != VK_SUCCESS)
 			throw runtime_error("Failed to create framebuffer.");
 	}
+}
+
+void RenderPass::destroyFramebuffers()
+{
+	for (VkFramebuffer fb : framebuffers)
+		vkDestroyFramebuffer(*device, fb, nullptr);
 }
 
 }

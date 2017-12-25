@@ -30,8 +30,9 @@ public:
 	virtual void after(VkCommandBuffer cmdBuffer) {}
 
 	virtual void resize(uint32_t width, uint32_t height) = 0;
+	virtual const VkAttachmentDescription& getDescription() const = 0;
 
-	bool isReady() const { return device != nullptr; }
+	virtual bool isReady() const { return device != nullptr; }
 	Device* getDevice() { return device; }
 	VkFormat getFormat() const { return format; }
 	uint32_t getWidth() const { return width; }

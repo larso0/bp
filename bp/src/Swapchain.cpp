@@ -8,14 +8,22 @@ namespace bp
 {
 
 void Swapchain::init(NotNull<Device> device, VkSurfaceKHR surface, uint32_t width, uint32_t height,
-		     const FlagSet<Flags>& flags)
+		     bool vsync)
 {
-	if (isReady()) throw runtime_error("Swapchain already initialized.");
-	if (surface == VK_NULL_HANDLE) throw invalid_argument("Surface must be a valid handle.");
-	this->surface = surface;
-	this->flags = flags;
-	RenderTarget::init(device, VK_FORMAT_B8G8R8_UNORM, width, height, flags);
+	Attachment::device = device;
+	Attachment::width = width;
+	Attachment::height = height;
+	Swapchain::surface = surface;
+	Swapchain::vsync = vsync;
+	format = VK_FORMAT_B8G8R8_UNORM;
 	framebufferImageCount = 2;
+
+	VkSemaphoreCreateInfo semInfo =
+		{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, nullptr, 0};
+	VkResult result = vkCreateSemaphore(*device, &semInfo, nullptr, &presentSemaphore);
+	if (result != VK_SUCCESS)
+		throw runtime_error("Failed to create semaphore.");
+
 	create();
 }
 
@@ -24,41 +32,19 @@ Swapchain::~Swapchain()
 	destroy();
 }
 
-void Swapchain::beginFrame(VkCommandBuffer cmdBuffer)
+void Swapchain::before(VkCommandBuffer cmdBuffer)
 {
-	assertReady();
 	nextImage();
 	transitionColor(cmdBuffer);
-	if (flags & Flags::DEPTH_STAGING_BUFFER)
-	{
-		depthImage->transition(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-				       VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
-				       VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-				       VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
-	}
 }
 
-void Swapchain::endFrame(VkCommandBuffer cmdBuffer)
+void Swapchain::after(VkCommandBuffer cmdBuffer)
 {
-	assertReady();
 	transitionPresent(cmdBuffer);
-	if (flags & Flags::DEPTH_STAGING_BUFFER)
-	{
-		depthImage->transition(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-				       VK_ACCESS_TRANSFER_READ_BIT,
-				       VK_PIPELINE_STAGE_TRANSFER_BIT, cmdBuffer);
-	}
 }
 
 void Swapchain::present(VkSemaphore waitSemaphore)
 {
-	assertReady();
-	if (flags & Flags::DEPTH_STAGING_BUFFER)
-	{
-		VkCommandBuffer cmdBuffer = beginSingleUseCmdBuffer(*device, cmdPool);
-		depthStagingBuffer->transfer(*depthImage, cmdBuffer);
-		endSingleUseCmdBuffer(*device, device->getGraphicsQueue(), cmdPool, cmdBuffer);
-	}
 	VkPresentInfoKHR presentInfo = {};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	presentInfo.waitSemaphoreCount = 1;
@@ -73,7 +59,8 @@ void Swapchain::present(VkSemaphore waitSemaphore)
 
 void Swapchain::resize(uint32_t w, uint32_t h)
 {
-	RenderTarget::resize(w, h);
+	width = w;
+	height = h;
 	create();
 }
 
@@ -141,7 +128,7 @@ void Swapchain::create()
 						  present_modes.data());
 
 	VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR;
-	if (!(flags & Flags::VERTICAL_SYNC))
+	if (!vsync)
 	{
 		for (uint32_t i = 0; i < n; i++)
 		{

@@ -18,14 +18,52 @@ void Subpass::setDepthAttachment(NotNull<DepthAttachment> depthAttachment)
 	Subpass::depthAttachment = depthAttachment;
 }
 
-void Subpass::addAttachment(NotNull<Attachment> attachment, VkImageLayout layout)
+void Subpass::addDependency(NotNull<Subpass> subpass, const DependencyInfo& dependencyInfo)
+{
+	if (device == nullptr) device = subpass->device;
+	else if (subpass->device != device)
+	{
+		if (subpass->device == nullptr) subpass->device = device;
+		else throw runtime_error(
+				"All subpasses of a render pass must use the same device.");
+	}
+	dependencies.emplace_back(subpass, dependencyInfo);
+	subpass->dependents.push_back(this);
+}
+
+void Subpass::addInputAttachment(NotNull<Attachment> attachment)
 {
 	if (!attachment->isReady())
 		throw runtime_error("Attachment must be initialized before adding to a subpass.");
 	if (device == nullptr) device = attachment->getDevice();
 	else if (device != attachment->getDevice())
-		throw runtime_error("Attachment must use the same device as the other attachments.");
-	attachments.push_back({attachment, layout});
+		throw runtime_error(
+			"Attachment must use the same device as the other attachments.");
+	inputAttachments.push_back(attachment.get());
+}
+
+void Subpass::addColorAttachment(NotNull<Attachment> attachment, Attachment* resolveAttachment)
+{
+	if (resolveAttachment != nullptr)
+	{
+		if (colorAttachments.size() > resolveAttachments.size())
+			throw runtime_error("Resolve- and color- attachment counts must match.");
+		if (!resolveAttachment->isReady())
+			throw runtime_error(
+				"Attachment must be initialized before adding to a subpass.");
+		if (device == nullptr) device = resolveAttachment->getDevice();
+		else if (device != resolveAttachment->getDevice())
+			throw runtime_error(
+				"Attachment must use the same device as the other attachments.");
+		resolveAttachments.push_back(resolveAttachment);
+	}
+	if (!attachment->isReady())
+		throw runtime_error("Attachment must be initialized before adding to a subpass.");
+	if (device == nullptr) device = attachment->getDevice();
+	else if (device != attachment->getDevice())
+		throw runtime_error(
+			"Attachment must use the same device as the other attachments.");
+	colorAttachments.push_back(attachment.get());
 }
 
 }
