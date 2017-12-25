@@ -15,6 +15,7 @@ class ImageTarget : public RenderTarget
 public:
 	ImageTarget() :
 		RenderTarget{},
+		image{nullptr},
 		stagingImage{nullptr} {}
 	ImageTarget(NotNull<Device> device, uint32_t width, uint32_t height,
 		    const FlagSet<Flags>& flags =
