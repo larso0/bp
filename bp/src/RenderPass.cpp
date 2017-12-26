@@ -39,7 +39,30 @@ void RenderPass::init()
 		throw runtime_error("No subpasses added to render pass.");
 
 	for (Attachment* attachment : attachments)
-		attachmentDescriptions.push_back(attachment->getDescription());
+	{
+		VkAttachmentDescription description = {};
+		description.format = attachment->getFormat();
+		description.samples = VK_SAMPLE_COUNT_1_BIT;
+
+		if (attachment->isClearEnabled()) description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		else description.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+
+		description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+		if (dynamic_cast<DepthAttachment*>(attachment) != nullptr)
+		{
+			description.initialLayout = description.finalLayout =
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		} else
+		{
+			description.initialLayout = description.finalLayout =
+				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		}
+
+		attachmentDescriptions.push_back(description);
+	}
 
 	for (Subpass* subpass : subpasses)
 	{

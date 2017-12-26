@@ -39,16 +39,22 @@ void Window::init()
 	if (physical == VK_NULL_HANDLE) throw runtime_error("No suitable device available.");
 	device.init(physical, requirements);
 	swapchain.init(&device, surface, static_cast<uint32_t>(width()),
-		       static_cast<uint32_t>(height()), swapchainFlags);
+		       static_cast<uint32_t>(height()), vsync);
 
 	bp::connect(swapchain.presentQueuedEvent, *this, &Window::presentQueued);
 
+	VkCommandPoolCreateInfo poolInfo = {};
+	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	poolInfo.queueFamilyIndex = device.getGraphicsQueue().getQueueFamilyIndex();
+	VkResult result = vkCreateCommandPool(device, &poolInfo, nullptr, &cmdPool);
+	if (result != VK_SUCCESS) throw runtime_error("Failed to create command pool.");
+
 	VkCommandBufferAllocateInfo cmdBufferInfo = {};
 	cmdBufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	cmdBufferInfo.commandPool = swapchain.getCmdPool();
+	cmdBufferInfo.commandPool = cmdPool;
 	cmdBufferInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	cmdBufferInfo.commandBufferCount = 1;
-	VkResult result = vkAllocateCommandBuffers(device, &cmdBufferInfo, &frameCmdBuffer);
+	result = vkAllocateCommandBuffers(device, &cmdBufferInfo, &frameCmdBuffer);
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to allocate command buffer.");
 
@@ -88,9 +94,9 @@ void Window::frame()
 	frameSubmitInfo.pWaitSemaphores = &presentSem;
 
 	vkBeginCommandBuffer(frameCmdBuffer, &frameCmdBufferBeginInfo);
-	swapchain.beginFrame(frameCmdBuffer);
+	swapchain.before(frameCmdBuffer);
 	render(frameCmdBuffer);
-	swapchain.endFrame(frameCmdBuffer);
+	swapchain.after(frameCmdBuffer);
 	vkEndCommandBuffer(frameCmdBuffer);
 	vkQueueSubmit(queue, 1, &frameSubmitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(queue);

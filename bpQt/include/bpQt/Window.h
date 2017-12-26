@@ -19,6 +19,7 @@ public:
 		inited{false},
 		continuousAnimation{false},
 		surface{VK_NULL_HANDLE},
+		cmdPool{VK_NULL_HANDLE},
 		frameCmdBuffer{VK_NULL_HANDLE},
 		renderCompleteSem{VK_NULL_HANDLE},
 		frameCmdBufferBeginInfo{},
@@ -34,13 +35,8 @@ public:
 
 	virtual ~Window();
 
-	void setSwapchainFlags(const bp::FlagSet<bp::Swapchain::Flags>& flags)
-	{
-		swapchainFlags = flags;
-	}
-
-	void enableContinuousAnimation() { continuousAnimation = true; }
-	void disableContinuousAnimation() { continuousAnimation = false; }
+	void setVSync(bool enabled) { vsync = enabled; }
+	void setContinuousRendering(bool enabled) { continuousAnimation = enabled; }
 
 protected:
 	bp::Device device;
@@ -55,8 +51,9 @@ protected:
 private:
 	bool surfaceDestroyed, inited, continuousAnimation;
 	VkSurfaceKHR surface;
-	bp::FlagSet<bp::Swapchain::Flags> swapchainFlags;
+	bool vsync;
 
+	VkCommandPool cmdPool;
 	VkCommandBuffer frameCmdBuffer;
 	VkSemaphore renderCompleteSem;
 

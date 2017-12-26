@@ -19,7 +19,7 @@ public:
 		handle{VK_NULL_HANDLE},
 		colorSpace{VK_COLOR_SPACE_SRGB_NONLINEAR_KHR} {}
 	Swapchain(NotNull<Device> device, VkSurfaceKHR surface, uint32_t width, uint32_t height,
-		  bool vsync = true) :
+		  bool vsync) :
 		Swapchain{}
 	{
 		init(device, surface, width, height, vsync);
@@ -28,7 +28,7 @@ public:
 	~Swapchain() override;
 
 	void init(NotNull<Device> device, VkSurfaceKHR surface, uint32_t width, uint32_t height,
-		  bool vsync = true);
+		  bool vsync);
 
 	void before(VkCommandBuffer cmdBuffer) override;
 	void after(VkCommandBuffer cmdBuffer) override;

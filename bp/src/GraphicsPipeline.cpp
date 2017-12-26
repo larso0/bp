@@ -71,7 +71,7 @@ void GraphicsPipeline::create()
 	VkPipelineDepthStencilStateCreateInfo depthState = {};
 	depthState.sType =
 		VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	if (renderPass->getRenderTarget().isDepthImageEnabled())
+	if (depthEnabled)
 	{
 		depthState.depthTestEnable = VK_TRUE;
 		depthState.depthWriteEnable = VK_TRUE;

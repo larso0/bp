@@ -16,6 +16,7 @@ public:
 		device{nullptr},
 		format{VK_FORMAT_UNDEFINED},
 		width{0}, height{0},
+		clearEnabled{false},
 		clearValue{} {}
 	virtual ~Attachment() = default;
 
@@ -30,20 +31,22 @@ public:
 	virtual void after(VkCommandBuffer cmdBuffer) {}
 
 	virtual void resize(uint32_t width, uint32_t height) = 0;
-	virtual const VkAttachmentDescription& getDescription() const = 0;
 
 	virtual bool isReady() const { return device != nullptr; }
+	bool isClearEnabled() const { return clearEnabled; }
 	Device* getDevice() { return device; }
 	VkFormat getFormat() const { return format; }
 	uint32_t getWidth() const { return width; }
 	uint32_t getHeight() const { return height; }
 	const VkClearValue& getClearValue() const { return clearValue; }
+	void setClearEnabled(bool enabled) { clearEnabled = enabled; }
 	void setClearValue(const VkClearValue& clearValue) { Attachment::clearValue = clearValue; }
 
 protected:
 	Device* device;
 	VkFormat format;
 	uint32_t width, height;
+	bool clearEnabled;
 	VkClearValue clearValue;
 };
 

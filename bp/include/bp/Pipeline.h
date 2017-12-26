@@ -17,19 +17,18 @@ public:
 	Pipeline() :
 		device{nullptr},
 		handle{VK_NULL_HANDLE},
-		layout{VK_NULL_HANDLE},
-		renderPass{VK_NULL_HANDLE} {}
-	Pipeline(NotNull<Device> device, NotNull<RenderPass> renderPass, VkPipelineLayout layout,
-		 std::initializer_list<VkPipelineShaderStageCreateInfo> shaderStageInfos) :
-		Pipeline{}
-	{
-		addShaderStageInfos(shaderStageInfos.begin(), shaderStageInfos.end());
-		init(device, renderPass, layout);
-	}
+		layout{VK_NULL_HANDLE} {}
 	virtual ~Pipeline()
 	{
 		if (isReady())
 			vkDestroyPipeline(*device, handle, nullptr);
+	}
+
+	void init(NotNull<Device> device, VkPipelineLayout layout)
+	{
+		Pipeline::device = device;
+		Pipeline::layout = layout;
+		create();
 	}
 
 	void addShaderStageInfo(const VkPipelineShaderStageCreateInfo& info)
@@ -43,20 +42,6 @@ public:
 		shaderStageInfos.insert(shaderStageInfos.end(), begin, end);
 	}
 
-	void init(NotNull<Device> device, NotNull<RenderPass> renderPass, VkPipelineLayout layout)
-	{
-		this->device = device;
-		this->renderPass = renderPass;
-		this->layout = layout;
-		create();
-	}
-	void init(NotNull<Device> device, NotNull<RenderPass> renderPass, VkPipelineLayout layout,
-		  std::initializer_list<VkPipelineShaderStageCreateInfo> shaderStageInfos)
-	{
-		addShaderStageInfos(shaderStageInfos.begin(), shaderStageInfos.end());
-		init(device, renderPass, layout);
-	}
-
 	operator VkPipeline() { return handle; }
 
 	bool isReady() const { return handle != VK_NULL_HANDLE; }
@@ -68,7 +53,6 @@ protected:
 	VkPipeline handle;
 	VkPipelineLayout layout;
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStageInfos;
-	RenderPass* renderPass;
 
 	virtual void create() = 0;
 };

@@ -10,10 +10,13 @@ class ComputePipeline : public Pipeline
 {
 public:
 	ComputePipeline() : Pipeline{} {}
-	ComputePipeline(NotNull<Device> device, NotNull<RenderPass> renderPass,
-			VkPipelineLayout layout,
+	ComputePipeline(NotNull<Device> device, VkPipelineLayout layout,
 			std::initializer_list<VkPipelineShaderStageCreateInfo> shaderStageInfos) :
-		Pipeline{device, renderPass, layout, shaderStageInfos} {}
+		Pipeline{}
+	{
+		addShaderStageInfos(shaderStageInfos.begin(), shaderStageInfos.end());
+		init(device, layout);
+	}
 private:
 	void create() override;
 };
