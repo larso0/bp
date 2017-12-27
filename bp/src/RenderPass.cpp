@@ -33,8 +33,11 @@ void RenderPass::addSubpassGraph(NotNull<Subpass> subpass)
 	}
 }
 
-void RenderPass::init()
+void RenderPass::init(uint32_t width, uint32_t height)
 {
+	renderExtent.width = width;
+	renderExtent.height = height;
+
 	if (subpasses.empty())
 		throw runtime_error("No subpasses added to render pass.");
 
@@ -71,38 +74,34 @@ void RenderPass::init()
 
 		if (!subpass->inputAttachments.empty())
 		{
-			auto attachmentReferences = addAttachmentReferences(
-				subpass->inputAttachments,
-				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 			description.inputAttachmentCount =
 				static_cast<uint32_t>(subpass->inputAttachments.size());
-			description.pInputAttachments = attachmentReferences;
+			description.pInputAttachments = addAttachmentReferences(
+				subpass->inputAttachments,
+				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		}
 
 		if (!subpass->colorAttachments.empty())
 		{
-			auto attachmentReferences = addAttachmentReferences(
-				subpass->colorAttachments,
-				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 			description.colorAttachmentCount =
 				static_cast<uint32_t>(subpass->colorAttachments.size());
-			description.pColorAttachments = attachmentReferences;
+			description.pColorAttachments = addAttachmentReferences(
+				subpass->colorAttachments,
+				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 		}
 
 		if (!subpass->resolveAttachments.empty())
 		{
-			auto attachmentReferences = addAttachmentReferences(
+			description.pResolveAttachments = addAttachmentReferences(
 				subpass->resolveAttachments,
 				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-			description.pResolveAttachments = attachmentReferences;
 		}
 
 		if (subpass->depthAttachment != nullptr)
 		{
-			auto attachmentReference = addAttachmentReference(
+			description.pDepthStencilAttachment = addAttachmentReference(
 				subpass->depthAttachment,
 				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-			description.pDepthStencilAttachment = attachmentReference;
 		}
 
 		subpassDescriptions.push_back(description);
@@ -139,16 +138,22 @@ void RenderPass::init()
 	}
 
 	create();
+
+	for (Subpass* subpass : subpasses) subpass->init(this);
 }
 
-void RenderPass::recreateFramebuffers()
+void RenderPass::resize(uint32_t width, uint32_t height)
 {
+	renderExtent.width = width;
+	renderExtent.height = height;
 	destroyFramebuffers();
 	createFramebuffers();
 }
 
 void RenderPass::render(VkCommandBuffer cmdBuffer)
 {
+	for (Attachment* attachment : attachments) attachment->before(cmdBuffer);
+
 	vector<VkClearValue> clearValues;
 	auto framebufferIndex = swapchain != nullptr ? swapchain->getCurrentFramebufferIndex() : 0;
 
@@ -158,21 +163,18 @@ void RenderPass::render(VkCommandBuffer cmdBuffer)
 	beginInfo.framebuffer = framebuffers[framebufferIndex];
 	beginInfo.renderArea = renderArea;
 
-	if (clearEnabled)
+	for (auto i = 0; i < attachments.size(); i++)
 	{
-		for (auto i = 0; i < attachments.size(); i++)
+		const auto& description = attachmentDescriptions[i];
+		if (description.loadOp == VK_ATTACHMENT_LOAD_OP_CLEAR
+		    || description.stencilLoadOp == VK_ATTACHMENT_LOAD_OP_CLEAR)
 		{
-			const auto& description = attachmentDescriptions[i];
-			if (description.loadOp == VK_ATTACHMENT_LOAD_OP_CLEAR
-			    || description.stencilLoadOp == VK_ATTACHMENT_LOAD_OP_CLEAR)
-			{
-				clearValues.push_back(attachments[i]->getClearValue());
-			}
+			clearValues.push_back(attachments[i]->getClearValue());
 		}
-
-		beginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-		beginInfo.pClearValues = clearValues.data();
 	}
+
+	beginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	beginInfo.pClearValues = clearValues.data();
 
 	vkCmdBeginRenderPass(cmdBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -185,12 +187,14 @@ void RenderPass::render(VkCommandBuffer cmdBuffer)
 	}
 
 	vkCmdEndRenderPass(cmdBuffer);
+
+	for (Attachment* attachment : attachments) attachment->after(cmdBuffer);
 }
 
 uint32_t RenderPass::getAttachmentIndex(Attachment* a)
 {
 	auto found = lower_bound(attachments.begin(), attachments.end(), a);
-	if (*found != a)
+	if (found == attachments.end() || *found != a)
 		throw runtime_error("No such attachment.");
 	return static_cast<uint32_t>(distance(attachments.begin(), found));
 }
@@ -198,7 +202,7 @@ uint32_t RenderPass::getAttachmentIndex(Attachment* a)
 void RenderPass::addAttachment(Attachment* a)
 {
 	auto pos = lower_bound(attachments.begin(), attachments.end(), a);
-	if (*pos != a)
+	if (pos == attachments.end() || *pos != a)
 	{
 		attachments.insert(pos, a);
 	}
@@ -215,17 +219,19 @@ const VkAttachmentReference* RenderPass::addAttachmentReference(Attachment* atta
 								VkImageLayout layout)
 {
 	auto index = attachmentReferences.size();
-	attachmentReferences.push_back({getAttachmentIndex(attachment), layout});
-	return attachmentReferences.data() + index;
+	attachmentReferences.emplace_back();
+	attachmentReferences[index].push_back({getAttachmentIndex(attachment), layout});
+	return attachmentReferences[index].data();
 }
 
 const VkAttachmentReference* RenderPass::addAttachmentReferences(
 	std::vector<Attachment*>& attachments, VkImageLayout layout)
 {
 	auto index = attachmentReferences.size();
+	attachmentReferences.emplace_back();
 	for (Attachment* attachment : attachments)
-		attachmentReferences.push_back({getAttachmentIndex(attachment), layout});
-	return attachmentReferences.data() + index;
+		attachmentReferences[index].push_back({getAttachmentIndex(attachment), layout});
+	return attachmentReferences[index].data();
 }
 
 void RenderPass::create()

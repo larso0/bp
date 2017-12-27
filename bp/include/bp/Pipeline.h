@@ -24,13 +24,6 @@ public:
 			vkDestroyPipeline(*device, handle, nullptr);
 	}
 
-	void init(NotNull<Device> device, VkPipelineLayout layout)
-	{
-		Pipeline::device = device;
-		Pipeline::layout = layout;
-		create();
-	}
-
 	void addShaderStageInfo(const VkPipelineShaderStageCreateInfo& info)
 	{
 		shaderStageInfos.push_back(info);
@@ -53,8 +46,6 @@ protected:
 	VkPipeline handle;
 	VkPipelineLayout layout;
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStageInfos;
-
-	virtual void create() = 0;
 };
 
 }

@@ -16,7 +16,8 @@ Window::~Window()
 {
 	if (renderCompleteSem != VK_NULL_HANDLE)
 		vkDestroySemaphore(device, renderCompleteSem, nullptr);
-
+	if (cmdPool != VK_NULL_HANDLE)
+		vkDestroyCommandPool(device, cmdPool, nullptr);
 }
 
 VkPhysicalDevice Window::selectDevice(const vector<VkPhysicalDevice>& devices)
@@ -45,6 +46,7 @@ void Window::init()
 
 	VkCommandPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	poolInfo.queueFamilyIndex = device.getGraphicsQueue().getQueueFamilyIndex();
 	VkResult result = vkCreateCommandPool(device, &poolInfo, nullptr, &cmdPool);
 	if (result != VK_SUCCESS) throw runtime_error("Failed to create command pool.");
@@ -94,9 +96,7 @@ void Window::frame()
 	frameSubmitInfo.pWaitSemaphores = &presentSem;
 
 	vkBeginCommandBuffer(frameCmdBuffer, &frameCmdBufferBeginInfo);
-	swapchain.before(frameCmdBuffer);
 	render(frameCmdBuffer);
-	swapchain.after(frameCmdBuffer);
 	vkEndCommandBuffer(frameCmdBuffer);
 	vkQueueSubmit(queue, 1, &frameSubmitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(queue);

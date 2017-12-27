@@ -17,8 +17,15 @@ public:
 		addShaderStageInfos(shaderStageInfos.begin(), shaderStageInfos.end());
 		init(device, layout);
 	}
+
+	void init(NotNull<Device> device, VkPipelineLayout layout)
+	{
+		Pipeline::device = device;
+		Pipeline::layout = layout;
+		create();
+	}
 private:
-	void create() override;
+	void create();
 };
 
 }

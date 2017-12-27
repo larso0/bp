@@ -30,6 +30,8 @@ void Swapchain::init(NotNull<Device> device, VkSurfaceKHR surface, uint32_t widt
 Swapchain::~Swapchain()
 {
 	destroy();
+	if (presentSemaphore != VK_NULL_HANDLE)
+		vkDestroySemaphore(*device, presentSemaphore, nullptr);
 }
 
 void Swapchain::before(VkCommandBuffer cmdBuffer)

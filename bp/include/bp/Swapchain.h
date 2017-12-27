@@ -17,7 +17,10 @@ public:
 		vsync{true},
 		surface{VK_NULL_HANDLE},
 		handle{VK_NULL_HANDLE},
-		colorSpace{VK_COLOR_SPACE_SRGB_NONLINEAR_KHR} {}
+		colorSpace{VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+		framebufferImageCount{2},
+		currentFramebufferIndex{0},
+		presentSemaphore{VK_NULL_HANDLE} {}
 	Swapchain(NotNull<Device> device, VkSurfaceKHR surface, uint32_t width, uint32_t height,
 		  bool vsync) :
 		Swapchain{}
@@ -40,7 +43,7 @@ public:
 
 	operator VkSwapchainKHR() { return handle; }
 
-	bool isReady() const override { handle != VK_NULL_HANDLE; }
+	bool isReady() const override { return handle != VK_NULL_HANDLE; }
 	VkSwapchainKHR getHandle() { return handle; }
 	VkSurfaceKHR getSurface() { return surface; }
 	uint32_t getFramebufferImageCount() const { return framebufferImageCount; }

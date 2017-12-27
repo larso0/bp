@@ -17,6 +17,14 @@ public:
 		cullMode{VK_CULL_MODE_BACK_BIT},
 		frontFace{VK_FRONT_FACE_COUNTER_CLOCKWISE},
 		depthEnabled{true} {}
+
+	void init(NotNull<Device> device, NotNull<RenderPass> renderPass, VkPipelineLayout layout)
+	{
+		Pipeline::device = device;
+		Pipeline::layout = layout;
+		GraphicsPipeline::renderPass = renderPass;
+		create();
+	}
 	
 	void addVertexBindingDescription(const VkVertexInputBindingDescription& description)
 	{
@@ -90,7 +98,7 @@ private:
 	VkFrontFace frontFace;
 	bool depthEnabled;
 	
-	void create() override;
+	void create();
 };
 
 }

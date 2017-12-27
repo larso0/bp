@@ -9,6 +9,8 @@
 namespace bp
 {
 
+class RenderPass;
+
 class Subpass
 {
 	friend class RenderPass;
@@ -27,6 +29,7 @@ public:
 		depthAttachment{nullptr} {}
 	virtual ~Subpass() = default;
 
+	virtual void init(NotNull<RenderPass> renderPass) = 0;
 	virtual void render(VkCommandBuffer cmdBuffer) = 0;
 
 	void addDependency(NotNull<Subpass> subpass, const DependencyInfo& dependencyInfo);
