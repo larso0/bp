@@ -4,7 +4,6 @@
 #include "Subpass.h"
 #include "Swapchain.h"
 #include "Pointer.h"
-#include <set>
 #include <vector>
 
 namespace bp
