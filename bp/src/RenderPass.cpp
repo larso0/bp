@@ -154,7 +154,7 @@ void RenderPass::render(VkCommandBuffer cmdBuffer)
 {
 	for (Attachment* attachment : attachments) attachment->before(cmdBuffer);
 
-	vector<VkClearValue> clearValues;
+	vector<VkClearValue> clearValues(attachments.size());
 	auto framebufferIndex = swapchain != nullptr ? swapchain->getCurrentFramebufferIndex() : 0;
 
 	VkRenderPassBeginInfo beginInfo = {};
@@ -169,7 +169,7 @@ void RenderPass::render(VkCommandBuffer cmdBuffer)
 		if (description.loadOp == VK_ATTACHMENT_LOAD_OP_CLEAR
 		    || description.stencilLoadOp == VK_ATTACHMENT_LOAD_OP_CLEAR)
 		{
-			clearValues.push_back(attachments[i]->getClearValue());
+			clearValues[i] = attachments[i]->getClearValue();
 		}
 	}
 
