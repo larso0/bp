@@ -11,28 +11,19 @@ class GraphicsPipeline : public Pipeline
 public:
 	GraphicsPipeline() :
 		Pipeline{},
+		renderPass{nullptr},
 		primitiveTopology{VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST},
 		polygonMode{VK_POLYGON_MODE_FILL},
 		cullMode{VK_CULL_MODE_BACK_BIT},
-		frontFace{VK_FRONT_FACE_COUNTER_CLOCKWISE} {}
-	GraphicsPipeline(NotNull<Device> device, NotNull<RenderPass> renderPass,
-			 VkPipelineLayout layout,
-			 std::initializer_list<VkPipelineShaderStageCreateInfo> shaderStageInfos,
-			 std::initializer_list<VkVertexInputBindingDescription> bindingDescriptions,
-			 std::initializer_list<VkVertexInputAttributeDescription> attributes,
-			 VkPrimitiveTopology topology, VkPolygonMode polygonMode,
-			 VkCullModeFlags cullMode, VkFrontFace frontFace) :
-		Pipeline{},
-		primitiveTopology{topology},
-		polygonMode{polygonMode},
-		cullMode{cullMode},
-		frontFace{frontFace}
+		frontFace{VK_FRONT_FACE_COUNTER_CLOCKWISE},
+		depthEnabled{true} {}
+
+	void init(NotNull<Device> device, NotNull<RenderPass> renderPass, VkPipelineLayout layout)
 	{
-		addShaderStageInfos(shaderStageInfos.begin(), shaderStageInfos.end());
-		addVertexBindingDescriptions(bindingDescriptions.begin(),
-					     bindingDescriptions.end());
-		addVertexAttributeDescriptions(attributes.begin(), attributes.end());
-		init(device, renderPass, layout);
+		Pipeline::device = device;
+		Pipeline::layout = layout;
+		GraphicsPipeline::renderPass = renderPass;
+		create();
 	}
 	
 	void addVertexBindingDescription(const VkVertexInputBindingDescription& description)
@@ -71,6 +62,11 @@ public:
 		GraphicsPipeline::frontFace = frontFace;
 	}
 
+	void setDepthEnabled(bool enabled)
+	{
+		depthEnabled = enabled;
+	}
+
 	VkPrimitiveTopology getPrimitiveTopology() const
 	{
 		return primitiveTopology;
@@ -87,16 +83,22 @@ public:
 	{
 		return frontFace;
 	}
+	bool isDepthEnabled() const
+	{
+		return depthEnabled;
+	}
 
 private:
+	RenderPass* renderPass;
 	std::vector<VkVertexInputBindingDescription> vertexBindingDescriptions;
 	std::vector<VkVertexInputAttributeDescription> vertexAttributeDescriptions;
 	VkPrimitiveTopology primitiveTopology;
 	VkPolygonMode polygonMode;
 	VkCullModeFlags cullMode;
 	VkFrontFace frontFace;
+	bool depthEnabled;
 	
-	void create() override;
+	void create();
 };
 
 }
