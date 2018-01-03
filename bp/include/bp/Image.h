@@ -45,7 +45,7 @@ public:
 		  VkImageLayout initialLayout = VK_IMAGE_LAYOUT_UNDEFINED);
 
 	void* map(VkDeviceSize offset, VkDeviceSize size);
-	void unmap(bool writeBack = true);
+	void unmap(bool writeBack = true, VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
 	void transition(VkImageLayout dstLayout, VkAccessFlags dstAccess,
 			VkPipelineStageFlags dstStage, VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
 	void transfer(Image& fromImage, VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);

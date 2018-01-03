@@ -12,7 +12,7 @@ public:
 	Texture() :
 		ImageAttachment{}
 	{
-		imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 	}
 	Texture(NotNull<Device> device, VkFormat format, uint32_t width, uint32_t height) :
 		Texture{}
@@ -21,8 +21,8 @@ public:
 	}
 	virtual ~Texture() = default;
 
-	virtual void before(VkCommandBuffer cmdBuffer) override;
-
+	void before(VkCommandBuffer cmdBuffer) override;
+	void transitionShaderReadable(VkCommandBuffer cmdBuffer);
 
 private:
 	void createImageView() override;

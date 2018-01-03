@@ -24,11 +24,12 @@ public:
 
 	virtual ~ImageAttachment();
 
-	void init(NotNull<Device> device, VkFormat format, uint32_t width, uint32_t height);
+	virtual void init(NotNull<Device> device, VkFormat format, uint32_t width, uint32_t height);
 
 	void resize(uint32_t width, uint32_t height) override;
 
-	const VkImageView getImageView() const { return imageView; }
+	Image* getImage() { return image; }
+	VkImageView getImageView() { return imageView; }
 
 protected:
 	VkImageUsageFlags imageUsage;

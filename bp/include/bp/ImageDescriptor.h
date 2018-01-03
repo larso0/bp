@@ -18,6 +18,8 @@ public:
 		descriptorInfos{infos} {}
 	virtual ~ImageDescriptor() = default;
 
+	void resetDescriptorInfos() { descriptorInfos.clear(); }
+
 	void addDescriptorInfo(const VkDescriptorImageInfo& info)
 	{
 		descriptorInfos.push_back(info);

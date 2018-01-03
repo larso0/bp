@@ -138,14 +138,14 @@ void* Image::map(VkDeviceSize offset, VkDeviceSize size)
 	return mappedMemory;
 }
 
-void Image::unmap(bool writeBack)
+void Image::unmap(bool writeBack, VkCommandBuffer cmdBuffer)
 {
 	assertReady();
 	if (stagingBuffer != nullptr)
 	{
 		stagingBuffer->unmap();
 		if (writeBack)
-			transfer(*stagingBuffer);
+			transfer(*stagingBuffer, cmdBuffer);
 	} else
 	{
 		vkFlushMappedMemoryRanges(*device, 1, &mapped);
