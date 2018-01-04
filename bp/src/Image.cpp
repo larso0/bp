@@ -184,7 +184,7 @@ void Image::transition(VkImageLayout dstLayout, VkAccessFlags dstAccess,
 			     0, nullptr, 1, &barrier);
 
 	if (useOwnBuffer)
-		endSingleUseCmdBuffer(*device, device->getGraphicsQueue(), cmdPool, cmdBuffer);
+		endSingleUseCmdBuffer(*device, device->getTransferQueue(), cmdPool, cmdBuffer);
 
 	layout = dstLayout;
 	accessFlags = dstAccess;
@@ -225,7 +225,7 @@ void Image::transfer(Image& fromImage, VkCommandBuffer cmdBuffer)
 		       handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
 	if (useOwnBuffer)
-		endSingleUseCmdBuffer(*device, device->getGraphicsQueue(), cmdPool, cmdBuffer);
+		endSingleUseCmdBuffer(*device, device->getTransferQueue(), cmdPool, cmdBuffer);
 }
 
 void Image::transfer(Buffer& src, VkCommandBuffer cmdBuffer)
@@ -256,7 +256,7 @@ void Image::transfer(Buffer& src, VkCommandBuffer cmdBuffer)
 			       &region);
 
 	if (useOwnBuffer)
-		endSingleUseCmdBuffer(*device, device->getGraphicsQueue(), cmdPool, cmdBuffer);
+		endSingleUseCmdBuffer(*device, device->getTransferQueue(), cmdPool, cmdBuffer);
 }
 
 void Image::createCommandPool()
@@ -264,7 +264,7 @@ void Image::createCommandPool()
 	VkCommandPoolCreateInfo cmdPoolInfo = {};
 	cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	cmdPoolInfo.queueFamilyIndex = device->getGraphicsQueue().getQueueFamilyIndex();
+	cmdPoolInfo.queueFamilyIndex = device->getTransferQueue().getQueueFamilyIndex();
 
 	VkResult result = vkCreateCommandPool(*device, &cmdPoolInfo, nullptr, &cmdPool);
 	if (result != VK_SUCCESS)
