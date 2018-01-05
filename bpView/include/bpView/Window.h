@@ -24,12 +24,27 @@ public:
 		BP_FLAGSET_LAST
 	};
 
+	Window() :
+		instance{VK_NULL_HANDLE},
+		handle{nullptr},
+		surface{VK_NULL_HANDLE},
+		width{0}, height{0} {}
 	Window(VkInstance instance, uint32_t width, uint32_t height, const std::string& title,
 	       GLFWmonitor* monitor = nullptr, const FlagSet<Flags>& flags =
 			FlagSet<Flags>() << Flags::RESIZABLE << Flags::VISIBLE
-					 << Flags::DECORATED << Flags::AUTO_ICONIFY);
+					 << Flags::DECORATED << Flags::AUTO_ICONIFY) :
+		Window{}
+	{
+		init(instance, width, height, title, monitor, flags);
+	}
+
 	~Window();
 
+	void init(VkInstance instance, uint32_t width, uint32_t height, const std::string& title,
+		  GLFWmonitor* monitor = nullptr,
+		  const FlagSet<Flags>& flags = FlagSet<Flags>()
+			  << Flags::RESIZABLE << Flags::VISIBLE
+			  << Flags::DECORATED << Flags::AUTO_ICONIFY);
 	void handleEvents();
 
 	void setSize(int width, int height);

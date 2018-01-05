@@ -6,10 +6,15 @@ using namespace std;
 namespace bp
 {
 
-Window::Window(VkInstance instance, uint32_t width, uint32_t height, const std::string& title,
-	       GLFWmonitor* monitor, const FlagSet<Window::Flags>& flags) :
-	instance{instance}
+void Window::init(VkInstance instance, uint32_t width, uint32_t height, const std::string& title,
+		  GLFWmonitor* monitor, const FlagSet<bp::Window::Flags>& flags)
 {
+	Window::instance = instance;
+	Window::width = width;
+	Window::height = height;
+	Window::title = title;
+	Window::flags = flags;
+
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, flags & Flags::RESIZABLE);
 	glfwWindowHint(GLFW_VISIBLE, flags & Flags::VISIBLE);
