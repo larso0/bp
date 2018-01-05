@@ -3,6 +3,7 @@
 
 #include "Device.h"
 #include "Pointer.h"
+#include "CommandPool.h"
 
 namespace bp
 {
@@ -15,7 +16,6 @@ public:
 	Image() :
 		device{nullptr},
 		handle{VK_NULL_HANDLE},
-		cmdPool{VK_NULL_HANDLE},
 		width{0}, height{0},
 		format{VK_FORMAT_UNDEFINED},
 		tiling{VK_IMAGE_TILING_LINEAR},
@@ -68,7 +68,7 @@ private:
 
 	Device* device;
 	VkImage handle;
-	VkCommandPool cmdPool;
+	CommandPool cmdPool;
 	uint32_t width, height;
 	VkFormat format;
 	VkImageTiling tiling;
@@ -81,7 +81,6 @@ private:
 	VkMappedMemoryRange mapped;
 	Buffer* stagingBuffer;
 
-	void createCommandPool();
 	void assertReady();
 };
 

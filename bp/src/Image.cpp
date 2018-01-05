@@ -44,7 +44,7 @@ void Image::init(NotNull<Device> device, uint32_t width, uint32_t height, VkForm
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to create image.");
 
-	VkMemoryRequirements memoryRequirements;
+	VkMemoryRequirements memoryRequirements = {};
 	vkGetImageMemoryRequirements(*device, handle, &memoryRequirements);
 
 	int32_t memType = -1;
@@ -96,13 +96,14 @@ void Image::init(NotNull<Device> device, uint32_t width, uint32_t height, VkForm
 	mapped.pNext = nullptr;
 	mapped.memory = memory;
 	memorySize = memoryRequirements.size;
+
+	cmdPool.init(device->getTransferQueue(), VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
 }
 
 Image::~Image()
 {
 	if (!isReady()) return;
-	if (cmdPool != VK_NULL_HANDLE) vkDestroyCommandPool(*device, cmdPool, nullptr);
-	if (stagingBuffer != nullptr) delete stagingBuffer;
+	delete stagingBuffer;
 	vkFreeMemory(*device, memory, nullptr);
 	vkDestroyImage(*device, handle, nullptr);
 }
@@ -161,10 +162,7 @@ void Image::transition(VkImageLayout dstLayout, VkAccessFlags dstAccess,
 
 	bool useOwnBuffer = cmdBuffer == VK_NULL_HANDLE;
 	if (useOwnBuffer)
-	{
-		if (cmdPool == VK_NULL_HANDLE) createCommandPool();
 		cmdBuffer = beginSingleUseCmdBuffer(*device, cmdPool);
-	}
 
 	VkImageMemoryBarrier barrier = {};
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -184,7 +182,7 @@ void Image::transition(VkImageLayout dstLayout, VkAccessFlags dstAccess,
 			     0, nullptr, 1, &barrier);
 
 	if (useOwnBuffer)
-		endSingleUseCmdBuffer(*device, device->getTransferQueue(), cmdPool, cmdBuffer);
+		endSingleUseCmdBuffer(*device, *device->getTransferQueue(), cmdPool, cmdBuffer);
 
 	layout = dstLayout;
 	accessFlags = dstAccess;
@@ -195,10 +193,7 @@ void Image::transfer(Image& fromImage, VkCommandBuffer cmdBuffer)
 	assertReady();
 	bool useOwnBuffer = cmdBuffer == VK_NULL_HANDLE;
 	if (useOwnBuffer)
-	{
-		if (cmdPool == VK_NULL_HANDLE) createCommandPool();
 		cmdBuffer = beginSingleUseCmdBuffer(*device, cmdPool);
-	}
 
 	fromImage.transition(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT,
 			     VK_PIPELINE_STAGE_TRANSFER_BIT, cmdBuffer);
@@ -225,7 +220,7 @@ void Image::transfer(Image& fromImage, VkCommandBuffer cmdBuffer)
 		       handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
 	if (useOwnBuffer)
-		endSingleUseCmdBuffer(*device, device->getTransferQueue(), cmdPool, cmdBuffer);
+		endSingleUseCmdBuffer(*device, *device->getTransferQueue(), cmdPool, cmdBuffer);
 }
 
 void Image::transfer(Buffer& src, VkCommandBuffer cmdBuffer)
@@ -233,10 +228,7 @@ void Image::transfer(Buffer& src, VkCommandBuffer cmdBuffer)
 	assertReady();
 	bool useOwnBuffer = cmdBuffer == VK_NULL_HANDLE;
 	if (useOwnBuffer)
-	{
-		if (cmdPool == VK_NULL_HANDLE) createCommandPool();
 		cmdBuffer = beginSingleUseCmdBuffer(*device, cmdPool);
-	}
 
 	transition(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT,
 		   VK_PIPELINE_STAGE_TRANSFER_BIT, cmdBuffer);
@@ -256,19 +248,7 @@ void Image::transfer(Buffer& src, VkCommandBuffer cmdBuffer)
 			       &region);
 
 	if (useOwnBuffer)
-		endSingleUseCmdBuffer(*device, device->getTransferQueue(), cmdPool, cmdBuffer);
-}
-
-void Image::createCommandPool()
-{
-	VkCommandPoolCreateInfo cmdPoolInfo = {};
-	cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	cmdPoolInfo.queueFamilyIndex = device->getTransferQueue().getQueueFamilyIndex();
-
-	VkResult result = vkCreateCommandPool(*device, &cmdPoolInfo, nullptr, &cmdPool);
-	if (result != VK_SUCCESS)
-		throw runtime_error("Failed to create command pool.");
+		endSingleUseCmdBuffer(*device, *device->getTransferQueue(), cmdPool, cmdBuffer);
 }
 
 void Image::assertReady()

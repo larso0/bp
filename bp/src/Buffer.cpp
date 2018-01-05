@@ -80,15 +80,14 @@ void Buffer::init(NotNull<Device> device, VkDeviceSize size, VkBufferUsageFlags 
 	mapped.pNext = nullptr;
 	mapped.memory = memory;
 	this->size = memoryRequirements.size;
+
+	cmdPool.init(device->getTransferQueue(), VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
 }
 
 Buffer::~Buffer()
 {
 	if (!isReady()) return;
-	if (cmdPool != VK_NULL_HANDLE)
-		vkDestroyCommandPool(*device, cmdPool, nullptr);
-	if (stagingBuffer != nullptr)
-		delete stagingBuffer;
+	delete stagingBuffer;
 	vkFreeMemory(*device, memory, nullptr);
 	vkDestroyBuffer(*device, handle, nullptr);
 }
@@ -148,15 +147,12 @@ void Buffer::transfer(VkDeviceSize offset, VkDeviceSize size, const void* data,
 
 		bool useOwnBuffer = cmdBuffer == VK_NULL_HANDLE;
 		if (useOwnBuffer)
-		{
-			if (cmdPool == VK_NULL_HANDLE) createCommandPool();
 			cmdBuffer = beginSingleUseCmdBuffer(*device, cmdPool);
-		}
 
 		transfer(*stagingBuffer, offset, offset, size, cmdBuffer);
 
 		if (useOwnBuffer)
-			endSingleUseCmdBuffer(*device, device->getTransferQueue(), cmdPool,
+			endSingleUseCmdBuffer(*device, *device->getTransferQueue(), cmdPool,
 					      cmdBuffer);
 	} else
 	{
@@ -172,10 +168,7 @@ void Buffer::transfer(Buffer& src, VkDeviceSize srcOffset, VkDeviceSize dstOffse
 	assertReady();
 	bool useOwnBuffer = cmdBuffer == VK_NULL_HANDLE;
 	if (useOwnBuffer)
-	{
-		if (cmdPool == VK_NULL_HANDLE) createCommandPool();
 		cmdBuffer = beginSingleUseCmdBuffer(*device, cmdPool);
-	}
 
 	VkBufferCopy copy_region = {};
 	copy_region.srcOffset = srcOffset;
@@ -189,7 +182,7 @@ void Buffer::transfer(Buffer& src, VkDeviceSize srcOffset, VkDeviceSize dstOffse
 	vkCmdCopyBuffer(cmdBuffer, src.getHandle(), handle, 1, &copy_region);
 
 	if (useOwnBuffer)
-		endSingleUseCmdBuffer(*device, device->getTransferQueue(), cmdPool, cmdBuffer);
+		endSingleUseCmdBuffer(*device, *device->getTransferQueue(), cmdPool, cmdBuffer);
 }
 
 void Buffer::transfer(Image& src, VkCommandBuffer cmdBuffer)
@@ -197,10 +190,7 @@ void Buffer::transfer(Image& src, VkCommandBuffer cmdBuffer)
 	assertReady();
 	bool useOwnBuffer = cmdBuffer == VK_NULL_HANDLE;
 	if (useOwnBuffer)
-	{
-		if (cmdPool == VK_NULL_HANDLE) createCommandPool();
 		cmdBuffer = beginSingleUseCmdBuffer(*device, cmdPool);
-	}
 
 	src.transition(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT,
 		       VK_PIPELINE_STAGE_TRANSFER_BIT, cmdBuffer);
@@ -219,19 +209,7 @@ void Buffer::transfer(Image& src, VkCommandBuffer cmdBuffer)
 	vkCmdCopyImageToBuffer(cmdBuffer, src, src.layout, handle, 1, &region);
 
 	if (useOwnBuffer)
-		endSingleUseCmdBuffer(*device, device->getTransferQueue(), cmdPool, cmdBuffer);
-}
-
-void Buffer::createCommandPool()
-{
-	VkCommandPoolCreateInfo cmdPoolInfo = {};
-	cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	cmdPoolInfo.queueFamilyIndex = device->getTransferQueue().getQueueFamilyIndex();
-
-	VkResult result = vkCreateCommandPool(*device, &cmdPoolInfo, nullptr, &cmdPool);
-	if (result != VK_SUCCESS)
-		throw runtime_error("Failed to create command pool.");
+		endSingleUseCmdBuffer(*device, *device->getTransferQueue(), cmdPool, cmdBuffer);
 }
 
 void Buffer::assertReady()

@@ -18,11 +18,7 @@ void Swapchain::init(NotNull<Device> device, VkSurfaceKHR surface, uint32_t widt
 	format = VK_FORMAT_B8G8R8_UNORM;
 	framebufferImageCount = 2;
 
-	VkSemaphoreCreateInfo semInfo =
-		{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, nullptr, 0};
-	VkResult result = vkCreateSemaphore(*device, &semInfo, nullptr, &presentSemaphore);
-	if (result != VK_SUCCESS)
-		throw runtime_error("Failed to create semaphore.");
+	presentSemaphore.init(*device);
 
 	create();
 }
@@ -30,8 +26,6 @@ void Swapchain::init(NotNull<Device> device, VkSurfaceKHR surface, uint32_t widt
 Swapchain::~Swapchain()
 {
 	destroy();
-	if (presentSemaphore != VK_NULL_HANDLE)
-		vkDestroySemaphore(*device, presentSemaphore, nullptr);
 }
 
 void Swapchain::before(VkCommandBuffer cmdBuffer)
@@ -55,7 +49,7 @@ void Swapchain::present(VkSemaphore waitSemaphore)
 	presentInfo.pSwapchains = &handle;
 	presentInfo.pImageIndices = &currentFramebufferIndex;
 	presentInfo.pResults = nullptr;
-	vkQueuePresentKHR(device->getGraphicsQueue(), &presentInfo);
+	vkQueuePresentKHR(*device->getGraphicsQueue(), &presentInfo);
 	presentQueuedEvent();
 }
 

@@ -4,6 +4,7 @@
 #include "Device.h"
 #include "Pointer.h"
 #include "Image.h"
+#include "CommandPool.h"
 
 namespace bp
 {
@@ -15,7 +16,6 @@ public:
 		device{nullptr},
 		size{0},
 		handle{VK_NULL_HANDLE},
-		cmdPool{VK_NULL_HANDLE},
 		memoryProperties{0},
 		memory{VK_NULL_HANDLE},
 		mapped{},
@@ -52,13 +52,12 @@ private:
 	Device* device;
 	VkDeviceSize size;
 	VkBuffer handle;
-	VkCommandPool cmdPool;
+	CommandPool cmdPool;
 	VkMemoryPropertyFlags memoryProperties;
 	VkDeviceMemory memory;
 	VkMappedMemoryRange mapped;
 	Buffer* stagingBuffer;
 
-	void createCommandPool();
 	void assertReady();
 };
 

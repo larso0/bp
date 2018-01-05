@@ -47,7 +47,7 @@ void Window::init()
 	VkCommandPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	poolInfo.queueFamilyIndex = device.getGraphicsQueue().getQueueFamilyIndex();
+	poolInfo.queueFamilyIndex = device.getGraphicsQueue()->getQueueFamilyIndex();
 	VkResult result = vkCreateCommandPool(device, &poolInfo, nullptr, &cmdPool);
 	if (result != VK_SUCCESS) throw runtime_error("Failed to create command pool.");
 
@@ -91,7 +91,7 @@ void Window::frame()
 		resizeRenderResources(width(), height());
 	}
 
-	Queue& queue = device.getGraphicsQueue();
+	Queue& queue = *device.getGraphicsQueue();
 	VkSemaphore presentSem = swapchain.getPresentSemaphore();
 	frameSubmitInfo.pWaitSemaphores = &presentSem;
 

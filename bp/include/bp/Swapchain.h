@@ -4,6 +4,7 @@
 #include "Attachment.h"
 #include "Pointer.h"
 #include "Event.h"
+#include "Semaphore.h"
 #include <vector>
 
 namespace bp
@@ -19,8 +20,7 @@ public:
 		handle{VK_NULL_HANDLE},
 		colorSpace{VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
 		framebufferImageCount{2},
-		currentFramebufferIndex{0},
-		presentSemaphore{VK_NULL_HANDLE} {}
+		currentFramebufferIndex{0} {}
 	Swapchain(NotNull<Device> device, VkSurfaceKHR surface, uint32_t width, uint32_t height,
 		  bool vsync) :
 		Swapchain{}
@@ -63,7 +63,7 @@ private:
 	std::vector<bool> transitionStatus;
 	std::vector<VkImageView> framebufferImageViews;
 	uint32_t currentFramebufferIndex;
-	VkSemaphore presentSemaphore;
+	Semaphore presentSemaphore;
 
 	void create();
 	void nextImage();
