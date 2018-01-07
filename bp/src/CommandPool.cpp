@@ -69,9 +69,9 @@ void CommandPool::freeCommandBuffers(vector<VkCommandBuffer>& cmdBuffers)
 			     cmdBuffers.data());
 }
 
-void CommandPool::execute(const vector<pair<VkSemaphore, VkPipelineStageFlags>>& waitSemaphores,
+void CommandPool::submit(const vector<pair<VkSemaphore, VkPipelineStageFlags>>& waitSemaphores,
 			  const vector<VkCommandBuffer>& cmdBuffers,
-			  const vector<VkSemaphore>& signalSemaphores)
+			  const vector<VkSemaphore>& signalSemaphores, VkFence fence)
 {
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -94,7 +94,11 @@ void CommandPool::execute(const vector<pair<VkSemaphore, VkPipelineStageFlags>>&
 	submitInfo.signalSemaphoreCount = static_cast<uint32_t>(signalSemaphores.size());
 	submitInfo.pSignalSemaphores = signalSemaphores.data();
 
-	vkQueueSubmit(*queue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueSubmit(*queue, 1, &submitInfo, fence);
+}
+
+void CommandPool::waitQueueIdle()
+{
 	vkQueueWaitIdle(*queue);
 }
 

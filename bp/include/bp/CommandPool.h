@@ -34,10 +34,11 @@ public:
 		uint32_t count, VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 	void freeCommandBuffer(VkCommandBuffer cmdBuffer);
 	void freeCommandBuffers(std::vector<VkCommandBuffer>& cmdBuffers);
-	void execute(
+	void submit(
 		const std::vector<std::pair<VkSemaphore, VkPipelineStageFlags>>& waitSemaphores,
 		const std::vector<VkCommandBuffer>& cmdBuffers,
-		const std::vector<VkSemaphore>& signalSemaphores);
+		const std::vector<VkSemaphore>& signalSemaphores, VkFence fence = VK_NULL_HANDLE);
+	void waitQueueIdle();
 
 	operator VkCommandPool() { return handle; }
 
