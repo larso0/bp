@@ -34,6 +34,14 @@ public:
 		enabledExtensions.insert(enabledExtensions.end(), begin, end);
 	}
 	void enableExtension(const std::string& extensionName);
+
+	template <typename Iterator>
+	void enableLayers(Iterator begin, Iterator end)
+	{
+		enabledLayers.insert(enabledLayers.end(), begin, end);
+	}
+	void enableLayer(const std::string& layerName);
+
 	void init(bool enableDebug, std::initializer_list<std::string> enabledExtensions,
 		  const VkApplicationInfo* applicationInfo = nullptr);
 	void init(bool enableDebug, const VkApplicationInfo* applicationInfo = nullptr);
@@ -60,6 +68,7 @@ private:
 	VkDebugReportCallbackEXT debugReportCallback;
 
 	std::vector<std::string> enabledExtensions;
+	std::vector<std::string> enabledLayers;
 };
 
 }

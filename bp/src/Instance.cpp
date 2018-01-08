@@ -47,6 +47,13 @@ void Instance::enableExtension(const std::string& extensionName)
 	enabledExtensions.push_back(extensionName);
 }
 
+void Instance::enableLayer(const std::string& layerName)
+{
+	if (isReady())
+		throw runtime_error("Failed to enable layer, instance already initialized.");
+	enabledLayers.push_back(layerName);
+}
+
 void Instance::init(bool enableDebug, std::initializer_list<std::string> enabledExtensions,
 		    const VkApplicationInfo* applicationInfo)
 {
@@ -64,16 +71,20 @@ void Instance::init(bool enableDebug, const VkApplicationInfo* applicationInfo)
 	vector<const char*> extensions;
 	for (const string& ext : this->enabledExtensions)
 		extensions.push_back(ext.c_str());
+	vector<const char*> layers;
+	for (const string& layer : this->enabledLayers)
+		layers.push_back(layer.c_str());
 
 	if (enableDebug)
 	{
-		instanceInfo.enabledLayerCount = 1;
-		instanceInfo.ppEnabledLayerNames = &VALIDATION_LAYER;
 		extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+		layers.push_back(VALIDATION_LAYER);
 	}
 
 	instanceInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	instanceInfo.ppEnabledExtensionNames = extensions.data();
+	instanceInfo.enabledLayerCount = static_cast<uint32_t>(layers.size());
+	instanceInfo.ppEnabledLayerNames = layers.data();
 
 	VkResult result = vkCreateInstance(&instanceInfo, nullptr, &handle);
 

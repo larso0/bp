@@ -6,6 +6,19 @@ using namespace std;
 namespace bp
 {
 
+void Texture::setUsageFlags(const FlagSet<UsageFlags>& usageFlags)
+{
+	if (isReady())
+		throw runtime_error("Texture usage flags must be set before initialization.");
+	Texture::usageFlags = usageFlags;
+
+	imageUsage = 0;
+	if (usageFlags & UsageFlags::SHADER_READABLE)
+		imageUsage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+	if (usageFlags & UsageFlags::COLOR_ATTACHMENT)
+		imageUsage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+}
+
 void Texture::before(VkCommandBuffer cmdBuffer)
 {
 	image->transition(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -27,13 +40,27 @@ void Texture::createImageView()
 	imageViewInfo.image = *image;
 	imageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	imageViewInfo.format = format;
-	imageViewInfo.components = {
-		VK_COMPONENT_SWIZZLE_R,
-		VK_COMPONENT_SWIZZLE_G,
-		VK_COMPONENT_SWIZZLE_B,
-		VK_COMPONENT_SWIZZLE_A
-	};
-	imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+
+	if (format == VK_FORMAT_D16_UNORM)
+	{
+		imageViewInfo.components = {
+			VK_COMPONENT_SWIZZLE_IDENTITY,
+			VK_COMPONENT_SWIZZLE_IDENTITY,
+			VK_COMPONENT_SWIZZLE_IDENTITY,
+			VK_COMPONENT_SWIZZLE_IDENTITY
+		};
+	} else
+	{
+		imageViewInfo.components = {
+			VK_COMPONENT_SWIZZLE_R,
+			VK_COMPONENT_SWIZZLE_G,
+			VK_COMPONENT_SWIZZLE_B,
+			VK_COMPONENT_SWIZZLE_A
+		};
+	}
+	imageViewInfo.subresourceRange.aspectMask = format != VK_FORMAT_D16_UNORM
+						    ? VK_IMAGE_ASPECT_COLOR_BIT
+						    : VK_IMAGE_ASPECT_DEPTH_BIT;
 	imageViewInfo.subresourceRange.baseMipLevel = 0;
 	imageViewInfo.subresourceRange.levelCount = 1;
 	imageViewInfo.subresourceRange.baseArrayLayer = 0;

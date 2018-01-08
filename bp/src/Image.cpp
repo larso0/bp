@@ -154,6 +154,22 @@ void Image::unmap(bool writeBack, VkCommandBuffer cmdBuffer)
 	}
 }
 
+void Image::updateStagingBuffer(VkCommandBuffer cmdBuffer)
+{
+	if (tiling == VK_IMAGE_TILING_LINEAR &&
+	    memoryProperties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+		return;
+	if (stagingBuffer == nullptr)
+	{
+		stagingBuffer = new Buffer(device, memorySize,
+					   VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+					   VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+					   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+					   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	}
+	stagingBuffer->transfer(*this, cmdBuffer);
+}
+
 void Image::transition(VkImageLayout dstLayout, VkAccessFlags dstAccess,
 		       VkPipelineStageFlags dstStage, VkCommandBuffer cmdBuffer)
 {

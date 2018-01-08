@@ -23,6 +23,8 @@ public:
 	const T* operator ->() const { return t; }
 	T& operator *() { return *t; }
 	const T& operator *() const { return *t; }
+	bool operator ==(const NotNull<T>& other) { return t == other.t; }
+	bool operator ==(const T* other) { return t == other; }
 	T* get() { return t; }
 	const T* get() const { return t; }
 	
@@ -50,6 +52,8 @@ public:
 	const T* operator ->() const { return t; }
 	T& operator *() { return *t; }
 	const T& operator *() const { return *t; }
+	bool operator ==(const Scoped<T>& other) { return t == other.t; }
+	bool operator ==(const T* other) { return t == other; }
 	T* get() { return t; }
 	const T* get() const { return t; }
 
