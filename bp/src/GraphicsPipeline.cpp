@@ -131,7 +131,7 @@ void GraphicsPipeline::create()
 	pipelineCreateInfo.layout = layout;
 	pipelineCreateInfo.renderPass = *renderPass;
 	pipelineCreateInfo.subpass = 0;
-	pipelineCreateInfo.basePipelineHandle = nullptr;
+	pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
 	pipelineCreateInfo.basePipelineIndex = 0;
 
 	VkResult result = vkCreateGraphicsPipelines(*device, VK_NULL_HANDLE, 1, &pipelineCreateInfo,
