@@ -23,7 +23,7 @@ public:
 		usageFlags << UsageFlags::COLOR_ATTACHMENT << UsageFlags::SHADER_READABLE;
 		imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 	}
-	Texture(NotNull<Device> device, VkFormat format, uint32_t width, uint32_t height,
+	Texture(Device& device, VkFormat format, uint32_t width, uint32_t height,
 		const FlagSet<UsageFlags>& usageFlags) :
 		Texture{}
 	{

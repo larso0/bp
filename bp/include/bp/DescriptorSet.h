@@ -2,7 +2,6 @@
 #define BP_DESCRIPTORSET_H
 
 #include "Device.h"
-#include "Pointer.h"
 #include "DescriptorPool.h"
 #include "DescriptorSetLayout.h"
 #include "Descriptor.h"
@@ -18,17 +17,16 @@ public:
 		device{nullptr},
 		pool{nullptr},
 		handle{VK_NULL_HANDLE} {}
-	DescriptorSet(NotNull<Device> device, NotNull<DescriptorPool> pool,
-		      NotNull<DescriptorSetLayout> layout) :
+	DescriptorSet(Device& device, DescriptorPool& pool, DescriptorSetLayout& layout) :
 		DescriptorSet()
 	{
 		init(device, pool, layout);
 	}
 	~DescriptorSet();
 
-	void init(NotNull<Device> device, NotNull<DescriptorPool> pool,
-		  NotNull<DescriptorSetLayout> layout);
-	void bind(const NotNull<Descriptor> descriptor);
+	void init(Device& device, DescriptorPool& pool,
+		  DescriptorSetLayout& layout);
+	void bind(const Descriptor& descriptor);
 	void update();
 
 	operator VkDescriptorSet() { return handle; }

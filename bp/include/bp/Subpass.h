@@ -29,14 +29,14 @@ public:
 		depthAttachment{nullptr} {}
 	virtual ~Subpass() = default;
 
-	virtual void init(NotNull<RenderPass> renderPass) = 0;
+	virtual void init(RenderPass& renderPass) = 0;
 	virtual void render(VkCommandBuffer cmdBuffer) = 0;
 
-	void addDependency(NotNull<Subpass> subpass, const DependencyInfo& dependencyInfo);
-	void addInputAttachment(NotNull<Attachment> attachment);
-	void addColorAttachment(NotNull<Attachment> attachment,
-				Attachment* resolveAttachment = nullptr);
-	void setDepthAttachment(NotNull<DepthAttachment> depthAttachment);
+	void addDependency(Subpass& subpass, const DependencyInfo& dependencyInfo);
+	void addInputAttachment(Attachment& attachment);
+	void addColorAttachment(Attachment& attachment);
+	void addColorAttachment(Attachment& attachment, Attachment& resolveAttachment);
+	void setDepthAttachment(DepthAttachment& depthAttachment);
 
 protected:
 	Device* device;

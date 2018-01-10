@@ -14,14 +14,14 @@ public:
 	{
 		imageUsage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 	}
-	DepthAttachment(NotNull<Device> device, uint32_t width, uint32_t height) :
+	DepthAttachment(Device& device, uint32_t width, uint32_t height) :
 		DepthAttachment{}
 	{
 		init(device, width, height);
 	}
 	virtual ~DepthAttachment() = default;
 
-	void init(NotNull<Device> device, uint32_t width, uint32_t height)
+	void init(Device& device, uint32_t width, uint32_t height)
 	{
 		ImageAttachment::init(device, VK_FORMAT_D16_UNORM, width, height);
 	}

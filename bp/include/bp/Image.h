@@ -2,7 +2,6 @@
 #define BP_IMAGE_H
 
 #include "Device.h"
-#include "Pointer.h"
 #include "CommandPool.h"
 
 namespace bp
@@ -26,7 +25,7 @@ public:
 		memory{VK_NULL_HANDLE},
 		mapped{},
 		stagingBuffer{nullptr} {}
-	Image(NotNull<Device> device, uint32_t width, uint32_t height, VkFormat format,
+	Image(Device& device, uint32_t width, uint32_t height, VkFormat format,
 	      VkImageTiling tiling, VkImageUsageFlags usage,
 	      VkMemoryPropertyFlags requiredMemoryProperties,
 	      VkMemoryPropertyFlags optimalMemoryProperties = 0,
@@ -38,7 +37,7 @@ public:
 	}
 	~Image();
 
-	void init(NotNull<Device> device, uint32_t width, uint32_t height, VkFormat format,
+	void init(Device& device, uint32_t width, uint32_t height, VkFormat format,
 		  VkImageTiling tiling, VkImageUsageFlags usage,
 		  VkMemoryPropertyFlags requiredMemoryProperties,
 		  VkMemoryPropertyFlags optimalMemoryProperties = 0,

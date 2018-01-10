@@ -57,7 +57,7 @@ void Instance::enableLayer(const std::string& layerName)
 void Instance::init(bool enableDebug, std::initializer_list<std::string> enabledExtensions,
 		    const VkApplicationInfo* applicationInfo)
 {
-	this->enabledExtensions.insert(this->enabledExtensions.end(), enabledExtensions.begin(),
+	Instance::enabledExtensions.insert(Instance::enabledExtensions.end(), enabledExtensions.begin(),
 				       enabledExtensions.end());
 	init(enableDebug, applicationInfo);
 }
@@ -69,10 +69,10 @@ void Instance::init(bool enableDebug, const VkApplicationInfo* applicationInfo)
 	instanceInfo.pApplicationInfo = applicationInfo;
 
 	vector<const char*> extensions;
-	for (const string& ext : this->enabledExtensions)
+	for (const string& ext : Instance::enabledExtensions)
 		extensions.push_back(ext.c_str());
 	vector<const char*> layers;
-	for (const string& layer : this->enabledLayers)
+	for (const string& layer : Instance::enabledLayers)
 		layers.push_back(layer.c_str());
 
 	if (enableDebug)

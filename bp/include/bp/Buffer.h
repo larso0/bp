@@ -2,7 +2,6 @@
 #define BP_BUFFER_H
 
 #include "Device.h"
-#include "Pointer.h"
 #include "Image.h"
 #include "CommandPool.h"
 
@@ -20,7 +19,7 @@ public:
 		memory{VK_NULL_HANDLE},
 		mapped{},
 		stagingBuffer{nullptr} {}
-	Buffer(NotNull<Device> device, VkDeviceSize size, VkBufferUsageFlags usage,
+	Buffer(Device& device, VkDeviceSize size, VkBufferUsageFlags usage,
 	       VkMemoryPropertyFlags requiredMemoryProperties,
 	       VkMemoryPropertyFlags optimalMemoryProperties = 0) :
 		Buffer()
@@ -29,7 +28,7 @@ public:
 	}
 	~Buffer();
 
-	void init(NotNull<Device> device, VkDeviceSize size, VkBufferUsageFlags usage,
+	void init(Device& device, VkDeviceSize size, VkBufferUsageFlags usage,
 		  VkMemoryPropertyFlags requiredMemoryProperties,
 		  VkMemoryPropertyFlags optimalMemoryProperties = 0);
 

@@ -18,11 +18,11 @@ public:
 		frontFace{VK_FRONT_FACE_COUNTER_CLOCKWISE},
 		depthEnabled{true} {}
 
-	void init(NotNull<Device> device, NotNull<RenderPass> renderPass, VkPipelineLayout layout)
+	void init(Device& device, RenderPass& renderPass, VkPipelineLayout layout)
 	{
-		Pipeline::device = device;
+		Pipeline::device = &device;
 		Pipeline::layout = layout;
-		GraphicsPipeline::renderPass = renderPass;
+		GraphicsPipeline::renderPass = &renderPass;
 		create();
 	}
 	

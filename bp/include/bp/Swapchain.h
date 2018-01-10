@@ -2,7 +2,6 @@
 #define BP_SWAPCHAIN_H
 
 #include "Attachment.h"
-#include "Pointer.h"
 #include "Event.h"
 #include "Semaphore.h"
 #include <vector>
@@ -21,7 +20,7 @@ public:
 		colorSpace{VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
 		framebufferImageCount{2},
 		currentFramebufferIndex{0} {}
-	Swapchain(NotNull<Device> device, VkSurfaceKHR surface, uint32_t width, uint32_t height,
+	Swapchain(Device& device, VkSurfaceKHR surface, uint32_t width, uint32_t height,
 		  bool vsync) :
 		Swapchain{}
 	{
@@ -30,7 +29,7 @@ public:
 
 	~Swapchain() override;
 
-	void init(NotNull<Device> device, VkSurfaceKHR surface, uint32_t width, uint32_t height,
+	void init(Device& device, VkSurfaceKHR surface, uint32_t width, uint32_t height,
 		  bool vsync);
 
 	void before(VkCommandBuffer cmdBuffer) override;

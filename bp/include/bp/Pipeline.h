@@ -4,7 +4,6 @@
 #include "Device.h"
 #include "Shader.h"
 #include "RenderPass.h"
-#include "Pointer.h"
 #include <vector>
 #include <initializer_list>
 

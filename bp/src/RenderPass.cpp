@@ -17,19 +17,19 @@ RenderPass::~RenderPass()
 	}
 }
 
-void RenderPass::addSubpassGraph(NotNull<Subpass> subpass)
+void RenderPass::addSubpassGraph(Subpass& subpass)
 {
-	if (device == nullptr) device = subpass->device;
-	subpasses.push_back(subpass.get());
+	if (device == nullptr) device = subpass.device;
+	subpasses.push_back(&subpass);
 
-	addAttachments(subpass->inputAttachments.begin(), subpass->inputAttachments.end());
-	addAttachments(subpass->colorAttachments.begin(), subpass->colorAttachments.end());
-	addAttachments(subpass->resolveAttachments.begin(), subpass->resolveAttachments.end());
-	if (subpass->depthAttachment != nullptr) addAttachment(subpass->depthAttachment);
+	addAttachments(subpass.inputAttachments.begin(), subpass.inputAttachments.end());
+	addAttachments(subpass.colorAttachments.begin(), subpass.colorAttachments.end());
+	addAttachments(subpass.resolveAttachments.begin(), subpass.resolveAttachments.end());
+	if (subpass.depthAttachment != nullptr) addAttachment(subpass.depthAttachment);
 
-	for (auto& s : subpass->dependents)
+	for (auto s : subpass.dependents)
 	{
-		addSubpassGraph(s);
+		addSubpassGraph(*s);
 	}
 }
 
@@ -139,7 +139,7 @@ void RenderPass::init(uint32_t width, uint32_t height)
 
 	create();
 
-	for (Subpass* subpass : subpasses) subpass->init(this);
+	for (Subpass* subpass : subpasses) subpass->init(*this);
 }
 
 void RenderPass::resize(uint32_t width, uint32_t height)

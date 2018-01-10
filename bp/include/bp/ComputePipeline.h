@@ -10,7 +10,7 @@ class ComputePipeline : public Pipeline
 {
 public:
 	ComputePipeline() : Pipeline{} {}
-	ComputePipeline(NotNull<Device> device, VkPipelineLayout layout,
+	ComputePipeline(Device& device, VkPipelineLayout layout,
 			std::initializer_list<VkPipelineShaderStageCreateInfo> shaderStageInfos) :
 		Pipeline{}
 	{
@@ -18,9 +18,9 @@ public:
 		init(device, layout);
 	}
 
-	void init(NotNull<Device> device, VkPipelineLayout layout)
+	void init(Device& device, VkPipelineLayout layout)
 	{
-		Pipeline::device = device;
+		Pipeline::device = &device;
 		Pipeline::layout = layout;
 		create();
 	}

@@ -2,7 +2,6 @@
 #define BP_COMMANDPOOL_H
 
 #include "Queue.h"
-#include "Pointer.h"
 #include <vector>
 #include <utility>
 
@@ -16,7 +15,7 @@ public:
 		queue{nullptr},
 		handle{VK_NULL_HANDLE} {}
 	CommandPool(
-		NotNull<Queue> queue,
+		Queue& queue,
 		VkCommandPoolCreateFlags flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
 	) :
 		CommandPool{}
@@ -25,7 +24,7 @@ public:
 	}
 	~CommandPool();
 
-	void init(NotNull<Queue> queue,
+	void init(Queue& queue,
 		  VkCommandPoolCreateFlags flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
 	VkCommandBuffer allocateCommandBuffer(

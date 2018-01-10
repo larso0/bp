@@ -3,7 +3,6 @@
 
 #include "Subpass.h"
 #include "Swapchain.h"
-#include "Pointer.h"
 #include <vector>
 
 namespace bp
@@ -20,7 +19,7 @@ public:
 		swapchain{nullptr} {}
 	~RenderPass();
 
-	void addSubpassGraph(NotNull<Subpass> subpass);
+	void addSubpassGraph(Subpass& subpass);
 	void init(uint32_t width, uint32_t height);
 	void resize(uint32_t width, uint32_t height);
 	void render(VkCommandBuffer cmdBuffer);

@@ -2,7 +2,6 @@
 #define BP_PIPELINELAYOUT_H
 
 #include "Device.h"
-#include "Pointer.h"
 #include <vector>
 #include <initializer_list>
 
@@ -15,7 +14,7 @@ public:
 	PipelineLayout() :
 		device{nullptr},
 		handle{VK_NULL_HANDLE} {}
-	PipelineLayout(NotNull<Device> device,
+	PipelineLayout(Device& device,
 		       std::initializer_list<VkDescriptorSetLayout> setLayouts,
 		       std::initializer_list<VkPushConstantRange> pushConstantRanges) :
 		PipelineLayout{}
@@ -48,8 +47,8 @@ public:
 		pushConstantRanges.insert(pushConstantRanges.end(), begin, end);
 	}
 
-	void init(NotNull<Device> device);
-	void init(NotNull<Device> device,
+	void init(Device& device);
+	void init(Device& device,
 		  std::initializer_list<VkDescriptorSetLayout> setLayouts,
 		  std::initializer_list<VkPushConstantRange> pushConstantRanges)
 	{

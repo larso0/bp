@@ -7,10 +7,10 @@ using namespace std;
 namespace bp
 {
 
-void Swapchain::init(NotNull<Device> device, VkSurfaceKHR surface, uint32_t width, uint32_t height,
+void Swapchain::init(Device& device, VkSurfaceKHR surface, uint32_t width, uint32_t height,
 		     bool vsync)
 {
-	Attachment::device = device;
+	Attachment::device = &device;
 	Attachment::width = width;
 	Attachment::height = height;
 	Swapchain::surface = surface;
@@ -18,7 +18,7 @@ void Swapchain::init(NotNull<Device> device, VkSurfaceKHR surface, uint32_t widt
 	format = VK_FORMAT_B8G8R8_UNORM;
 	framebufferImageCount = 2;
 
-	presentSemaphore.init(*device);
+	presentSemaphore.init(device);
 
 	create();
 }
@@ -49,7 +49,7 @@ void Swapchain::present(VkSemaphore waitSemaphore)
 	presentInfo.pSwapchains = &handle;
 	presentInfo.pImageIndices = &currentFramebufferIndex;
 	presentInfo.pResults = nullptr;
-	vkQueuePresentKHR(*device->getGraphicsQueue(), &presentInfo);
+	vkQueuePresentKHR(device->getGraphicsQueue(), &presentInfo);
 	presentQueuedEvent();
 }
 

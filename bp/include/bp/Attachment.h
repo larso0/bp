@@ -34,7 +34,7 @@ public:
 
 	virtual bool isReady() const { return device != nullptr; }
 	bool isClearEnabled() const { return clearEnabled; }
-	Device* getDevice() { return device; }
+	Device& getDevice() { return *device; }
 	VkFormat getFormat() const { return format; }
 	uint32_t getWidth() const { return width; }
 	uint32_t getHeight() const { return height; }

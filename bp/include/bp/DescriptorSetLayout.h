@@ -2,7 +2,6 @@
 #define BP_DESCRIPTORSETLAYOUT_H
 
 #include "Device.h"
-#include "Pointer.h"
 #include <initializer_list>
 #include <vector>
 
@@ -15,7 +14,7 @@ public:
 	DescriptorSetLayout() :
 		device{nullptr},
 		handle{VK_NULL_HANDLE} {}
-	DescriptorSetLayout(NotNull<Device> device,
+	DescriptorSetLayout(Device& device,
 			    std::initializer_list<VkDescriptorSetLayoutBinding> bindings) :
 		DescriptorSetLayout()
 	{
@@ -25,7 +24,7 @@ public:
 	~DescriptorSetLayout();
 
 	void addLayoutBinding(const VkDescriptorSetLayoutBinding& binding);
-	void init(NotNull<Device> device);
+	void init(Device& device);
 
 	operator VkDescriptorSetLayout() { return handle; }
 

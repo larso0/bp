@@ -61,11 +61,11 @@ public:
 	VkPhysicalDevice getPhysicalHandle() { return physical; }
 	VkDevice getLogicalHandle() { return logical; }
 	uint32_t getQueueCount() const { return static_cast<uint32_t>(queues.size()); }
-	Queue* getQueue(uint32_t index = 0);
-	Queue* getGraphicsQueue();
-	Queue* getComputeQueue();
-	Queue* getTransferQueue();
-	Queue* getSparseBindingQueue();
+	Queue& getQueue(uint32_t index = 0);
+	Queue& getGraphicsQueue();
+	Queue& getComputeQueue();
+	Queue& getTransferQueue();
+	Queue& getSparseBindingQueue();
 	bool isReady() const { return logical != VK_NULL_HANDLE; }
 
 private:

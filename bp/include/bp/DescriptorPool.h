@@ -2,7 +2,6 @@
 #define BP_DESCRIPTORPOOL_H
 
 #include "Device.h"
-#include "Pointer.h"
 #include <vector>
 
 namespace bp
@@ -14,7 +13,7 @@ public:
 	DescriptorPool() :
 		device{VK_NULL_HANDLE},
 		handle{VK_NULL_HANDLE} {}
-	DescriptorPool(NotNull<Device> device, const std::vector<VkDescriptorPoolSize>& poolSizes,
+	DescriptorPool(Device& device, const std::vector<VkDescriptorPoolSize>& poolSizes,
 		       uint32_t maxSets) :
 		DescriptorPool()
 	{
@@ -22,7 +21,7 @@ public:
 	}
 	~DescriptorPool();
 
-	void init(NotNull<Device> device, const std::vector<VkDescriptorPoolSize>& poolSizes,
+	void init(Device& device, const std::vector<VkDescriptorPoolSize>& poolSizes,
 		  uint32_t maxSets);
 
 	operator VkDescriptorPool() { return handle; }

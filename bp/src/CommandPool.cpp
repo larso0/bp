@@ -12,17 +12,17 @@ CommandPool::~CommandPool()
 		vkDestroyCommandPool(queue->getDevice(), handle, nullptr);
 }
 
-void CommandPool::init(NotNull<Queue> queue, VkCommandPoolCreateFlags flags)
+void CommandPool::init(Queue& queue, VkCommandPoolCreateFlags flags)
 {
 	VkCommandPoolCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	info.flags = flags;
-	info.queueFamilyIndex = queue->getQueueFamilyIndex();
+	info.queueFamilyIndex = queue.getQueueFamilyIndex();
 
-	VkResult result = vkCreateCommandPool(queue->getDevice(), &info, nullptr, &handle);
+	VkResult result = vkCreateCommandPool(queue.getDevice(), &info, nullptr, &handle);
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to create command pool.");
-	CommandPool::queue = queue;
+	CommandPool::queue = &queue;
 }
 
 VkCommandBuffer CommandPool::allocateCommandBuffer(VkCommandBufferLevel level)

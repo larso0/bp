@@ -11,9 +11,9 @@ PipelineLayout::~PipelineLayout()
 	if (handle != VK_NULL_HANDLE) vkDestroyPipelineLayout(*device, handle, nullptr);
 }
 
-void PipelineLayout::init(NotNull<Device> device)
+void PipelineLayout::init(Device& device)
 {
-	this->device = device;
+	PipelineLayout::device = &device;
 	VkPipelineLayoutCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	info.setLayoutCount = static_cast<uint32_t>(setLayouts.size());
@@ -21,7 +21,7 @@ void PipelineLayout::init(NotNull<Device> device)
 	info.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
 	info.pPushConstantRanges = pushConstantRanges.data();
 
-	VkResult result = vkCreatePipelineLayout(*device, &info, nullptr, &handle);
+	VkResult result = vkCreatePipelineLayout(device, &info, nullptr, &handle);
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to create pipeline layout.");
 }

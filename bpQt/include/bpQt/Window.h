@@ -2,7 +2,6 @@
 #define BP_QT_WINDOW_H
 
 #include "DeviceQuery.h"
-#include <bp/Pointer.h>
 #include <bp/Swapchain.h>
 #include <QWindow>
 #include <QVulkanInstance>
@@ -27,10 +26,10 @@ public:
 	{
 		setSurfaceType(VulkanSurface);
 	}
-	explicit Window(bp::NotNull<QVulkanInstance> instance) :
+	explicit Window(QVulkanInstance& instance) :
 		Window{}
 	{
-		setVulkanInstance(instance);
+		setVulkanInstance(&instance);
 	}
 
 	virtual ~Window();

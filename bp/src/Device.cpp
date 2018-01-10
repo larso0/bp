@@ -193,43 +193,43 @@ Device::~Device()
 	vkDestroyDevice(logical, nullptr);
 }
 
-Queue* Device::getQueue(uint32_t index)
+Queue& Device::getQueue(uint32_t index)
 {
 	assertReady();
 	if (index >= getQueueCount())
 		throw out_of_range("Invalid queue index.");
-	return &queues[index];
+	return queues[index];
 }
 
-Queue* Device::getGraphicsQueue()
+Queue& Device::getGraphicsQueue()
 {
 	assertReady();
 	for (auto i = 0; i < getQueueCount(); i++)
-		if (queueInfos[i].flags & VK_QUEUE_GRAPHICS_BIT) return &queues[i];
+		if (queueInfos[i].flags & VK_QUEUE_GRAPHICS_BIT) return queues[i];
 	throw runtime_error("No graphics queue available.");
 }
 
-Queue* Device::getComputeQueue()
+Queue& Device::getComputeQueue()
 {
 	assertReady();
 	for (auto i = 0; i < getQueueCount(); i++)
-		if (queueInfos[i].flags & VK_QUEUE_COMPUTE_BIT) return &queues[i];
+		if (queueInfos[i].flags & VK_QUEUE_COMPUTE_BIT) return queues[i];
 	throw runtime_error("No compute queue available.");
 }
 
-Queue* Device::getTransferQueue()
+Queue& Device::getTransferQueue()
 {
 	assertReady();
 	for (auto i = 0; i < getQueueCount(); i++)
-		if (queueInfos[i].flags & VK_QUEUE_TRANSFER_BIT) return &queues[i];
+		if (queueInfos[i].flags & VK_QUEUE_TRANSFER_BIT) return queues[i];
 	throw runtime_error("No transfer queue available.");
 }
 
-Queue* Device::getSparseBindingQueue()
+Queue& Device::getSparseBindingQueue()
 {
 	assertReady();
 	for (auto i = 0; i < getQueueCount(); i++)
-		if (queueInfos[i].flags & VK_QUEUE_SPARSE_BINDING_BIT) return &queues[i];
+		if (queueInfos[i].flags & VK_QUEUE_SPARSE_BINDING_BIT) return queues[i];
 	throw runtime_error("No sparse binding queue available.");
 }
 

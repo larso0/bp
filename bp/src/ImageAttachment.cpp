@@ -10,10 +10,10 @@ ImageAttachment::~ImageAttachment()
 	if (isReady()) destroy();
 }
 
-void ImageAttachment::init(NotNull<Device> device, VkFormat format, uint32_t width,
+void ImageAttachment::init(Device& device, VkFormat format, uint32_t width,
 			   uint32_t height)
 {
-	Attachment::device = device;
+	Attachment::device = &device;
 	Attachment::format = format;
 	Attachment::width = width;
 	Attachment::height = height;
@@ -33,7 +33,7 @@ void ImageAttachment::resize(uint32_t width, uint32_t height)
 
 void ImageAttachment::create()
 {
-	image = new Image(device, width, height, format, VK_IMAGE_TILING_OPTIMAL, imageUsage,
+	image = new Image(*device, width, height, format, VK_IMAGE_TILING_OPTIMAL, imageUsage,
 			  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	createImageView();
 }

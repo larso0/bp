@@ -8,22 +8,22 @@ using namespace std;
 namespace bp
 {
 
-void DescriptorSet::init(NotNull<Device> device, NotNull<DescriptorPool> pool,
-			 NotNull<DescriptorSetLayout> layout)
+void DescriptorSet::init(Device& device, DescriptorPool& pool,
+			 DescriptorSetLayout& layout)
 {
 	if (isReady()) throw runtime_error("Descriptor set already initialized.");
-	this->device = device;
-	this->pool = pool;
+	DescriptorSet::device = &device;
+	DescriptorSet::pool = &pool;
 
-	VkDescriptorSetLayout layoutHandle = *layout;
+	VkDescriptorSetLayout layoutHandle = layout;
 
 	VkDescriptorSetAllocateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	info.descriptorPool = *pool;
+	info.descriptorPool = pool;
 	info.descriptorSetCount = 1;
 	info.pSetLayouts = &layoutHandle;
 
-	VkResult result = vkAllocateDescriptorSets(*device, &info, &handle);
+	VkResult result = vkAllocateDescriptorSets(device, &info, &handle);
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to allocate descriptor set.");
 }
@@ -33,18 +33,17 @@ DescriptorSet::~DescriptorSet()
 	vkFreeDescriptorSets(*device, *pool, 1, &handle);
 }
 
-void DescriptorSet::bind(const NotNull<Descriptor> descriptor)
+void DescriptorSet::bind(const Descriptor& descriptor)
 {
 	VkWriteDescriptorSet write = {};
 	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	write.dstSet = handle;
-	write.dstBinding = descriptor->getBinding();
-	write.dstArrayElement = descriptor->getFirstIndex();
-	write.descriptorType = descriptor->getType();
+	write.dstBinding = descriptor.getBinding();
+	write.dstArrayElement = descriptor.getFirstIndex();
+	write.descriptorType = descriptor.getType();
 
 	{
-		const ImageDescriptor* imageDescriptor =
-			dynamic_cast<const ImageDescriptor*>(descriptor.get());
+		auto imageDescriptor = dynamic_cast<const ImageDescriptor*>(&descriptor);
 		if (imageDescriptor != nullptr)
 		{
 			const auto& infos = imageDescriptor->getDescriptorInfos();
@@ -54,8 +53,7 @@ void DescriptorSet::bind(const NotNull<Descriptor> descriptor)
 	}
 
 	{
-		const BufferDescriptor* bufferDescriptor =
-			dynamic_cast<const BufferDescriptor*>(descriptor.get());
+		auto bufferDescriptor = dynamic_cast<const BufferDescriptor*>(&descriptor);
 		if (bufferDescriptor != nullptr)
 		{
 			const auto& infos = bufferDescriptor->getDescriptorInfos();
