@@ -27,7 +27,7 @@ public:
 
 	void resize(uint32_t width, uint32_t height) override;
 
-	Image* getImage() { return image; }
+	Image& getImage() { return *image; }
 	VkImageView getImageView() { return imageView; }
 
 protected:
