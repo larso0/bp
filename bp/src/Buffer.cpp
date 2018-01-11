@@ -149,6 +149,12 @@ void Buffer::updateStagingBuffer(VkCommandBuffer cmdBuffer)
 	stagingBuffer->transfer(*this, 0, 0, size, cmdBuffer);
 }
 
+void Buffer::flushStagingBuffer(VkCommandBuffer cmdBuffer)
+{
+	if (stagingBuffer == nullptr) return;
+	transfer(*stagingBuffer, 0, 0, size, cmdBuffer);
+}
+
 void Buffer::transfer(VkDeviceSize offset, VkDeviceSize size, const void* data,
 		      VkCommandBuffer cmdBuffer)
 {

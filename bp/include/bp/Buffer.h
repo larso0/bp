@@ -35,6 +35,7 @@ public:
 	void* map(VkDeviceSize offset, VkDeviceSize size);
 	void unmap(bool writeBack = true, VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
 	void updateStagingBuffer(VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
+	void flushStagingBuffer(VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
 	void transfer(VkDeviceSize offset, VkDeviceSize size, const void* data,
 		      VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
 	void transfer(Buffer& src, VkDeviceSize srcOffset, VkDeviceSize dstOffset,

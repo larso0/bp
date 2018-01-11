@@ -170,6 +170,12 @@ void Image::updateStagingBuffer(VkCommandBuffer cmdBuffer)
 	stagingBuffer->transfer(*this, cmdBuffer);
 }
 
+void Image::flushStagingBuffer(VkCommandBuffer cmdBuffer)
+{
+	if (stagingBuffer == nullptr) return;
+	transfer(*stagingBuffer, cmdBuffer);
+}
+
 void Image::transition(VkImageLayout dstLayout, VkAccessFlags dstAccess,
 		       VkPipelineStageFlags dstStage, VkCommandBuffer cmdBuffer)
 {
