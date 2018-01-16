@@ -51,6 +51,15 @@ public:
 	VkImageView getFramebufferImageView(uint32_t i) { return framebufferImageViews[i]; }
 	VkSemaphore getPresentSemaphore() { return presentSemaphore; }
 
+	VkImageLayout getInitialLayout() const override
+	{
+		return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	}
+	VkImageLayout getFinalLayout() const override
+	{
+		return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	}
+
 	Event<> presentQueuedEvent;
 private:
 	bool vsync;

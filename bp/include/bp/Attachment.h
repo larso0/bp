@@ -42,6 +42,9 @@ public:
 	void setClearEnabled(bool enabled) { clearEnabled = enabled; }
 	void setClearValue(const VkClearValue& clearValue) { Attachment::clearValue = clearValue; }
 
+	virtual VkImageLayout getInitialLayout() const = 0;
+	virtual VkImageLayout getFinalLayout() const = 0;
+
 protected:
 	Device* device;
 	VkFormat format;

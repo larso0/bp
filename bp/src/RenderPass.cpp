@@ -53,16 +53,8 @@ void RenderPass::init(uint32_t width, uint32_t height)
 		description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-		if (dynamic_cast<DepthAttachment*>(attachment) != nullptr)
-		{
-			description.initialLayout = description.finalLayout =
-				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		} else
-		{
-			description.initialLayout = description.finalLayout =
-				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		}
+		description.initialLayout = attachment->getInitialLayout();
+		description.finalLayout = attachment->getFinalLayout();
 
 		attachmentDescriptions.push_back(description);
 	}
@@ -264,10 +256,10 @@ void RenderPass::createFramebuffers()
 			attachmentViews.push_back(VK_NULL_HANDLE);
 			continue;
 		}
-		auto imageAttachment = dynamic_cast<ImageAttachment*>(attachments[i]);
-		if (imageAttachment == nullptr)
+		auto texture = dynamic_cast<Texture*>(attachments[i]);
+		if (texture == nullptr)
 			throw runtime_error("Unsupported attachment subclass.");
-		attachmentViews.push_back(imageAttachment->getImageView());
+		attachmentViews.push_back(texture->getImageView());
 	}
 	if (swapchain != nullptr && swapchainIndex == -1)
 		throw runtime_error("This should never happen.");

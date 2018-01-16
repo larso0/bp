@@ -6,7 +6,7 @@ using namespace std;
 namespace bp
 {
 
-void Subpass::setDepthAttachment(DepthAttachment& depthAttachment)
+void Subpass::setDepthAttachment(Texture& depthAttachment)
 {
 	if (!depthAttachment.isReady())
 		throw runtime_error("Depth attachment must be initialized before assigning to "
@@ -14,7 +14,9 @@ void Subpass::setDepthAttachment(DepthAttachment& depthAttachment)
 	if (device == nullptr) device = &depthAttachment.getDevice();
 	else if (device != &depthAttachment.getDevice())
 		throw runtime_error("Depth attachment must use the same device as the other "
-					    "attachments.");
+				    "attachments.");
+	if (!(depthAttachment.getImageUsage() & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT))
+		throw runtime_error("Texture is not a depth texture.");
 	Subpass::depthAttachment = &depthAttachment;
 }
 

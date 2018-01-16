@@ -1,46 +1,55 @@
 #ifndef BP_TEXTURE_H
 #define BP_TEXTURE_H
 
-#include "ImageAttachment.h"
-#include "FlagSet.h"
+#include "Attachment.h"
+#include "Image.h"
 
 namespace bp
 {
 
-class Texture : public ImageAttachment
+class Texture : public Attachment
 {
 public:
-	enum class UsageFlags
-	{
-		SHADER_READABLE,
-		COLOR_ATTACHMENT,
-		BP_FLAGSET_LAST
-	};
-
 	Texture() :
-		ImageAttachment{}
-	{
-		usageFlags << UsageFlags::COLOR_ATTACHMENT << UsageFlags::SHADER_READABLE;
-		imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-	}
-	Texture(Device& device, VkFormat format, uint32_t width, uint32_t height,
-		const FlagSet<UsageFlags>& usageFlags) :
+		Attachment{},
+		imageUsage{0},
+		image{nullptr},
+		imageView{VK_NULL_HANDLE},
+		renderLayout{VK_IMAGE_LAYOUT_UNDEFINED},
+		renderAccessFlags{0},
+		renderPipelineStage{0} {}
+	Texture(Device& device, VkFormat format, VkImageUsageFlags usage,
+			uint32_t width, uint32_t height) :
 		Texture{}
 	{
-		setUsageFlags(usageFlags);
-		init(device, format, width, height);
+		init(device, format, usage, width, height);
 	}
-	virtual ~Texture() = default;
 
-	void setUsageFlags(const FlagSet<UsageFlags>& usageFlags);
+	virtual ~Texture();
 
+	virtual void init(Device& device, VkFormat format, VkImageUsageFlags usage, uint32_t width,
+			  uint32_t height);
+	void resize(uint32_t width, uint32_t height) override;
+	void transitionShaderReadable(VkCommandBuffer cmdBuffer, VkPipelineStageFlags stage);
 	void before(VkCommandBuffer cmdBuffer) override;
-	void transitionShaderReadable(VkCommandBuffer cmdBuffer);
+
+	VkImageUsageFlags getImageUsage() const { return imageUsage; }
+	Image& getImage() { return *image; }
+	VkImageView getImageView() { return imageView; }
+	VkImageLayout getInitialLayout() const override { return renderLayout; }
+	VkImageLayout getFinalLayout() const override { return renderLayout; }
 
 private:
-	FlagSet<UsageFlags> usageFlags;
+	VkImageUsageFlags imageUsage;
+	Image* image;
+	VkImageView imageView;
 
-	void createImageView() override;
+	VkImageLayout renderLayout;
+	VkAccessFlags renderAccessFlags;
+	VkPipelineStageFlags renderPipelineStage;
+
+	void create();
+	void destroy();
 };
 
 }

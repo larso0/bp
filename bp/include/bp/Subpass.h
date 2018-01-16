@@ -2,7 +2,7 @@
 #define BP_SUBPASS_H
 
 #include "Attachment.h"
-#include "DepthAttachment.h"
+#include "Texture.h"
 #include <vector>
 #include <utility>
 
@@ -36,7 +36,7 @@ public:
 	void addInputAttachment(Attachment& attachment);
 	void addColorAttachment(Attachment& attachment);
 	void addColorAttachment(Attachment& attachment, Attachment& resolveAttachment);
-	void setDepthAttachment(DepthAttachment& depthAttachment);
+	void setDepthAttachment(Texture& depthAttachment);
 
 protected:
 	Device* device;
@@ -47,7 +47,7 @@ private:
 	std::vector<Attachment*> inputAttachments;
 	std::vector<Attachment*> colorAttachments;
 	std::vector<Attachment*> resolveAttachments;
-	DepthAttachment* depthAttachment;
+	Texture* depthAttachment;
 
 };
 
