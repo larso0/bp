@@ -25,16 +25,27 @@ find_path(BP_QT_INCLUDE_DIR bpQt/Window.h
 	  HINTS ${BP_QT_ROOT_DIR}/include ${BP_ROOT_DIR}/bpQt/include ${BP_QT_INCLUDE_DIR}
 	  PATHS ../bp/bpQt/include)
 
-find_library(BP_QT_LIBRARY NAMES bpQt
+find_library(BP_QT_LIBRARY_RELEASE NAMES bpQt
 	     HINTS
-	     ${BP_QT_ROOT_DIR}/lib
-	     ${BP_QT_ROOT_DIR}/cmake-build-debug
-	     ${BP_ROOT_DIR}/cmake-build-debug
+	     	${BP_QT_ROOT_DIR}/lib
+	     	${BP_QT_ROOT_DIR}/cmake-build-release
+	     	${BP_ROOT_DIR}/cmake-build-release
 	     PATHS
-	     ${BP_QT_LIBRARY_DIR}
-	     ${BP_LIBRARY_DIR}
-	     ../bp/lib
-	     ../bp/cmake-build-debug)
+	     	${BP_QT_LIBRARY_DIR}
+	     	${BP_LIBRARY_DIR}
+	     	../bp/lib
+	     	../bp/cmake-build-release)
+find_library(BP_QT_LIBRARY_DEBUG NAMES bpQtd
+	     HINTS
+	     	${BP_QT_ROOT_DIR}/lib
+	     	${BP_QT_ROOT_DIR}/cmake-build-debug
+	     	${BP_ROOT_DIR}/cmake-build-debug
+	     PATHS
+	     	${BP_QT_LIBRARY_DIR}
+	     	${BP_LIBRARY_DIR}
+	     	../bp/lib
+	     	../bp/cmake-build-debug)
+set(BP_QT_LIBRARY optimized ${BP_QT_LIBRARY_RELEASE} debug ${BP_QT_LIBRARY_DEBUG})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(BP_QT DEFAULT_MSG

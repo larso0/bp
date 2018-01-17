@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.3)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules")
+set(CMAKE_DEBUG_POSTFIX d)
 project(bp)
 
 set(CMAKE_CXX_STANDARD 11)

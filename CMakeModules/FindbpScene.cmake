@@ -11,16 +11,27 @@ find_path(BP_SCENE_INCLUDE_DIR bpScene/Node.h
 	  HINTS ${BP_SCENE_ROOT_DIR}/include ${BP_ROOT_DIR}/bpScene/include ${BP_SCENE_INCLUDE_DIR}
 	  PATHS ../bp/bpScene/include)
 
-find_library(BP_SCENE_LIBRARY NAMES bpScene
+find_library(BP_SCENE_LIBRARY_RELEASE NAMES bpScene
 	     HINTS
 	     	${BP_SCENE_ROOT_DIR}/lib
-	     	${BP_SCENE_ROOT_DIR}/cmake-build-debug
-	     	${BP_ROOT_DIR}/cmake-build-debug
+	     	${BP_SCENE_ROOT_DIR}/cmake-build-release
+	     	${BP_ROOT_DIR}/cmake-build-release
 	     PATHS
 	     	${BP_SCENE_LIBRARY_DIR}
 	     	${BP_LIBRARY_DIR}
 	     	../bp/lib
-	     	../bp/cmake-build-debug)
+	     	../bp/cmake-build-release)
+find_library(BP_SCENE_LIBRARY_DEBUG NAMES bpScened
+	     HINTS
+	     ${BP_SCENE_ROOT_DIR}/lib
+	     ${BP_SCENE_ROOT_DIR}/cmake-build-debug
+	     ${BP_ROOT_DIR}/cmake-build-debug
+	     PATHS
+	     ${BP_SCENE_LIBRARY_DIR}
+	     ${BP_LIBRARY_DIR}
+	     ../bp/lib
+	     ../bp/cmake-build-debug)
+set(BP_SCENE_LIBRARY optimized ${BP_SCENE_LIBRARY_RELEASE} debug ${BP_SCENE_LIBRARY_DEBUG})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(BP_SCENE DEFAULT_MSG

@@ -11,9 +11,13 @@ find_path(BP_INCLUDE_DIR bp/Instance.h
 	  HINTS ${BP_ROOT_DIR}/include ${BP_ROOT_DIR}/bp/include ${BP_INCLUDE_DIR}
 	  PATHS ../bp/bp/include)
 
-find_library(BP_LIBRARY NAMES bp
+find_library(BP_LIBRARY_RELEASE NAMES bp
+	     HINTS ${BP_ROOT_DIR}/lib ${BP_ROOT_DIR}/cmake-build-release
+	     PATHS ${BP_LIBRARY_DIR} ../bp/lib ../bp/cmake-build-release)
+find_library(BP_LIBRARY_DEBUG NAMES bpd
 	     HINTS ${BP_ROOT_DIR}/lib ${BP_ROOT_DIR}/cmake-build-debug
 	     PATHS ${BP_LIBRARY_DIR} ../bp/lib ../bp/cmake-build-debug)
+set(BP_LIBRARY optimized ${BP_LIBRARY_RELEASE} debug ${BP_LIBRARY_DEBUG})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(BP DEFAULT_MSG
