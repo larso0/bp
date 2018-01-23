@@ -7,6 +7,7 @@
 #include <bp/Semaphore.h>
 #include <QWindow>
 #include <QVulkanInstance>
+#include <ctime>
 
 namespace bpQt
 {
@@ -21,6 +22,7 @@ public:
 		surface{VK_NULL_HANDLE},
 		vsync{true},
 		resized{false},
+		timer{0},
 		graphicsQueue{nullptr},
 		frameCmdBuffer{VK_NULL_HANDLE},
 		frameCmdBufferBeginInfo{}
@@ -42,17 +44,19 @@ protected:
 	bp::Device device;
 	bp::Swapchain swapchain;
 
-	virtual void initRenderResources() = 0;
-	virtual void resizeRenderResources(int width, int height) {}
+	virtual void initRenderResources(uint32_t width, uint32_t height) = 0;
+	virtual void resizeRenderResources(uint32_t width, uint32_t height) {}
 	virtual void specifyDeviceRequirements(bp::DeviceRequirements& requirements) {}
 	virtual VkPhysicalDevice selectDevice(const std::vector<VkPhysicalDevice>& devices);
 	virtual void render(VkCommandBuffer cmdBuffer) = 0;
+	virtual void update(double frameDeltaTime) {}
 
 private:
 	bool surfaceDestroyed, inited, continuousAnimation;
 	VkSurfaceKHR surface;
 	bool vsync;
 	bool resized;
+	clock_t timer;
 
 	bp::Queue* graphicsQueue;
 	bp::CommandPool cmdPool;

@@ -132,6 +132,11 @@ void RenderPass::init(uint32_t width, uint32_t height)
 	create();
 
 	for (Subpass* subpass : subpasses) subpass->init(*this);
+
+	if (swapchain != nullptr)
+	{
+		connect(swapchain->resizeEvent, *this, &RenderPass::resize);
+	}
 }
 
 void RenderPass::resize(uint32_t width, uint32_t height)

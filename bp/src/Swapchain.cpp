@@ -58,6 +58,7 @@ void Swapchain::resize(uint32_t w, uint32_t h)
 	width = w;
 	height = h;
 	create();
+	resizeEvent(w, h);
 }
 
 void Swapchain::recreate(VkSurfaceKHR newSurface)
@@ -68,6 +69,7 @@ void Swapchain::recreate(VkSurfaceKHR newSurface)
 		surface = newSurface;
 	}
 	create();
+	resizeEvent(width, height);
 }
 
 void Swapchain::create()
@@ -216,8 +218,16 @@ void Swapchain::destroy()
 
 void Swapchain::nextImage()
 {
-	vkAcquireNextImageKHR(*device, handle, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE,
-			      &currentFramebufferIndex);
+	VkResult result = vkAcquireNextImageKHR(*device, handle, UINT64_MAX,
+						imageAvailableSemaphore, VK_NULL_HANDLE,
+						&currentFramebufferIndex);
+	if (result == VK_ERROR_OUT_OF_DATE_KHR)
+	{
+		create();
+		vkAcquireNextImageKHR(*device, handle, UINT64_MAX, imageAvailableSemaphore,
+				      VK_NULL_HANDLE, &currentFramebufferIndex);
+		resizeEvent(width, height);
+	}
 }
 
 void Swapchain::transitionColor(VkCommandBuffer cmdBuffer)

@@ -28,8 +28,11 @@ void Window::init()
 	VkPhysicalDevice physical = selectDevice(queryDevices(*vulkanInstance(), requirements));
 	if (physical == VK_NULL_HANDLE) throw runtime_error("No suitable device available.");
 	device.init(physical, requirements);
+
 	swapchain.init(device, surface, static_cast<uint32_t>(width()),
 		       static_cast<uint32_t>(height()), vsync);
+	bp::connect(swapchain.resizeEvent, *this, &Window::resizeRenderResources);
+
 	graphicsQueue = &device.getGraphicsQueue();
 
 	bp::connect(swapchain.presentQueuedEvent, *this, &Window::presentQueued);
@@ -42,7 +45,10 @@ void Window::init()
 	frameCmdBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	frameCmdBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-	initRenderResources();
+	initRenderResources(static_cast<uint32_t>(width()), static_cast<uint32_t>(height()));
+
+	timer = clock();
+
 	inited = true;
 }
 
@@ -53,7 +59,7 @@ void Window::frame()
 	{
 		swapchain.resize(static_cast<uint32_t>(width()),
 				 static_cast<uint32_t>(height()));
-		resizeRenderResources(width(), height());
+		resized = false;
 	}
 
 	vkBeginCommandBuffer(frameCmdBuffer, &frameCmdBufferBeginInfo);
@@ -64,6 +70,11 @@ void Window::frame()
 		     {frameCmdBuffer}, {renderCompleteSem});
 	graphicsQueue->waitIdle();
 	swapchain.present(renderCompleteSem);
+
+	time_t updatedTimer = clock();
+	double delta = static_cast<double>(updatedTimer - timer) / CLOCKS_PER_SEC;
+	timer = updatedTimer;
+	update(delta);
 
 	if (continuousAnimation)
 		requestUpdate();

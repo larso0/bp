@@ -61,6 +61,7 @@ public:
 	}
 
 	Event<> presentQueuedEvent;
+	Event<uint32_t, uint32_t> resizeEvent;
 private:
 	bool vsync;
 	VkSurfaceKHR surface;
