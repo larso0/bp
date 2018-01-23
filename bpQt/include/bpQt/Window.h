@@ -3,9 +3,10 @@
 
 #include "DeviceQuery.h"
 #include <bp/Swapchain.h>
+#include <bp/CommandPool.h>
+#include <bp/Semaphore.h>
 #include <QWindow>
 #include <QVulkanInstance>
-#include <vulkan/vulkan.h>
 
 namespace bpQt
 {
@@ -18,11 +19,11 @@ public:
 		inited{false},
 		continuousAnimation{false},
 		surface{VK_NULL_HANDLE},
-		cmdPool{VK_NULL_HANDLE},
+		vsync{true},
+		resized{false},
+		graphicsQueue{nullptr},
 		frameCmdBuffer{VK_NULL_HANDLE},
-		renderCompleteSem{VK_NULL_HANDLE},
-		frameCmdBufferBeginInfo{},
-		frameSubmitInfo{}
+		frameCmdBufferBeginInfo{}
 	{
 		setSurfaceType(VulkanSurface);
 	}
@@ -32,7 +33,7 @@ public:
 		setVulkanInstance(&instance);
 	}
 
-	virtual ~Window();
+	virtual ~Window() = default;
 
 	void setVSync(bool enabled) { vsync = enabled; }
 	void setContinuousRendering(bool enabled) { continuousAnimation = enabled; }
@@ -51,13 +52,14 @@ private:
 	bool surfaceDestroyed, inited, continuousAnimation;
 	VkSurfaceKHR surface;
 	bool vsync;
+	bool resized;
 
-	VkCommandPool cmdPool;
+	bp::Queue* graphicsQueue;
+	bp::CommandPool cmdPool;
 	VkCommandBuffer frameCmdBuffer;
-	VkSemaphore renderCompleteSem;
+	bp::Semaphore renderCompleteSem;
 
 	VkCommandBufferBeginInfo frameCmdBufferBeginInfo;
-	VkSubmitInfo frameSubmitInfo;
 
 	void presentQueued()
 	{
@@ -66,6 +68,7 @@ private:
 
 	void init();
 	void frame();
+	void resizeEvent(QResizeEvent*) override;
 	void exposeEvent(QExposeEvent*) override;
 	bool event(QEvent* event) override;
 };

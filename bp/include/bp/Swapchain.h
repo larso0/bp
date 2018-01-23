@@ -49,7 +49,7 @@ public:
 	uint32_t getCurrentFramebufferIndex() const { return currentFramebufferIndex; }
 	VkImage getFramebufferImage(uint32_t i) { return framebufferImages[i]; }
 	VkImageView getFramebufferImageView(uint32_t i) { return framebufferImageViews[i]; }
-	VkSemaphore getPresentSemaphore() { return presentSemaphore; }
+	VkSemaphore getImageAvailableSemaphore() { return imageAvailableSemaphore; }
 
 	VkImageLayout getInitialLayout() const override
 	{
@@ -71,7 +71,7 @@ private:
 	std::vector<bool> transitionStatus;
 	std::vector<VkImageView> framebufferImageViews;
 	uint32_t currentFramebufferIndex;
-	Semaphore presentSemaphore;
+	Semaphore imageAvailableSemaphore;
 
 	void create();
 	void nextImage();

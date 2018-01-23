@@ -18,7 +18,7 @@ void Swapchain::init(Device& device, VkSurfaceKHR surface, uint32_t width, uint3
 	format = VK_FORMAT_B8G8R8_UNORM;
 	framebufferImageCount = 2;
 
-	presentSemaphore.init(device);
+	imageAvailableSemaphore.init(device);
 
 	create();
 }
@@ -206,15 +206,17 @@ void Swapchain::create()
 void Swapchain::destroy()
 {
 	if (!isReady()) return;
+	vkDeviceWaitIdle(*device);
 	for (VkImageView imageView : framebufferImageViews)
 		vkDestroyImageView(*device, imageView, nullptr);
 	vkDestroySwapchainKHR(*device, handle, nullptr);
 	handle = VK_NULL_HANDLE;
+	currentFramebufferIndex = 0;
 }
 
 void Swapchain::nextImage()
 {
-	vkAcquireNextImageKHR(*device, handle, UINT64_MAX, presentSemaphore, VK_NULL_HANDLE,
+	vkAcquireNextImageKHR(*device, handle, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE,
 			      &currentFramebufferIndex);
 }
 
