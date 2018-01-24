@@ -31,11 +31,11 @@ void Window::init()
 
 	swapchain.init(device, surface, static_cast<uint32_t>(width()),
 		       static_cast<uint32_t>(height()), vsync);
-	bp::connect(swapchain.resizeEvent, *this, &Window::resizeRenderResources);
+	bpUtil::connect(swapchain.resizeEvent, *this, &Window::resizeRenderResources);
 
 	graphicsQueue = &device.getGraphicsQueue();
 
-	bp::connect(swapchain.presentQueuedEvent, *this, &Window::presentQueued);
+	bpUtil::connect(swapchain.presentQueuedEvent, *this, &Window::presentQueued);
 
 	cmdPool.init(device.getGraphicsQueue());
 	frameCmdBuffer = cmdPool.allocateCommandBuffer();

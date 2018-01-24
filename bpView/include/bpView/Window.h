@@ -4,16 +4,16 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <string>
-#include <bp/Event.h>
-#include <bp/FlagSet.h>
+#include <bpUtil/Event.h>
+#include <bpUtil/FlagSet.h>
 
-namespace bp
+namespace bpView
 {
 
 class Window
 {
 public:
-	enum class Flags : size_t
+	enum class Flag : size_t
 	{
 		RESIZABLE,
 		VISIBLE,
@@ -23,6 +23,7 @@ public:
 		MAXIMIZED,
 		BP_FLAGSET_LAST
 	};
+	using Flags = bpUtil::FlagSet<Flag>;
 
 	Window() :
 		instance{VK_NULL_HANDLE},
@@ -30,9 +31,10 @@ public:
 		surface{VK_NULL_HANDLE},
 		width{0}, height{0} {}
 	Window(VkInstance instance, uint32_t width, uint32_t height, const std::string& title,
-	       GLFWmonitor* monitor = nullptr, const FlagSet<Flags>& flags =
-			FlagSet<Flags>() << Flags::RESIZABLE << Flags::VISIBLE
-					 << Flags::DECORATED << Flags::AUTO_ICONIFY) :
+	       GLFWmonitor* monitor = nullptr, const Flags& flags = Flags() << Flag::RESIZABLE
+									    << Flag::VISIBLE
+									    << Flag::DECORATED
+									    << Flag::AUTO_ICONIFY) :
 		Window{}
 	{
 		init(instance, width, height, title, monitor, flags);
@@ -42,9 +44,8 @@ public:
 
 	void init(VkInstance instance, uint32_t width, uint32_t height, const std::string& title,
 		  GLFWmonitor* monitor = nullptr,
-		  const FlagSet<Flags>& flags = FlagSet<Flags>()
-			  << Flags::RESIZABLE << Flags::VISIBLE
-			  << Flags::DECORATED << Flags::AUTO_ICONIFY);
+		  const Flags& flags = Flags() << Flag::RESIZABLE << Flag::VISIBLE
+					       << Flag::DECORATED << Flag::AUTO_ICONIFY);
 	void handleEvents();
 
 	void setSize(int width, int height);
@@ -59,27 +60,27 @@ public:
 	uint32_t getHeight() const { return height; }
 	const std::string& getTitle() const { return title; }
 
-	Event<int, int> keyPressEvent;
-	Event<int, int> keyReleaseEvent;
-	Event<int, int> keyRepeatEvent;
-	Event<unsigned int> charInputEvent;
-	Event<int, int> mouseBtnPressEvent;
-	Event<int, int> mouseBtnReleaseEvent;
-	Event<double, double> cursorPosEvent;
-	Event<> cursorEnterEvent;
-	Event<> cursorLeaveEvent;
-	Event<uint32_t, uint32_t> sizeChangedEvent;
-	Event<const std::vector<std::string>&> fileDropEvent;
+	bpUtil::Event<int, int> keyPressEvent;
+	bpUtil::Event<int, int> keyReleaseEvent;
+	bpUtil::Event<int, int> keyRepeatEvent;
+	bpUtil::Event<unsigned int> charInputEvent;
+	bpUtil::Event<int, int> mouseBtnPressEvent;
+	bpUtil::Event<int, int> mouseBtnReleaseEvent;
+	bpUtil::Event<double, double> cursorPosEvent;
+	bpUtil::Event<> cursorEnterEvent;
+	bpUtil::Event<> cursorLeaveEvent;
+	bpUtil::Event<uint32_t, uint32_t> sizeChangedEvent;
+	bpUtil::Event<const std::vector<std::string>&> fileDropEvent;
 
-	Event<double, double> cursorMotionEvent;
-	Event<uint32_t, uint32_t> resizeEvent;
+	bpUtil::Event<double, double> cursorMotionEvent;
+	bpUtil::Event<uint32_t, uint32_t> resizeEvent;
 private:
 	VkInstance instance;
 	GLFWwindow* handle;
 	VkSurfaceKHR surface;
 	uint32_t width, height;
 	std::string title;
-	FlagSet<Flags> flags;
+	Flags flags;
 
 	struct Motion
 	{

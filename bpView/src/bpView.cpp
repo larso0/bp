@@ -11,7 +11,7 @@ namespace bpView
 
 static vector<string> _requiredInstanceExtensions;
 const vector<string>& requiredInstanceExtensions = _requiredInstanceExtensions;
-bp::Event<const std::string&> errorEvent;
+bpUtil::Event<const std::string&> errorEvent;
 
 static void glfwErrorCallback(int, const char* msg)
 {

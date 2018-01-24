@@ -4,13 +4,13 @@
 #include <mutex>
 #include <condition_variable>
 
-namespace bp
+namespace bpUtil
 {
 
-class CPUSemaphore
+class Semaphore
 {
 public:
-	explicit CPUSemaphore(unsigned v = 0) :
+	explicit Semaphore(unsigned v = 0) :
 		value{v} {}
 
 	void wait()

@@ -5,7 +5,7 @@
 #include <string>
 #include <initializer_list>
 #include <vector>
-#include "Event.h"
+#include <bpUtil/Event.h>
 
 namespace bp
 {
@@ -59,9 +59,9 @@ public:
 	 * Connect delegates to these events to recieve messages.
 	 * Call these events to send messages to the delegates (operator()).
 	 */
-	Event<const std::string&> infoEvent;
-	Event<const std::string&> warningEvent;
-	Event<const std::string&> errorEvent;
+	bpUtil::Event<const std::string&> infoEvent;
+	bpUtil::Event<const std::string&> warningEvent;
+	bpUtil::Event<const std::string&> errorEvent;
 private:
 	VkInstance handle;
 	std::vector<VkPhysicalDevice> physicalDevices;

@@ -3,13 +3,13 @@
 
 #include <vector>
 #include <string>
-#include <bp/Event.h>
+#include <bpUtil/Event.h>
 
 namespace bpView
 {
 
 extern const std::vector<std::string>& requiredInstanceExtensions;
-extern bp::Event<const std::string&> errorEvent;
+extern bpUtil::Event<const std::string&> errorEvent;
 
 void init();
 

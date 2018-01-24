@@ -13,13 +13,14 @@ if (NOT BP_MODULES)
 endif()
 
 set(BP_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bp/include)
+set(BP_UTIL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bpUtil/include)
 set(BP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bp/src)
 file(GLOB_RECURSE BP_SRC_FILES "${BP_SRC_DIR}/*.cpp" "src/*.c")
 file(GLOB_RECURSE BP_INCLUDE_FILES "${BP_INCLUDE_DIR}/*.h" "${BP_INCLUDE_DIR}/*.hpp")
 set(BP_SRC ${BP_SRC_FILES} ${BP_INCLUDE_FILES})
 
 find_package(Vulkan REQUIRED)
-include_directories(${Vulkan_INCLUDE_DIRS} ${BP_INCLUDE_DIR})
+include_directories(${Vulkan_INCLUDE_DIRS} ${BP_INCLUDE_DIR} ${BP_UTIL_INCLUDE_DIR})
 add_library(bp STATIC ${BP_SRC})
 
 if (Scene IN_LIST BP_MODULES)

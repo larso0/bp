@@ -31,7 +31,7 @@ const uint32_t Vertex::POSITION_OFFSET = 0;
 const uint32_t Vertex::NORMAL_OFFSET = sizeof(glm::vec3);
 const uint32_t Vertex::TEXTURE_COORDINATE_OFFSET = 2 * sizeof(glm::vec3);
 
-void Mesh::loadObj(const string& filename, const bp::FlagSet<LoadFlags>& flags)
+void Mesh::loadObj(const string& filename, const LoadFlags& flags)
 {
 	tinyobj::attrib_t attrib;
 	vector <tinyobj::shape_t> shapes;
@@ -48,15 +48,15 @@ void Mesh::loadObj(const string& filename, const bp::FlagSet<LoadFlags>& flags)
 		for (const auto& index : shape.mesh.indices)
 		{
 			Vertex vertex;
-			if (flags & LoadFlags::POSITION)
+			if (flags & LoadFlag::POSITION)
 				vertex.position = vec3(attrib.vertices[3 * index.vertex_index],
 						       attrib.vertices[3 * index.vertex_index + 1],
 						       attrib.vertices[3 * index.vertex_index + 2]);
-			if (flags & LoadFlags::NORMAL)
+			if (flags & LoadFlag::NORMAL)
 				vertex.normal = vec3(attrib.normals[3 * index.normal_index],
 						     attrib.normals[3 * index.normal_index + 1],
 						     attrib.normals[3 * index.normal_index + 2]);
-			if (flags & LoadFlags::TEXTURE_COORDINATE)
+			if (flags & LoadFlag::TEXTURE_COORDINATE)
 				vertex.textureCoordinate =
 					vec2(attrib.texcoords[2 * index.texcoord_index],
 					     1.f - attrib.texcoords[2 * index.texcoord_index + 1]);

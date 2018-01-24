@@ -2,8 +2,8 @@
 #define BP_SWAPCHAIN_H
 
 #include "Attachment.h"
-#include "Event.h"
 #include "Semaphore.h"
+#include <bpUtil/Event.h>
 #include <vector>
 
 namespace bp
@@ -60,8 +60,8 @@ public:
 		return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	}
 
-	Event<> presentQueuedEvent;
-	Event<uint32_t, uint32_t> resizeEvent;
+	bpUtil::Event<> presentQueuedEvent;
+	bpUtil::Event<uint32_t, uint32_t> resizeEvent;
 private:
 	bool vsync;
 	VkSurfaceKHR surface;

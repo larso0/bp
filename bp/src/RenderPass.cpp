@@ -135,7 +135,7 @@ void RenderPass::init(uint32_t width, uint32_t height)
 
 	if (swapchain != nullptr)
 	{
-		connect(swapchain->resizeEvent, *this, &RenderPass::resize);
+		bpUtil::connect(swapchain->resizeEvent, *this, &RenderPass::resize);
 	}
 }
 

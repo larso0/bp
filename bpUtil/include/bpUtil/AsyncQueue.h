@@ -5,7 +5,7 @@
 #include <mutex>
 #include <condition_variable>
 
-namespace bp
+namespace bpUtil
 {
 
 template<typename T>

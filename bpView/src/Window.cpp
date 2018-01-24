@@ -3,11 +3,11 @@
 
 using namespace std;
 
-namespace bp
+namespace bpView
 {
 
 void Window::init(VkInstance instance, uint32_t width, uint32_t height, const std::string& title,
-		  GLFWmonitor* monitor, const FlagSet<bp::Window::Flags>& flags)
+		  GLFWmonitor* monitor, const Flags& flags)
 {
 	Window::instance = instance;
 	Window::width = width;
@@ -16,12 +16,12 @@ void Window::init(VkInstance instance, uint32_t width, uint32_t height, const st
 	Window::flags = flags;
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, flags & Flags::RESIZABLE);
-	glfwWindowHint(GLFW_VISIBLE, flags & Flags::VISIBLE);
-	glfwWindowHint(GLFW_DECORATED, flags & Flags::DECORATED);
-	glfwWindowHint(GLFW_AUTO_ICONIFY, flags & Flags::AUTO_ICONIFY);
-	glfwWindowHint(GLFW_FLOATING, flags & Flags::FLOATING);
-	glfwWindowHint(GLFW_MAXIMIZED, flags & Flags::MAXIMIZED);
+	glfwWindowHint(GLFW_RESIZABLE, flags & Flag::RESIZABLE);
+	glfwWindowHint(GLFW_VISIBLE, flags & Flag::VISIBLE);
+	glfwWindowHint(GLFW_DECORATED, flags & Flag::DECORATED);
+	glfwWindowHint(GLFW_AUTO_ICONIFY, flags & Flag::AUTO_ICONIFY);
+	glfwWindowHint(GLFW_FLOATING, flags & Flag::FLOATING);
+	glfwWindowHint(GLFW_MAXIMIZED, flags & Flag::MAXIMIZED);
 
 	handle = glfwCreateWindow(width, height, title.c_str(), monitor, nullptr);
 	if (handle == nullptr)
@@ -41,11 +41,11 @@ void Window::init(VkInstance instance, uint32_t width, uint32_t height, const st
 	glfwSetDropCallback(handle, fileDropCallback);
 
 	glfwGetCursorPos(handle, &motion.x, &motion.y);
-	connect(cursorPosEvent, motion, &Motion::update);
+	bpUtil::connect(cursorPosEvent, motion, &Motion::update);
 
 	resize.width = width;
 	resize.height = height;
-	connect(sizeChangedEvent, resize, &Resize::update);
+	bpUtil::connect(sizeChangedEvent, resize, &Resize::update);
 	int w, h;
 	glfwGetFramebufferSize(handle, &w, &h);
 	width = w;

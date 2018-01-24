@@ -3,7 +3,7 @@
 
 #include <bitset>
 
-namespace bp
+namespace bpUtil
 {
 
 /*
@@ -16,7 +16,7 @@ namespace bp
  *
  * enum Flags { A, B, C, BP_FLAGSET_LAST };
  *
- * bp::FlagSet<Flags> flags;
+ * bpUtil::FlagSet<Flags> flags;
  * //Set flags with operator <<
  * flags << A << C;
  *
@@ -24,8 +24,8 @@ namespace bp
  * if (flags & A) { ... }
  *
  * //Use operator << on rvalue references
- * void foo(const bp::FlagSet<Flags>& flags) { ... }
- * foo(bp::FlagSet<Flags>() << A << B);
+ * void foo(const bpUtil::FlagSet<Flags>& flags) { ... }
+ * foo(bpUtil::FlagSet<Flags>() << A << B);
  */
 
 template <typename T>
@@ -34,62 +34,62 @@ using FlagSet = std::bitset<static_cast<size_t>(T::BP_FLAGSET_LAST)>;
 }
 
 template <typename T>
-bp::FlagSet<T>& operator<<(bp::FlagSet<T>& flags, T flag)
+bpUtil::FlagSet<T>& operator<<(bpUtil::FlagSet<T>& flags, T flag)
 {
 	flags[static_cast<size_t>(flag)] = true;
 	return flags;
 }
 
 template <typename T>
-bp::FlagSet<T>& operator<<(bp::FlagSet<T>&& flags, T flag)
+bpUtil::FlagSet<T>& operator<<(bpUtil::FlagSet<T>&& flags, T flag)
 {
 	flags[static_cast<size_t>(flag)] = true;
 	return flags;
 }
 
 template <typename T>
-bp::FlagSet<T>& operator>>(bp::FlagSet<T>& flags, T flag)
+bpUtil::FlagSet<T>& operator>>(bpUtil::FlagSet<T>& flags, T flag)
 {
 	flags[static_cast<size_t>(flag)] = false;
 	return flags;
 }
 
 template <typename T>
-bp::FlagSet<T>& operator>>(bp::FlagSet<T>&& flags, T flag)
+bpUtil::FlagSet<T>& operator>>(bpUtil::FlagSet<T>&& flags, T flag)
 {
 	flags[static_cast<size_t>(flag)] = false;
 	return flags;
 }
 
 template <typename T>
-bp::FlagSet<T>& operator|=(bp::FlagSet<T>& flags, T flag)
+bpUtil::FlagSet<T>& operator|=(bpUtil::FlagSet<T>& flags, T flag)
 {
 	flags[static_cast<size_t>(flag)] = true;
 	return flags;
 }
 
 template <typename T>
-bp::FlagSet<T>& operator|=(bp::FlagSet<T>&& flags, T flag)
+bpUtil::FlagSet<T>& operator|=(bpUtil::FlagSet<T>&& flags, T flag)
 {
 	flags[static_cast<size_t>(flag)] = true;
 	return flags;
 }
 
 template <typename T>
-bp::FlagSet<T>& operator^=(bp::FlagSet<T>& flags, T flag)
+bpUtil::FlagSet<T>& operator^=(bpUtil::FlagSet<T>& flags, T flag)
 {
 	flags.flip(static_cast<size_t>(flag));
 	return flags;
 }
 
 template <typename T>
-bp::FlagSet<T>& operator^=(bp::FlagSet<T>&& flags, T flag)
+bpUtil::FlagSet<T>& operator^=(bpUtil::FlagSet<T>&& flags, T flag)
 {
 	flags.flip(static_cast<size_t>(flag));
 	return flags;
 }
 
 template <typename T>
-bool operator&(const bp::FlagSet<T>& flags, T flag) { return flags[static_cast<size_t>(flag)]; }
+bool operator&(const bpUtil::FlagSet<T>& flags, T flag) { return flags[static_cast<size_t>(flag)]; }
 
 #endif
