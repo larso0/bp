@@ -191,13 +191,15 @@ void replaceSubstrings(std::string& str, const std::string& find, const std::str
 	}
 }
 
+static const size_t CHUNK_SIZE = 524288;
+
 void* parallelCopy(void* dest, const void* src, size_t count)
 {
-	if (count < 1536) return memmove(dest, src, count);
+	if (count <= CHUNK_SIZE) return memmove(dest, src, count);
 
 	size_t threadCount = thread::hardware_concurrency();
 	size_t chunkSize = count / threadCount;
-	if (chunkSize < 1024) chunkSize = 1024;
+	if (chunkSize < CHUNK_SIZE) chunkSize = CHUNK_SIZE;
 	threadCount = count / chunkSize;
 
 	vector<future<void>> futures;
