@@ -50,6 +50,7 @@ protected:
 	virtual VkPhysicalDevice selectDevice(const std::vector<VkPhysicalDevice>& devices);
 	virtual void render(VkCommandBuffer cmdBuffer) = 0;
 	virtual void update(double frameDeltaTime) {}
+	VkCommandBuffer getFrameCommandBuffer() { return frameCmdBuffer; }
 
 private:
 	bool surfaceDestroyed, inited, continuousAnimation;
