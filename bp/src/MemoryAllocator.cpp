@@ -58,8 +58,8 @@ void MemoryAllocator::init(VkPhysicalDevice physicalDevice, VkDevice logicalDevi
 		throw runtime_error("Failed to create memory allocator.");
 }
 
-Allocation MemoryAllocator::createBuffer(const VkBufferCreateInfo& bufferInfo, VmaMemoryUsage usage,
-					 VkBuffer& buffer)
+shared_ptr<Allocation> MemoryAllocator::createBuffer(const VkBufferCreateInfo& bufferInfo,
+						     VmaMemoryUsage usage, VkBuffer& buffer)
 {
 	VmaAllocationCreateInfo createInfo = {};
 	createInfo.usage = usage;
@@ -73,11 +73,11 @@ Allocation MemoryAllocator::createBuffer(const VkBufferCreateInfo& bufferInfo, V
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to allocate buffer memory.");
 
-	return Allocation(logicalDevice, handle, allocation, allocationInfo);
+	return make_shared<Allocation>(logicalDevice, handle, allocation, allocationInfo);
 }
 
-Allocation MemoryAllocator::createImage(const VkImageCreateInfo& bufferInfo, VmaMemoryUsage usage,
-					VkImage& image)
+shared_ptr<Allocation> MemoryAllocator::createImage(const VkImageCreateInfo& bufferInfo,
+						    VmaMemoryUsage usage, VkImage& image)
 {
 	VmaAllocationCreateInfo createInfo = {};
 	createInfo.usage = usage;
@@ -91,7 +91,7 @@ Allocation MemoryAllocator::createImage(const VkImageCreateInfo& bufferInfo, Vma
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to allocate image memory.");
 
-	return Allocation(logicalDevice, handle, allocation, allocationInfo);
+	return make_shared<Allocation>(logicalDevice, handle, allocation, allocationInfo);
 }
 
 }

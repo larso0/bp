@@ -117,6 +117,7 @@ void Device::init(VkPhysicalDevice physicalDevice, const DeviceRequirements& req
 	{
 		createLogicalDevice(requirements);
 		createQueues();
+		allocator = new MemoryAllocator(physical, logical);
 	} catch (exception& e)
 	{
 		if (isReady())
@@ -134,6 +135,7 @@ void Device::init(VkPhysicalDevice physicalDevice, const DeviceRequirements& req
 Device::~Device()
 {
 	queues.clear();
+	delete allocator;
 	vkDestroyDevice(logical, nullptr);
 }
 

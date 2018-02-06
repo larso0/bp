@@ -3,6 +3,7 @@
 
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
+#include <memory>
 #include "Memory.h"
 
 namespace bp
@@ -13,8 +14,8 @@ class Allocation : public Memory
 public:
 	Allocation() :
 		device{VK_NULL_HANDLE},
-		allocator{VMA_NULL},
-		handle{VMA_NULL} {}
+		allocator{VK_NULL_HANDLE},
+		handle{VK_NULL_HANDLE} {}
 	Allocation(VkDevice device, VmaAllocator allocator, VmaAllocation handle,
 		   VmaAllocationInfo& info) :
 		device{device},
@@ -30,7 +31,8 @@ public:
 	~Allocation();
 
 	bool isMapped() const override { return info.pMappedData != nullptr; }
-	bool isReady() const { return handle != VMA_NULL; }
+	bool isReady() const { return handle != VK_NULL_HANDLE; }
+	VkDeviceSize getSize() const override { return info.size; }
 	void* getMapped() override { return info.pMappedData; }
 	void flushMapped() override;
 
@@ -48,7 +50,7 @@ public:
 	MemoryAllocator() :
 		physicalDevice{VK_NULL_HANDLE},
 		logicalDevice{VK_NULL_HANDLE},
-		handle{VMA_NULL} {}
+		handle{VK_NULL_HANDLE} {}
 	MemoryAllocator(VkPhysicalDevice physicalDevice, VkDevice logicalDevice) :
 		MemoryAllocator{}
 	{
@@ -57,12 +59,12 @@ public:
 	~MemoryAllocator();
 
 	void init(VkPhysicalDevice physicalDevice, VkDevice logicalDevice);
-	Allocation createBuffer(const VkBufferCreateInfo& bufferInfo, VmaMemoryUsage usage,
-				VkBuffer& buffer);
-	Allocation createImage(const VkImageCreateInfo& bufferInfo, VmaMemoryUsage usage,
-			       VkImage& image);
+	std::shared_ptr<Allocation> createBuffer(const VkBufferCreateInfo& bufferInfo, VmaMemoryUsage usage,
+						 VkBuffer& buffer);
+	std::shared_ptr<Allocation> createImage(const VkImageCreateInfo& bufferInfo, VmaMemoryUsage usage,
+						VkImage& image);
 
-	bool isReady() const { return handle != VMA_NULL; }
+	bool isReady() const { return handle != VK_NULL_HANDLE; }
 
 private:
 	VkPhysicalDevice physicalDevice;

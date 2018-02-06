@@ -9,14 +9,13 @@ namespace bp
 {
 
 void Buffer::init(Device& device, VkDeviceSize size, VkBufferUsageFlags usage,
-		  VkMemoryPropertyFlags requiredMemoryProperties,
-		  VkMemoryPropertyFlags optimalMemoryProperties)
+		  VmaMemoryUsage memoryUsage)
 {
 	if (isReady()) throw runtime_error("Buffer already initialized.");
 	Buffer::device = &device;
+	Buffer::size = size;
 
-	if (!(requiredMemoryProperties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT))
-		usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+	usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
 	VkBufferCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -24,62 +23,7 @@ void Buffer::init(Device& device, VkDeviceSize size, VkBufferUsageFlags usage,
 	info.usage = usage;
 	info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	VkResult result = vkCreateBuffer(device, &info, nullptr, &handle);
-	if (result != VK_SUCCESS)
-		throw runtime_error("Failed to create buffer.");
-
-	VkMemoryRequirements memoryRequirements = {};
-	vkGetBufferMemoryRequirements(device, handle, &memoryRequirements);
-
-
-	int32_t memType = -1;
-	if (optimalMemoryProperties != 0)
-	{
-		memType = findPhysicalDeviceMemoryType(device,
-						       memoryRequirements.memoryTypeBits,
-						       optimalMemoryProperties);
-		memoryProperties = optimalMemoryProperties;
-	}
-	if (memType == -1)
-	{
-		memType = findPhysicalDeviceMemoryType(device,
-						       memoryRequirements.memoryTypeBits,
-						       requiredMemoryProperties);
-		memoryProperties = requiredMemoryProperties;
-	}
-	if (memType == -1)
-	{
-		vkDestroyBuffer(device, handle, nullptr);
-		handle = VK_NULL_HANDLE;
-		throw runtime_error("No suitable memory type.");
-	}
-
-	VkMemoryAllocateInfo memInfo = {};
-	memInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	memInfo.allocationSize = memoryRequirements.size;
-	memInfo.memoryTypeIndex = (uint32_t) memType;
-
-	result = vkAllocateMemory(device, &memInfo, nullptr, &memory);
-	if (result != VK_SUCCESS)
-	{
-		vkDestroyBuffer(device, handle, nullptr);
-		handle = VK_NULL_HANDLE;
-		throw runtime_error("Failed to allocate buffer memory.");
-	}
-
-	result = vkBindBufferMemory(device, handle, memory, 0);
-	if (result != VK_SUCCESS)
-	{
-		vkFreeMemory(device, memory, nullptr);
-		vkDestroyBuffer(device, handle, nullptr);
-		handle = VK_NULL_HANDLE;
-		throw runtime_error("Failed to bind buffer memory.");
-	}
-
-	mapped.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-	mapped.pNext = nullptr;
-	mapped.memory = memory;
-	Buffer::size = memoryRequirements.size;
+	memory = device.getMemoryAllocator().createBuffer(info, memoryUsage, handle);
 
 	cmdPool.init(device.getTransferQueue(), VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
 }
@@ -88,64 +32,38 @@ Buffer::~Buffer()
 {
 	if (!isReady()) return;
 	delete stagingBuffer;
-	vkFreeMemory(*device, memory, nullptr);
 	vkDestroyBuffer(*device, handle, nullptr);
 }
 
-void* Buffer::map(VkDeviceSize offset, VkDeviceSize size)
+void* Buffer::map()
 {
 	assertReady();
-	void* mappedMemory;
-	if (memoryProperties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
-	{
-		VkResult result = vkMapMemory(*device, memory, offset, size, 0, &mappedMemory);
-		if (result != VK_SUCCESS)
-			throw runtime_error("Failed to map buffer memory.");
-	} else
-	{
-		if (stagingBuffer == nullptr)
-		{
-			stagingBuffer = new Buffer(*device, Buffer::size,
-						   VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-						   VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-						   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-						   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-		}
-		mappedMemory = stagingBuffer->map(offset, size);
-	}
+	if (memory->isMapped()) return memory->getMapped();
 
-	mapped.offset = offset;
-	mapped.size = size;
-	return mappedMemory;
+	if (stagingBuffer == nullptr) createStagingBuffer();
+	return stagingBuffer->map();
 }
 
-void Buffer::unmap(bool writeBack, VkCommandBuffer cmdBuffer)
+void Buffer::createStagingBuffer()
 {
-	assertReady();
 	if (stagingBuffer != nullptr)
-	{
-		stagingBuffer->unmap();
-		if (writeBack)
-			transfer(*stagingBuffer, mapped.offset, mapped.offset, mapped.size,
-				 cmdBuffer);
-	} else
-	{
-		vkFlushMappedMemoryRanges(*device, 1, &mapped);
-		vkUnmapMemory(*device, memory);
-	}
+		throw runtime_error("Staging buffer is already created.");
+	stagingBuffer = new Buffer(*device, Buffer::size,
+				   VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+				   VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+				   VMA_MEMORY_USAGE_CPU_ONLY);
+}
+
+void Buffer::freeStagingBuffer()
+{
+	delete stagingBuffer;
+	stagingBuffer = nullptr;
 }
 
 void Buffer::updateStagingBuffer(VkCommandBuffer cmdBuffer)
 {
-	if (memoryProperties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) return;
-	if (stagingBuffer == nullptr)
-	{
-		stagingBuffer = new Buffer(*device, size,
-					   VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-					   VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-					   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-					   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	}
+	if (memory->isMapped()) return;
+	if (stagingBuffer == nullptr) createStagingBuffer();
 	stagingBuffer->transfer(*this, 0, 0, size, cmdBuffer);
 }
 
@@ -160,26 +78,31 @@ void Buffer::transfer(VkDeviceSize offset, VkDeviceSize size, const void* data,
 {
 	assertReady();
 	if (size == VK_WHOLE_SIZE) size = Buffer::size - offset;
+	void* mapped = map();
+	parallelCopy(mapped, data, size);
+
 	if (stagingBuffer != nullptr)
 	{
-		void* mapped = stagingBuffer->map(offset, size);
-		parallelCopy(mapped, data, size);
-		stagingBuffer->unmap();
-
 		bool useOwnBuffer = cmdBuffer == VK_NULL_HANDLE;
 		if (useOwnBuffer)
-			cmdBuffer = beginSingleUseCmdBuffer(*device, cmdPool);
+		{
+			cmdBuffer = cmdPool.allocateCommandBuffer();
+			VkCommandBufferBeginInfo beginInfo = {};
+			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+			vkBeginCommandBuffer(cmdBuffer, &beginInfo);
+		}
 
 		transfer(*stagingBuffer, offset, offset, size, cmdBuffer);
 
 		if (useOwnBuffer)
-			endSingleUseCmdBuffer(*device, device->getTransferQueue(), cmdPool,
-					      cmdBuffer);
-	} else
-	{
-		void* mapped = map(offset, size);
-		parallelCopy(mapped, data, size);
-		unmap();
+		{
+			vkEndCommandBuffer(cmdBuffer);
+			Queue& queue = device->getTransferQueue();
+			queue.submit({}, {cmdBuffer}, {});
+			queue.waitIdle();
+			cmdPool.freeCommandBuffer(cmdBuffer);
+		}
 	}
 }
 
@@ -189,7 +112,13 @@ void Buffer::transfer(Buffer& src, VkDeviceSize srcOffset, VkDeviceSize dstOffse
 	assertReady();
 	bool useOwnBuffer = cmdBuffer == VK_NULL_HANDLE;
 	if (useOwnBuffer)
-		cmdBuffer = beginSingleUseCmdBuffer(*device, cmdPool);
+	{
+		cmdBuffer = cmdPool.allocateCommandBuffer();
+		VkCommandBufferBeginInfo beginInfo = {};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		vkBeginCommandBuffer(cmdBuffer, &beginInfo);
+	}
 
 	VkBufferCopy copy_region = {};
 	copy_region.srcOffset = srcOffset;
@@ -203,7 +132,13 @@ void Buffer::transfer(Buffer& src, VkDeviceSize srcOffset, VkDeviceSize dstOffse
 	vkCmdCopyBuffer(cmdBuffer, src.getHandle(), handle, 1, &copy_region);
 
 	if (useOwnBuffer)
-		endSingleUseCmdBuffer(*device, device->getTransferQueue(), cmdPool, cmdBuffer);
+	{
+		vkEndCommandBuffer(cmdBuffer);
+		Queue& queue = device->getTransferQueue();
+		queue.submit({}, {cmdBuffer}, {});
+		queue.waitIdle();
+		cmdPool.freeCommandBuffer(cmdBuffer);
+	}
 }
 
 void Buffer::transfer(Image& src, VkCommandBuffer cmdBuffer)
@@ -211,7 +146,13 @@ void Buffer::transfer(Image& src, VkCommandBuffer cmdBuffer)
 	assertReady();
 	bool useOwnBuffer = cmdBuffer == VK_NULL_HANDLE;
 	if (useOwnBuffer)
-		cmdBuffer = beginSingleUseCmdBuffer(*device, cmdPool);
+	{
+		cmdBuffer = cmdPool.allocateCommandBuffer();
+		VkCommandBufferBeginInfo beginInfo = {};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		vkBeginCommandBuffer(cmdBuffer, &beginInfo);
+	}
 
 	src.transition(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT,
 		       VK_PIPELINE_STAGE_TRANSFER_BIT, cmdBuffer);
@@ -230,7 +171,13 @@ void Buffer::transfer(Image& src, VkCommandBuffer cmdBuffer)
 	vkCmdCopyImageToBuffer(cmdBuffer, src, src.layout, handle, 1, &region);
 
 	if (useOwnBuffer)
-		endSingleUseCmdBuffer(*device, device->getTransferQueue(), cmdPool, cmdBuffer);
+	{
+		vkEndCommandBuffer(cmdBuffer);
+		Queue& queue = device->getTransferQueue();
+		queue.submit({}, {cmdBuffer}, {});
+		queue.waitIdle();
+		cmdPool.freeCommandBuffer(cmdBuffer);
+	}
 }
 
 void Buffer::assertReady()

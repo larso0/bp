@@ -3,6 +3,7 @@
 
 #include "Instance.h"
 #include "Queue.h"
+#include "MemoryAllocator.h"
 #include <vulkan/vulkan.h>
 #include <vector>
 
@@ -39,7 +40,8 @@ class Device
 public:
 	Device() :
 		physical{VK_NULL_HANDLE},
-		logical{VK_NULL_HANDLE} {}
+		logical{VK_NULL_HANDLE},
+		allocator{nullptr} {}
 	Device(const Instance& instance, const DeviceRequirements& requirements) :
 		Device()
 	{
@@ -60,6 +62,7 @@ public:
 
 	VkPhysicalDevice getPhysicalHandle() { return physical; }
 	VkDevice getLogicalHandle() { return logical; }
+	MemoryAllocator& getMemoryAllocator() { return *allocator; }
 	uint32_t getQueueCount() const { return static_cast<uint32_t>(queues.size()); }
 	Queue& getQueue(uint32_t index = 0);
 	Queue& getGraphicsQueue();
@@ -71,6 +74,8 @@ public:
 private:
 	VkPhysicalDevice physical;
 	VkDevice logical;
+
+	MemoryAllocator* allocator;
 
 	struct QueueInfo
 	{

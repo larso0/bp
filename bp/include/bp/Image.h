@@ -20,33 +20,27 @@ public:
 		tiling{VK_IMAGE_TILING_LINEAR},
 		usage{0},
 		accessFlags{0},
-		memoryProperties{0},
-		memorySize{0},
 		memory{VK_NULL_HANDLE},
-		mapped{},
 		stagingBuffer{nullptr} {}
 	Image(Device& device, uint32_t width, uint32_t height, VkFormat format,
-	      VkImageTiling tiling, VkImageUsageFlags usage,
-	      VkMemoryPropertyFlags requiredMemoryProperties,
-	      VkMemoryPropertyFlags optimalMemoryProperties = 0,
+	      VkImageTiling tiling, VkImageUsageFlags usage, VmaMemoryUsage memoryUsage,
 	      VkImageLayout initialLayout = VK_IMAGE_LAYOUT_UNDEFINED) :
 		Image()
 	{
-		init(device, width, height, format, tiling, usage, requiredMemoryProperties,
-		     optimalMemoryProperties, initialLayout);
+		init(device, width, height, format, tiling, usage, memoryUsage, initialLayout);
 	}
 	~Image();
 
 	void init(Device& device, uint32_t width, uint32_t height, VkFormat format,
-		  VkImageTiling tiling, VkImageUsageFlags usage,
-		  VkMemoryPropertyFlags requiredMemoryProperties,
-		  VkMemoryPropertyFlags optimalMemoryProperties = 0,
+		  VkImageTiling tiling, VkImageUsageFlags usage, VmaMemoryUsage memoryUsage,
 		  VkImageLayout initialLayout = VK_IMAGE_LAYOUT_UNDEFINED);
 
-	void* map(VkDeviceSize offset, VkDeviceSize size);
-	void unmap(bool writeBack = true, VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
+	void* map();
+	void createStagingBuffer();
+	void freeStagingBuffer();
 	void updateStagingBuffer(VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
 	void flushStagingBuffer(VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
+
 	void transition(VkImageLayout dstLayout, VkAccessFlags dstAccess,
 			VkPipelineStageFlags dstStage, VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
 	void transfer(Image& fromImage, VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);
@@ -61,8 +55,7 @@ public:
 	VkImageTiling getTiling() const { return tiling; }
 	VkImageUsageFlags getUsage() const { return usage; }
 	VkImageLayout getLayout() const { return layout; }
-	VkMemoryPropertyFlags getMemoryProperties() const { return memoryProperties; }
-	VkDeviceSize getMemorySize() const { return memorySize; }
+	VkDeviceSize getMemorySize() const { return memory->getSize(); }
 	bool isReady() const { return handle != VK_NULL_HANDLE; }
 private:
 	friend class Buffer;
@@ -76,10 +69,8 @@ private:
 	VkImageUsageFlags usage;
 	VkImageLayout layout;
 	VkAccessFlags accessFlags;
-	VkMemoryPropertyFlags memoryProperties;
-	VkDeviceSize memorySize;
-	VkDeviceMemory memory;
-	VkMappedMemoryRange mapped;
+
+	std::shared_ptr<Memory> memory;
 	Buffer* stagingBuffer;
 
 	void assertReady();

@@ -61,7 +61,7 @@ void Texture::before(VkCommandBuffer cmdBuffer)
 void Texture::create()
 {
 	image = new Image(*device, width, height, format, VK_IMAGE_TILING_OPTIMAL, imageUsage,
-			  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+			  VMA_MEMORY_USAGE_GPU_ONLY);
 
 	VkImageViewCreateInfo imageViewInfo = {};
 	imageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
