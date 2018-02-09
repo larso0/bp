@@ -117,7 +117,6 @@ void Device::init(VkPhysicalDevice physicalDevice, const DeviceRequirements& req
 	{
 		createLogicalDevice(requirements);
 		createQueues();
-		allocator = new MemoryAllocator(physical, logical);
 	} catch (exception& e)
 	{
 		if (isReady())
@@ -199,6 +198,8 @@ void Device::createLogicalDevice(const DeviceRequirements& requirements)
 	VkResult result = vkCreateDevice(physical, &info, nullptr, &logical);
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to create logical device.");
+
+	allocator = new MemoryAllocator(physical, logical);
 }
 
 void Device::createQueues()

@@ -33,20 +33,6 @@ int32_t findPhysicalDeviceMemoryType(VkPhysicalDevice physicalDevice, uint32_t m
 				     VkMemoryPropertyFlags properties);
 
 /*
- * Allocate and begin a command buffer that should only be used once.
- * You can record commands to the returned command buffer.
- * After done recording, end the command buffer with the endSingleUseCmdBuffer function.
- */
-VkCommandBuffer beginSingleUseCmdBuffer(VkDevice device, VkCommandPool pool);
-
-/*
- * End command buffer, submit command buffer to the queue and free the command buffer.
- * Use this to end command buffer created by the function beginSingleUseCmdBuffer.
- */
-void endSingleUseCmdBuffer(VkDevice device, VkQueue queue, VkCommandPool pool,
-			   VkCommandBuffer cmdBuffer);
-
-/*
  * Read a binary file into a vector.
  * Useful for loading SPIR-V binary code from files.
  */
