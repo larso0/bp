@@ -199,7 +199,7 @@ void Device::createLogicalDevice(const DeviceRequirements& requirements)
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to create logical device.");
 
-	allocator = new MemoryAllocator(physical, logical);
+	allocator = new MemoryAllocator(*this);
 }
 
 void Device::createQueues()

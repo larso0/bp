@@ -1,4 +1,8 @@
 #include <bp/MemoryAllocator.h>
+#include <bp/Allocation.h>
+#include <bp/ExternalMemory.h>
+#include <bp/MemoryAllocator.h>
+#include <bp/Device.h>
 #include <stdexcept>
 
 using namespace std;
@@ -12,10 +16,10 @@ MemoryAllocator::~MemoryAllocator()
 		vmaDestroyAllocator(handle);
 }
 
-void MemoryAllocator::init(VkPhysicalDevice physicalDevice, VkDevice logicalDevice)
+void MemoryAllocator::init(Device& device)
 {
-	MemoryAllocator::physicalDevice = physicalDevice;
-	MemoryAllocator::logicalDevice = logicalDevice;
+	physicalDevice = device;
+	logicalDevice = device;
 
 	VmaAllocatorCreateInfo info = {};
 	info.physicalDevice = physicalDevice;
@@ -26,40 +30,74 @@ void MemoryAllocator::init(VkPhysicalDevice physicalDevice, VkDevice logicalDevi
 		throw runtime_error("Failed to create memory allocator.");
 }
 
-shared_ptr<Allocation> MemoryAllocator::createBuffer(const VkBufferCreateInfo& bufferInfo,
-						     VmaMemoryUsage usage, VkBuffer& buffer)
+shared_ptr<Memory> MemoryAllocator::createBuffer(const VkBufferCreateInfo& bufferInfo,
+						 VmaMemoryUsage usage, VkBuffer& buffer,
+						 void* opaque)
 {
-	VmaAllocationCreateInfo createInfo = {};
-	createInfo.usage = usage;
+	if (opaque == nullptr)
+	{
+		VmaAllocationCreateInfo createInfo = {};
+		createInfo.usage = usage;
 
-	if (usage != VMA_MEMORY_USAGE_GPU_ONLY) createInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+		if (usage != VMA_MEMORY_USAGE_GPU_ONLY)
+			createInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
-	VmaAllocation allocation = VK_NULL_HANDLE;
-	VmaAllocationInfo allocationInfo = {};
-	VkResult result = vmaCreateBuffer(handle, &bufferInfo, &createInfo, &buffer, &allocation,
-					  &allocationInfo);
-	if (result != VK_SUCCESS)
-		throw runtime_error("Failed to allocate buffer memory.");
+		VmaAllocation allocation = VK_NULL_HANDLE;
+		VmaAllocationInfo allocationInfo = {};
+		VkResult result = vmaCreateBuffer(handle, &bufferInfo, &createInfo, &buffer,
+						  &allocation,
+						  &allocationInfo);
+		if (result != VK_SUCCESS)
+			throw runtime_error("Failed to create buffer.");
 
-	return make_shared<Allocation>(logicalDevice, handle, allocation, allocationInfo);
+		return make_shared<Allocation>(logicalDevice, handle, allocation, allocationInfo);
+	} else
+	{
+		VkResult result = vkCreateBuffer(logicalDevice, &bufferInfo, nullptr, &buffer);
+		if (result != VK_SUCCESS)
+			throw runtime_error("Failed to create buffer.");
+
+		VkMemoryRequirements requirements = {};
+		vkGetBufferMemoryRequirements(logicalDevice, buffer, &requirements);
+
+		return make_shared<ExternalMemory>(physicalDevice, logicalDevice, requirements,
+						   opaque);
+	}
 }
 
-shared_ptr<Allocation> MemoryAllocator::createImage(const VkImageCreateInfo& bufferInfo,
-						    VmaMemoryUsage usage, VkImage& image)
+shared_ptr<Memory> MemoryAllocator::createImage(const VkImageCreateInfo& imageInfo,
+						VmaMemoryUsage usage, VkImage& image,
+						void* opaque)
 {
-	VmaAllocationCreateInfo createInfo = {};
-	createInfo.usage = usage;
+	if (opaque == nullptr)
+	{
+		VmaAllocationCreateInfo createInfo = {};
+		createInfo.usage = usage;
 
-	if (usage != VMA_MEMORY_USAGE_GPU_ONLY) createInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+		if (usage != VMA_MEMORY_USAGE_GPU_ONLY)
+			createInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
-	VmaAllocation allocation = VK_NULL_HANDLE;
-	VmaAllocationInfo allocationInfo = {};
-	VkResult result = vmaCreateImage(handle, &bufferInfo, &createInfo, &image, &allocation,
-					 &allocationInfo);
-	if (result != VK_SUCCESS)
-		throw runtime_error("Failed to allocate image memory.");
+		VmaAllocation allocation = VK_NULL_HANDLE;
+		VmaAllocationInfo allocationInfo = {};
+		VkResult result = vmaCreateImage(handle, &imageInfo, &createInfo, &image,
+						 &allocation,
+						 &allocationInfo);
+		if (result != VK_SUCCESS)
+			throw runtime_error("Failed to create image.");
 
-	return make_shared<Allocation>(logicalDevice, handle, allocation, allocationInfo);
+		return make_shared<Allocation>(logicalDevice, handle, allocation, allocationInfo);
+	} else
+	{
+		VkResult result = vkCreateImage(logicalDevice, &imageInfo, nullptr, &image);
+		if (result != VK_SUCCESS)
+			throw runtime_error("Failed to create image.");
+
+		VkMemoryRequirements requirements = {};
+		vkGetImageMemoryRequirements(logicalDevice, image, &requirements);
+
+		return make_shared<ExternalMemory>(physicalDevice, logicalDevice, requirements,
+						   opaque);
+	}
 }
 
 }

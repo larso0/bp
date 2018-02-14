@@ -5,10 +5,11 @@
 #include <vk_mem_alloc.h>
 #include <memory>
 #include "Memory.h"
-#include "Allocation.h"
 
 namespace bp
 {
+
+class Device;
 
 class MemoryAllocator
 {
@@ -17,18 +18,20 @@ public:
 		physicalDevice{VK_NULL_HANDLE},
 		logicalDevice{VK_NULL_HANDLE},
 		handle{VK_NULL_HANDLE} {}
-	MemoryAllocator(VkPhysicalDevice physicalDevice, VkDevice logicalDevice) :
+	MemoryAllocator(Device& device) :
 		MemoryAllocator{}
 	{
-		init(physicalDevice, logicalDevice);
+		init(device);
 	}
 	~MemoryAllocator();
 
-	void init(VkPhysicalDevice physicalDevice, VkDevice logicalDevice);
-	std::shared_ptr<Allocation> createBuffer(const VkBufferCreateInfo& bufferInfo,
-						 VmaMemoryUsage usage, VkBuffer& buffer);
-	std::shared_ptr<Allocation> createImage(const VkImageCreateInfo& bufferInfo,
-						VmaMemoryUsage usage, VkImage& image);
+	void init(Device& device);
+	std::shared_ptr<Memory> createBuffer(const VkBufferCreateInfo& bufferInfo,
+					     VmaMemoryUsage usage, VkBuffer& buffer,
+					     void* opaque = nullptr);
+	std::shared_ptr<Memory> createImage(const VkImageCreateInfo& imageInfo,
+					    VmaMemoryUsage usage, VkImage& image,
+					    void* opaque = nullptr);
 
 	bool isReady() const { return handle != VK_NULL_HANDLE; }
 
