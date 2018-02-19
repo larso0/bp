@@ -59,6 +59,8 @@ public:
 	uint32_t getWidth() const { return width; }
 	uint32_t getHeight() const { return height; }
 	const std::string& getTitle() const { return title; }
+	int getKey(int key) { return glfwGetKey(handle, key); }
+	bool shouldClose() { return static_cast<bool>(glfwWindowShouldClose(handle)); }
 
 	bpUtil::Event<int, int> keyPressEvent;
 	bpUtil::Event<int, int> keyReleaseEvent;
