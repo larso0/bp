@@ -14,7 +14,7 @@ namespace bpScene
 class Mesh
 {
 public:
-	enum class LoadFlag : size_t
+	enum LoadFlag
 	{
 		POSITION,
 		NORMAL,
@@ -27,8 +27,7 @@ public:
 		topology{topology} {}
 
 	void loadObj(const std::string& filename,
-		     const LoadFlags& flags = LoadFlags() << LoadFlag::POSITION
-							  << LoadFlag::NORMAL);
+		     const LoadFlags& flags = LoadFlags() << POSITION << NORMAL);
 
 	uint32_t addVertex(const Vertex& vertex)
 	{

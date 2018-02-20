@@ -48,48 +48,6 @@ bpUtil::FlagSet<T>& operator<<(bpUtil::FlagSet<T>&& flags, T flag)
 }
 
 template <typename T>
-bpUtil::FlagSet<T>& operator>>(bpUtil::FlagSet<T>& flags, T flag)
-{
-	flags[static_cast<size_t>(flag)] = false;
-	return flags;
-}
-
-template <typename T>
-bpUtil::FlagSet<T>& operator>>(bpUtil::FlagSet<T>&& flags, T flag)
-{
-	flags[static_cast<size_t>(flag)] = false;
-	return flags;
-}
-
-template <typename T>
-bpUtil::FlagSet<T>& operator|=(bpUtil::FlagSet<T>& flags, T flag)
-{
-	flags[static_cast<size_t>(flag)] = true;
-	return flags;
-}
-
-template <typename T>
-bpUtil::FlagSet<T>& operator|=(bpUtil::FlagSet<T>&& flags, T flag)
-{
-	flags[static_cast<size_t>(flag)] = true;
-	return flags;
-}
-
-template <typename T>
-bpUtil::FlagSet<T>& operator^=(bpUtil::FlagSet<T>& flags, T flag)
-{
-	flags.flip(static_cast<size_t>(flag));
-	return flags;
-}
-
-template <typename T>
-bpUtil::FlagSet<T>& operator^=(bpUtil::FlagSet<T>&& flags, T flag)
-{
-	flags.flip(static_cast<size_t>(flag));
-	return flags;
-}
-
-template <typename T>
 bool operator&(const bpUtil::FlagSet<T>& flags, T flag) { return flags[static_cast<size_t>(flag)]; }
 
 #endif

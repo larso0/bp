@@ -13,7 +13,7 @@ namespace bpView
 class Window
 {
 public:
-	enum class Flag : size_t
+	enum Flag
 	{
 		RESIZABLE,
 		VISIBLE,
@@ -31,10 +31,10 @@ public:
 		surface{VK_NULL_HANDLE},
 		width{0}, height{0} {}
 	Window(VkInstance instance, uint32_t width, uint32_t height, const std::string& title,
-	       GLFWmonitor* monitor = nullptr, const Flags& flags = Flags() << Flag::RESIZABLE
-									    << Flag::VISIBLE
-									    << Flag::DECORATED
-									    << Flag::AUTO_ICONIFY) :
+	       GLFWmonitor* monitor = nullptr, const Flags& flags = Flags() << RESIZABLE
+									    << VISIBLE
+									    << DECORATED
+									    << AUTO_ICONIFY) :
 		Window{}
 	{
 		init(instance, width, height, title, monitor, flags);
@@ -44,8 +44,8 @@ public:
 
 	void init(VkInstance instance, uint32_t width, uint32_t height, const std::string& title,
 		  GLFWmonitor* monitor = nullptr,
-		  const Flags& flags = Flags() << Flag::RESIZABLE << Flag::VISIBLE
-					       << Flag::DECORATED << Flag::AUTO_ICONIFY);
+		  const Flags& flags = Flags() << RESIZABLE << VISIBLE << DECORATED
+					       << AUTO_ICONIFY);
 	void handleEvents();
 
 	void setSize(int width, int height);
