@@ -71,7 +71,7 @@ void Window::frame()
 	graphicsQueue->waitIdle();
 	swapchain.present(renderCompleteSem);
 
-	time_t updatedTimer = clock();
+	clock_t updatedTimer = clock();
 	double delta = static_cast<double>(updatedTimer - timer) / CLOCKS_PER_SEC;
 	timer = updatedTimer;
 	update(delta);
