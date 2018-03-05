@@ -12,9 +12,7 @@ struct hash<bpScene::Vertex>
 {
 	size_t operator()(bpScene::Vertex const& vertex) const
 	{
-		return ((hash<glm::vec3>()(vertex.position) ^
-			 (hash<glm::vec3>()(vertex.normal) << 1)) >> 1) ^
-		       (hash<glm::vec2>()(vertex.textureCoordinate) << 1);
+		return (hash<glm::vec3>()(vertex.position));
 	}
 };
 }
@@ -42,6 +40,7 @@ void Mesh::loadObj(const string& filename, const LoadFlags& flags)
 		throw runtime_error(err);
 
 	unordered_map<Vertex, uint32_t> uniqueVertices;
+	uint32_t offset = static_cast<uint32_t>(vertices.size());
 
 	for (const auto& shape : shapes)
 	{
@@ -52,17 +51,9 @@ void Mesh::loadObj(const string& filename, const LoadFlags& flags)
 				vertex.position = vec3(attrib.vertices[3 * index.vertex_index],
 						       attrib.vertices[3 * index.vertex_index + 1],
 						       attrib.vertices[3 * index.vertex_index + 2]);
-			if (flags & LoadFlag::NORMAL)
-				vertex.normal = vec3(attrib.normals[3 * index.normal_index],
-						     attrib.normals[3 * index.normal_index + 1],
-						     attrib.normals[3 * index.normal_index + 2]);
-			if (flags & LoadFlag::TEXTURE_COORDINATE)
-				vertex.textureCoordinate =
-					vec2(attrib.texcoords[2 * index.texcoord_index],
-					     1.f - attrib.texcoords[2 * index.texcoord_index + 1]);
 
 			if (uniqueVertices.count(vertex) == 0)
-				uniqueVertices[vertex] = addVertex(vertex);
+				uniqueVertices[vertex] = addVertex(vertex) + offset;
 
 			indices.push_back(uniqueVertices[vertex]);
 		}
