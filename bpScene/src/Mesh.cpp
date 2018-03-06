@@ -40,7 +40,6 @@ void Mesh::loadObj(const string& filename, const LoadFlags& flags)
 		throw runtime_error(err);
 
 	unordered_map<Vertex, uint32_t> uniqueVertices;
-	uint32_t offset = static_cast<uint32_t>(vertices.size());
 
 	for (const auto& shape : shapes)
 	{
@@ -53,7 +52,7 @@ void Mesh::loadObj(const string& filename, const LoadFlags& flags)
 						       attrib.vertices[3 * index.vertex_index + 2]);
 
 			if (uniqueVertices.count(vertex) == 0)
-				uniqueVertices[vertex] = addVertex(vertex) + offset;
+				uniqueVertices[vertex] = addVertex(vertex);
 
 			indices.push_back(uniqueVertices[vertex]);
 		}
