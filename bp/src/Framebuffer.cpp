@@ -70,8 +70,12 @@ std::vector<VkClearValue> Framebuffer::getClearValues()
 	std::vector<VkClearValue> clearValues;
 	for (uint32_t i = 0; i < renderPass->getAttachmentCount(); i++)
 	{
-		clearValues.push_back(
-			attachments[&renderPass->getAttachmentSlot(i)]->getClearValue());
+		const AttachmentSlot* slot = &renderPass->getAttachmentSlot(i);
+		if (slot->getDescription().loadOp == VK_ATTACHMENT_LOAD_OP_CLEAR)
+		{
+			clearValues.push_back(
+				attachments[&renderPass->getAttachmentSlot(i)]->getClearValue());
+		}
 	}
 	return clearValues;
 }

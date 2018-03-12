@@ -4,6 +4,8 @@
 #include "Attachment.h"
 #include <unordered_map>
 #include <vector>
+#include <initializer_list>
+#include <utility>
 
 namespace bp
 {
@@ -18,8 +20,6 @@ public:
 		renderPass{nullptr},
 		swapchain{nullptr},
 		width{0}, height{0} {}
-	Framebuffer(RenderPass& renderPass, uint32_t width, uint32_t height) :
-		Framebuffer{} { init(renderPass, width, height); }
 	virtual ~Framebuffer();
 
 	void setAttachment(const AttachmentSlot& slot, Attachment& attachment);

@@ -8,8 +8,6 @@
 namespace bp
 {
 
-class RenderPass;
-
 class Subpass
 {
 	friend class RenderPass;
