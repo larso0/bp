@@ -6,6 +6,37 @@
 namespace bp
 {
 
+class AttachmentSlot
+{
+public:
+	AttachmentSlot() : description{} {}
+	AttachmentSlot(VkFormat format, VkSampleCountFlagBits samples,
+		       VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
+		       VkImageLayout initialLayout, VkImageLayout finalLayout) :
+		AttachmentSlot{}
+	{
+		init(format, samples, loadOp, storeOp, initialLayout, finalLayout);
+	}
+
+	void init(VkFormat format, VkSampleCountFlagBits samples,
+		  VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
+		  VkImageLayout initialLayout, VkImageLayout finalLayout)
+	{
+		description.format = format;
+		description.samples = samples;
+		description.loadOp = loadOp;
+		description.storeOp = storeOp;
+		description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		description.initialLayout = initialLayout;
+		description.finalLayout = finalLayout;
+	}
+
+	const VkAttachmentDescription& getDescription() const { return description; }
+private:
+	VkAttachmentDescription description;
+};
+
 /*
  * Attachment to a render pass
  */

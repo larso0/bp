@@ -12,19 +12,17 @@ RenderPass::~RenderPass()
 {
 	if (isReady())
 	{
-		destroyFramebuffers();
 		vkDestroyRenderPass(*device, handle, nullptr);
 	}
 }
 
 void RenderPass::addSubpassGraph(Subpass& subpass)
 {
-	if (device == nullptr) device = subpass.device;
 	subpasses.push_back(&subpass);
 
-	addAttachments(subpass.inputAttachments.begin(), subpass.inputAttachments.end());
-	addAttachments(subpass.colorAttachments.begin(), subpass.colorAttachments.end());
-	addAttachments(subpass.resolveAttachments.begin(), subpass.resolveAttachments.end());
+	for (auto& a : subpass.inputAttachments) addAttachment(a.first);
+	for (auto a : subpass.colorAttachments) addAttachment(a);
+	for (auto a : subpass.resolveAttachments) addAttachment(a);
 	if (subpass.depthAttachment != nullptr) addAttachment(subpass.depthAttachment);
 
 	for (auto s : subpass.dependents)
@@ -33,30 +31,19 @@ void RenderPass::addSubpassGraph(Subpass& subpass)
 	}
 }
 
-void RenderPass::init(uint32_t width, uint32_t height)
+void RenderPass::init(Device& device)
 {
-	renderExtent.width = width;
-	renderExtent.height = height;
+	if (isReady())
+		throw runtime_error("Render pass already initialized.");
+
+	RenderPass::device = &device;
 
 	if (subpasses.empty())
 		throw runtime_error("No subpasses added to render pass.");
 
-	for (Attachment* attachment : attachments)
+	for (const AttachmentSlot* attachment : attachmentSlots)
 	{
-		VkAttachmentDescription description = {};
-		description.format = attachment->getFormat();
-		description.samples = VK_SAMPLE_COUNT_1_BIT;
-
-		if (attachment->isClearEnabled()) description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		else description.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-
-		description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		description.initialLayout = attachment->getInitialLayout();
-		description.finalLayout = attachment->getFinalLayout();
-
-		attachmentDescriptions.push_back(description);
+		attachmentDescriptions.push_back(attachment->getDescription());
 	}
 
 	for (Subpass* subpass : subpasses)
@@ -69,8 +56,7 @@ void RenderPass::init(uint32_t width, uint32_t height)
 			description.inputAttachmentCount =
 				static_cast<uint32_t>(subpass->inputAttachments.size());
 			description.pInputAttachments = addAttachmentReferences(
-				subpass->inputAttachments,
-				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+				subpass->inputAttachments);
 		}
 
 		if (!subpass->colorAttachments.empty())
@@ -86,7 +72,7 @@ void RenderPass::init(uint32_t width, uint32_t height)
 		{
 			description.pResolveAttachments = addAttachmentReferences(
 				subpass->resolveAttachments,
-				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 		}
 
 		if (subpass->depthAttachment != nullptr)
@@ -130,89 +116,55 @@ void RenderPass::init(uint32_t width, uint32_t height)
 	}
 
 	create();
-
-	for (Subpass* subpass : subpasses) subpass->init(*this);
-
-	if (swapchain != nullptr)
-	{
-		bpUtil::connect(swapchain->resizeEvent, *this, &RenderPass::resize);
-	}
 }
 
-void RenderPass::resize(uint32_t width, uint32_t height)
+void RenderPass::render(Framebuffer& framebuffer, VkCommandBuffer cmdBuffer)
 {
-	renderExtent.width = width;
-	renderExtent.height = height;
-	destroyFramebuffers();
-	createFramebuffers();
-}
+	framebuffer.before(cmdBuffer);
 
-void RenderPass::render(VkCommandBuffer cmdBuffer)
-{
-	for (Attachment* attachment : attachments) attachment->before(cmdBuffer);
-
-	vector<VkClearValue> clearValues(attachments.size());
-	auto framebufferIndex = swapchain != nullptr ? swapchain->getCurrentFramebufferIndex() : 0;
+	auto clearValues = framebuffer.getClearValues();
 
 	VkRenderPassBeginInfo beginInfo = {};
 	beginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	beginInfo.renderPass = handle;
-	beginInfo.framebuffer = framebuffers[framebufferIndex];
+	beginInfo.framebuffer = framebuffer;
 	beginInfo.renderArea = renderArea;
-
-	for (auto i = 0; i < attachments.size(); i++)
-	{
-		const auto& description = attachmentDescriptions[i];
-		if (description.loadOp == VK_ATTACHMENT_LOAD_OP_CLEAR
-		    || description.stencilLoadOp == VK_ATTACHMENT_LOAD_OP_CLEAR)
-		{
-			clearValues[i] = attachments[i]->getClearValue();
-		}
-	}
-
 	beginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	beginInfo.pClearValues = clearValues.data();
 
 	vkCmdBeginRenderPass(cmdBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	subpasses[0]->render(cmdBuffer);
+	subpasses[0]->render(renderArea, cmdBuffer);
 
 	for (auto i = 1; i < subpasses.size(); i++)
 	{
 		vkCmdNextSubpass(cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);
-		subpasses[i]->render(cmdBuffer);
+		subpasses[i]->render(renderArea, cmdBuffer);
 	}
 
 	vkCmdEndRenderPass(cmdBuffer);
 
-	for (Attachment* attachment : attachments) attachment->after(cmdBuffer);
+	framebuffer.after(cmdBuffer);
 }
 
-uint32_t RenderPass::getAttachmentIndex(Attachment* a)
+uint32_t RenderPass::getAttachmentIndex(const AttachmentSlot* a)
 {
-	auto found = lower_bound(attachments.begin(), attachments.end(), a);
-	if (found == attachments.end() || *found != a)
-		throw runtime_error("No such attachment.");
-	return static_cast<uint32_t>(distance(attachments.begin(), found));
+	auto found = lower_bound(attachmentSlots.begin(), attachmentSlots.end(), a);
+	if (found == attachmentSlots.end() || *found != a)
+		throw runtime_error("No such attachment slot.");
+	return static_cast<uint32_t>(distance(attachmentSlots.begin(), found));
 }
 
-void RenderPass::addAttachment(Attachment* a)
+void RenderPass::addAttachment(const AttachmentSlot* a)
 {
-	auto pos = lower_bound(attachments.begin(), attachments.end(), a);
-	if (pos == attachments.end() || *pos != a)
+	auto pos = lower_bound(attachmentSlots.begin(), attachmentSlots.end(), a);
+	if (pos == attachmentSlots.end() || *pos != a)
 	{
-		attachments.insert(pos, a);
-	}
-	auto swapchainAttachment = dynamic_cast<Swapchain*>(a);
-	if (swapchainAttachment != nullptr)
-	{
-		if (swapchain != nullptr) throw runtime_error(
-			"Can only use one swapchain attachment per render pass.");
-		swapchain = swapchainAttachment;
+		attachmentSlots.insert(pos, a);
 	}
 }
 
-const VkAttachmentReference* RenderPass::addAttachmentReference(Attachment* attachment,
+const VkAttachmentReference* RenderPass::addAttachmentReference(const AttachmentSlot* attachment,
 								VkImageLayout layout)
 {
 	auto index = attachmentReferences.size();
@@ -222,12 +174,23 @@ const VkAttachmentReference* RenderPass::addAttachmentReference(Attachment* atta
 }
 
 const VkAttachmentReference* RenderPass::addAttachmentReferences(
-	std::vector<Attachment*>& attachments, VkImageLayout layout)
+	vector<const AttachmentSlot*>& attachments, VkImageLayout layout)
 {
 	auto index = attachmentReferences.size();
 	attachmentReferences.emplace_back();
-	for (Attachment* attachment : attachments)
+	for (const AttachmentSlot* attachment : attachments)
 		attachmentReferences[index].push_back({getAttachmentIndex(attachment), layout});
+	return attachmentReferences[index].data();
+}
+
+const VkAttachmentReference* RenderPass::addAttachmentReferences(
+	vector<pair<const AttachmentSlot*, VkImageLayout>>& attachments)
+{
+	auto index = attachmentReferences.size();
+	attachmentReferences.emplace_back();
+	for (auto& attachment : attachments)
+		attachmentReferences[index].push_back(
+			{getAttachmentIndex(attachment.first), attachment.second});
 	return attachmentReferences[index].data();
 }
 
@@ -245,59 +208,6 @@ void RenderPass::create()
 	VkResult result = vkCreateRenderPass(*device, &info, nullptr, &handle);
 	if (result != VK_SUCCESS)
 		throw runtime_error("Failed to create render pass.");
-
-	createFramebuffers();
-}
-
-void RenderPass::createFramebuffers()
-{
-	vector<VkImageView> attachmentViews;
-	int swapchainIndex = -1;
-	for (int i = 0; i < attachments.size(); i++)
-	{
-		if (swapchain != nullptr && attachments[i] == static_cast<Attachment*>(swapchain))
-		{
-			swapchainIndex = i;
-			attachmentViews.push_back(VK_NULL_HANDLE);
-			continue;
-		}
-		auto texture = dynamic_cast<Texture*>(attachments[i]);
-		if (texture == nullptr)
-			throw runtime_error("Unsupported attachment subclass.");
-		attachmentViews.push_back(texture->getImageView());
-	}
-	if (swapchain != nullptr && swapchainIndex == -1)
-		throw runtime_error("This should never happen.");
-
-	VkFramebufferCreateInfo info = {};
-	info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	info.renderPass = handle;
-	info.attachmentCount = static_cast<uint32_t>(attachmentViews.size());
-	info.pAttachments = attachmentViews.data();
-	info.width = renderExtent.width;
-	info.height = renderExtent.height;
-	info.layers = 1;
-
-	auto framebufferCount = swapchain != nullptr ? swapchain->getFramebufferImageCount() : 1;
-	framebuffers.resize(framebufferCount);
-	for (auto i = 0; i < framebufferCount; i++)
-	{
-		if (swapchain != nullptr)
-		{
-			attachmentViews[swapchainIndex] =
-				swapchain->getFramebufferImageView(static_cast<uint32_t>(i));
-		}
-		VkResult result = vkCreateFramebuffer(*device, &info, nullptr,
-						      framebuffers.data() + i);
-		if (result != VK_SUCCESS)
-			throw runtime_error("Failed to create framebuffer.");
-	}
-}
-
-void RenderPass::destroyFramebuffers()
-{
-	for (VkFramebuffer fb : framebuffers)
-		vkDestroyFramebuffer(*device, fb, nullptr);
 }
 
 }

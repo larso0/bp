@@ -7,14 +7,8 @@ using namespace std;
 namespace bpScene
 {
 
-void DrawableSubpass::init(RenderPass& renderPass)
+void DrawableSubpass::render(const VkRect2D& area, VkCommandBuffer cmdBuffer)
 {
-	DrawableSubpass::renderPass = &renderPass;
-}
-
-void DrawableSubpass::render(VkCommandBuffer cmdBuffer)
-{
-	const VkRect2D& area = renderPass->getRenderArea();
 	VkViewport viewport = {(float) area.offset.x, (float) area.offset.y,
 			       (float) area.extent.width, (float) area.extent.height, 0.f, 1.f};
 
