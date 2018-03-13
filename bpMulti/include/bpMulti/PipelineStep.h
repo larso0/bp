@@ -6,7 +6,7 @@
 namespace bpMulti
 {
 
-template<typename Input, typename Output>
+template<typename Output, typename... Input>
 class PipelineStep
 {
 public:
@@ -18,9 +18,9 @@ public:
 		for (unsigned i = 0; i < outputCount; i++) prepare(outputs[i]);
 	}
 
-	Output& process(Input& input, unsigned outputIdx)
+	Output& process(Input... input, unsigned outputIdx)
 	{
-		process(input, outputs[outputIdx], outputIdx);
+		process(input..., outputs[outputIdx], outputIdx);
 		return outputs[outputIdx];
 	}
 
@@ -29,7 +29,7 @@ public:
 
 protected:
 	virtual void prepare(Output&) {}
-	virtual void process(Input& input, Output& output, unsigned outputIndx) = 0;
+	virtual void process(Input... input, Output& output, unsigned outputIndx) = 0;
 
 private:
 	std::vector<Output> outputs;

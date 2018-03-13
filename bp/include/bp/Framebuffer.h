@@ -25,7 +25,7 @@ public:
 	void setAttachment(const AttachmentSlot& slot, Attachment& attachment);
 
 	void init(RenderPass& renderPass, uint32_t width, uint32_t height);
-	void resize(uint32_t width, uint32_t height);
+	virtual void resize(uint32_t width, uint32_t height);
 	void before(VkCommandBuffer cmdBuffer);
 	void after(VkCommandBuffer cmdBuffer);
 
