@@ -1,13 +1,13 @@
 #ifndef BP_SORTFIRSTRENDERER_H
 #define BP_SORTFIRSTRENDERER_H
 
-#include "Renderer.h"
+#include <bp/Renderer.h>
 #include <bpScene/Math.h>
 
 namespace bpMulti
 {
 
-class SortFirstRenderer : public Renderer
+class SortFirstRenderer : public bp::Renderer
 {
 public:
 	struct Contribution

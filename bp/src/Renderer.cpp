@@ -1,10 +1,9 @@
-#include <bpMulti/Renderer.h>
+#include <bp/Renderer.h>
 #include <stdexcept>
 
-using namespace bp;
 using namespace std;
 
-namespace bpMulti
+namespace bp
 {
 
 void Renderer::init(Device& device, VkFormat colorFormat, uint32_t width, uint32_t height)
