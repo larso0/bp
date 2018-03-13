@@ -23,10 +23,11 @@ public:
 	const AttachmentSlot& getColorAttachmentSlot() const { return colorAttachmentSlot; }
 	const AttachmentSlot& getDepthAttachmentSlot() const { return depthAttachmentSlot; }
 	RenderPass& getRenderPass() { return renderPass; }
-	bool isReady() const { return device != nullptr; }
+	bool isReady() const { return renderPass.isReady(); }
 
 protected:
-	virtual void init(uint32_t width, uint32_t height) = 0;
+	virtual void setupSubpasses() = 0;
+	virtual void initResources(uint32_t width, uint32_t height) = 0;
 	void addSubpassGraph(Subpass& subpass);
 
 private:

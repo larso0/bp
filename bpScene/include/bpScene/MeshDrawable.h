@@ -11,7 +11,7 @@ class MeshDrawable : public Drawable
 {
 public:
 	MeshDrawable() :
-		Drawable{},
+		pipeline{nullptr},
 		mesh{nullptr},
 		elementCount{0},
 		instanceCount{1} {}
@@ -28,7 +28,10 @@ public:
 
 	void draw(VkCommandBuffer cmdBuffer) override;
 
+	bp::GraphicsPipeline* getPipeline() override { return pipeline; }
+
 private:
+	bp::GraphicsPipeline* pipeline;
 	MeshResources* mesh;
 	uint32_t elementCount;
 	uint32_t instanceCount;

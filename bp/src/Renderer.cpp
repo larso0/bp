@@ -19,10 +19,12 @@ void Renderer::init(Device& device, VkFormat colorFormat, uint32_t width, uint32
 				 VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 				 VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
-	init(width, height);
+	setupSubpasses();
 
 	renderPass.setRenderArea({{}, {width, height}});
 	renderPass.init(device);
+
+	initResources(width, height);
 }
 
 void Renderer::resize(uint32_t width, uint32_t height)

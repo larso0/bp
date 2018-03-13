@@ -10,18 +10,13 @@ namespace bpScene
 class Drawable
 {
 public:
-	Drawable() :
-		pipeline{nullptr} {}
 	virtual ~Drawable() = default;
 
 	virtual void draw(VkCommandBuffer cmdBuffer) = 0;
 
-	bp::GraphicsPipeline* getPipeline() { return pipeline; }
+	virtual bp::GraphicsPipeline* getPipeline() { return nullptr; }
 
 	bpUtil::Event<VkCommandBuffer> resourceBindingEvent;
-
-protected:
-	bp::GraphicsPipeline* pipeline;
 };
 
 }
