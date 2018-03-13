@@ -16,7 +16,6 @@ public:
 
 	void init(Device& device, VkFormat colorFormat, uint32_t width, uint32_t height);
 
-	virtual void init(uint32_t width, uint32_t height) = 0;
 	virtual void resize(uint32_t width, uint32_t height);
 	virtual void render(Framebuffer& fbo, VkCommandBuffer cmdBuffer);
 
@@ -27,6 +26,7 @@ public:
 	bool isReady() const { return device != nullptr; }
 
 protected:
+	virtual void init(uint32_t width, uint32_t height) = 0;
 	void addSubpassGraph(Subpass& subpass);
 
 private:

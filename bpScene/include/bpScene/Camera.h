@@ -36,25 +36,15 @@ public:
 		node = n;
 	}
 
-	void setClipTransform(float x, float y, float w, float h)
-	{
-		clipTransform = glm::scale(glm::translate(glm::mat4{},
-							  {(2.f * x + w - 1.f) / w,
-							   (2.f * y + h - 1.f) / h, 0.f}),
-					   {1.f / w, 1.f / h, 1.f});
-	}
-
 	void setPerspectiveProjection(float fov, float ratio, float nearDist, float farDist)
 	{
-		projectionMatrix = clipTransform
-				   * glm::perspective(fov, ratio, nearDist, farDist);
+		projectionMatrix = glm::perspective(fov, ratio, nearDist, farDist);
 	}
 
 	void setOrthoProjection(float left, float right, float top,
 				float bottom, float nearDist, float farDist)
 	{
-		projectionMatrix = clipTransform
-				   * glm::ortho(left, right, top, bottom, nearDist, farDist);
+		projectionMatrix = glm::ortho(left, right, top, bottom, nearDist, farDist);
 	}
 
 	void update()
@@ -76,7 +66,6 @@ public:
 private:
 	Node* node;
 	glm::mat4 viewMatrix;
-	glm::mat4 clipTransform;
 	glm::mat4 projectionMatrix;
 };
 
