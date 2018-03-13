@@ -65,9 +65,9 @@ void Framebuffer::after(VkCommandBuffer cmdBuffer)
 		a.second->after(cmdBuffer);
 }
 
-std::vector<VkClearValue> Framebuffer::getClearValues()
+vector<VkClearValue> Framebuffer::getClearValues()
 {
-	std::vector<VkClearValue> clearValues;
+	vector<VkClearValue> clearValues;
 	for (uint32_t i = 0; i < renderPass->getAttachmentCount(); i++)
 	{
 		const AttachmentSlot* slot = &renderPass->getAttachmentSlot(i);
