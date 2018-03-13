@@ -15,7 +15,7 @@ public:
 		Subpass{} {}
 
 	void render(const VkRect2D& area, VkCommandBuffer cmdBuffer) override;
-	void addDrawable(Drawable* drawable);
+	void addDrawable(Drawable& drawable);
 
 private:
 	std::vector<Drawable*> drawables;

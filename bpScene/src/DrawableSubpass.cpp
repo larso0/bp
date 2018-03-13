@@ -31,13 +31,13 @@ void DrawableSubpass::render(const VkRect2D& area, VkCommandBuffer cmdBuffer)
 	}
 }
 
-void DrawableSubpass::addDrawable(Drawable* drawable)
+void DrawableSubpass::addDrawable(Drawable& drawable)
 {
-	drawables.insert(upper_bound(drawables.begin(), drawables.end(), drawable,
+	drawables.insert(upper_bound(drawables.begin(), drawables.end(), &drawable,
 				     [](Drawable* a, Drawable* b){
 					     return a->getPipeline() < b->getPipeline();
 				     }),
-			 drawable);
+			 &drawable);
 }
 
 }
