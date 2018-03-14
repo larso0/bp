@@ -1,8 +1,52 @@
 #include <bpMulti/SortLastCompositor.h>
 #include "SortLastCompositingSpv.inc"
+#include <stdexcept>
+
+using namespace bp;
+using namespace std;
 
 namespace bpMulti
 {
+
+void SortLastCompositor::init(initializer_list<pair<Device*, SortLastRenderer*>> configurations,
+			      VkFormat colorFormat, uint32_t width, uint32_t height)
+{
+	if (configurations.size() < 1)
+	{
+		throw invalid_argument("At least one configuration must be specified.");
+	}
+	auto iter = configurations.begin();
+
+	compositingDrawables.resize(configurations.size());
+	secondaryDevices.reserve(configurations.size() - 1);
+	secondaryRenderSteps.reserve(configurations.size() - 1);
+	deviceToHostSteps.reserve(configurations.size() - 1);
+	hostCopySteps.reserve(configurations.size() - 1);
+	hostToDeviceSteps.reserve(configurations.size() - 1);
+
+	bp::Device* primaryDevice = iter->first;
+	primaryRenderStep.init(*primaryDevice, 5, width, height, *iter->second);
+
+	iter++;
+	for (; iter != configurations.end(); iter++)
+	{
+		secondaryDevices.push_back(iter->first);
+
+		secondaryRenderSteps.emplace_back();
+		secondaryRenderSteps.back().init(*iter->first, 2, width, height, *iter->second);
+
+		deviceToHostSteps.emplace_back();
+		deviceToHostSteps.back().init(true, 2);
+
+		hostCopySteps.emplace_back();
+		hostCopySteps.back().init(*primaryDevice, true, width, height, 2);
+
+		hostToDeviceSteps.emplace_back();
+		hostToDeviceSteps.back().init(*primaryDevice, true, width, height, 2);
+	}
+
+	Compositor::init(*primaryDevice, colorFormat, width, height);
+}
 
 void SortLastCompositor::resize(uint32_t width, uint32_t height)
 {
@@ -11,7 +55,7 @@ void SortLastCompositor::resize(uint32_t width, uint32_t height)
 	Renderer::resize(width, height);
 }
 
-void SortLastCompositor::render(bp::Framebuffer& fbo, VkCommandBuffer cmdBuffer)
+void SortLastCompositor::render(Framebuffer& fbo, VkCommandBuffer cmdBuffer)
 {
 	//TODO perform pipeline steps for producing a frame
 
@@ -32,8 +76,8 @@ void SortLastCompositor::initResources(uint32_t width, uint32_t height)
 	initPipelineLayout();
 	initPipeline();
 
-	drawable.init(pipeline);
-	subpass.addDrawable(drawable);
+	//drawable.init(pipeline);
+	//subpass.addDrawable(drawable);
 
 	//TODO add resource binding delegate to drawable for push descriptors
 }
