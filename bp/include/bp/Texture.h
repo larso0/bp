@@ -3,6 +3,7 @@
 
 #include "Attachment.h"
 #include "Image.h"
+#include "ImageDescriptor.h"
 
 namespace bp
 {
@@ -15,6 +16,7 @@ public:
 		imageUsage{0},
 		image{nullptr},
 		imageView{VK_NULL_HANDLE},
+		sampler{VK_NULL_HANDLE},
 		renderLayout{VK_IMAGE_LAYOUT_UNDEFINED},
 		renderAccessFlags{0},
 		renderPipelineStage{0} {}
@@ -38,11 +40,14 @@ public:
 	VkImageView getImageView() { return imageView; }
 	VkImageLayout getInitialLayout() const override { return renderLayout; }
 	VkImageLayout getFinalLayout() const override { return renderLayout; }
+	const Descriptor& getDescriptor() { return descriptor; }
 
 private:
 	VkImageUsageFlags imageUsage;
 	Image* image;
 	VkImageView imageView;
+	VkSampler sampler;
+	ImageDescriptor descriptor;
 
 	VkImageLayout renderLayout;
 	VkAccessFlags renderAccessFlags;

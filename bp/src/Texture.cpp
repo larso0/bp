@@ -7,7 +7,12 @@ namespace bp
 
 Texture::~Texture()
 {
-	if (isReady()) destroy();
+	if (isReady())
+	{
+		destroy();
+		if (imageUsage & VK_IMAGE_USAGE_SAMPLED_BIT)
+			vkDestroySampler(*device, sampler, nullptr);
+	}
 }
 
 void Texture::init(Device& device, VkFormat format, VkImageUsageFlags usage, uint32_t width,
@@ -34,6 +39,34 @@ void Texture::init(Device& device, VkFormat format, VkImageUsageFlags usage, uin
 	}
 
 	create();
+
+	if (!(usage & VK_IMAGE_USAGE_SAMPLED_BIT)) return;
+
+	VkSamplerCreateInfo samplerInfo = {};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.anisotropyEnable = VK_FALSE;
+	samplerInfo.maxAnisotropy = 16;
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerInfo.mipLodBias = 0.0f;
+	samplerInfo.minLod = 0.0f;
+	samplerInfo.maxLod = 0.0f;
+
+	VkResult result = vkCreateSampler(device, &samplerInfo, nullptr, &sampler);
+	if (result != VK_SUCCESS)
+		throw runtime_error("Failed to create sampler.");
+
+	descriptor.setType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	descriptor.addDescriptorInfo({sampler, imageView,
+				      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL});
 }
 
 void Texture::resize(uint32_t width, uint32_t height)
@@ -44,6 +77,13 @@ void Texture::resize(uint32_t width, uint32_t height)
 		Attachment::width = width;
 		Attachment::height = height;
 		create();
+
+		if (imageUsage & VK_IMAGE_USAGE_SAMPLED_BIT)
+		{
+			descriptor.resetDescriptorInfos();
+			descriptor.addDescriptorInfo({sampler, imageView,
+						      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL});
+		}
 	}
 }
 
