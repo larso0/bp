@@ -22,6 +22,18 @@ void RenderStep::init(Device& device, unsigned outputCount, uint32_t width, uint
 	PipelineStep<OffscreenFramebuffer>::init(outputCount);
 }
 
+void RenderStep::resize(uint32_t width, uint32_t height)
+{
+	RenderStep::width = width;
+	RenderStep::height = height;
+
+	for (unsigned i = 0; i < getOutputCount(); i++)
+	{
+		getOutput(i).resize(width, height);
+	}
+	renderer->resize(width, height);
+}
+
 void RenderStep::prepare(bp::OffscreenFramebuffer& output)
 {
 	output.init(renderer->getRenderPass(), width, height,

@@ -23,6 +23,7 @@ public:
 
 	void init(bp::Device& device, unsigned outputCount, uint32_t width, uint32_t height,
 		  bp::Renderer& renderer);
+	void resize(uint32_t width, uint32_t height);
 	bp::Renderer& getRenderer() { return *renderer; }
 
 protected:

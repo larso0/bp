@@ -56,6 +56,7 @@ public:
 	VkImageUsageFlags getUsage() const { return usage; }
 	VkImageLayout getLayout() const { return layout; }
 	VkDeviceSize getMemorySize() const { return memory->getSize(); }
+	Buffer* getStagingBuffer() { return stagingBuffer; }
 	bool isReady() const { return handle != VK_NULL_HANDLE; }
 private:
 	friend class Buffer;

@@ -10,7 +10,10 @@ template<typename Output, typename... Input>
 class PipelineStep
 {
 public:
-	virtual ~PipelineStep() = default;
+	virtual ~PipelineStep()
+	{
+		for (auto& output : outputs) destroy(output);
+	}
 
 	void init(unsigned outputCount)
 	{
@@ -29,6 +32,7 @@ public:
 
 protected:
 	virtual void prepare(Output&) {}
+	virtual void destroy(Output&) {}
 	virtual void process(Input... input, Output& output, unsigned outputIndx) = 0;
 
 private:
