@@ -12,13 +12,15 @@ void DescriptorSetLayout::addLayoutBinding(const VkDescriptorSetLayoutBinding& b
 	bindings.push_back(binding);
 }
 
-void DescriptorSetLayout::init(Device& device)
+void DescriptorSetLayout::init(Device& device, VkDescriptorSetLayoutCreateFlags createFlags)
 {
 	if (isReady()) throw runtime_error("Descriptor set layout already initialized.");
 	DescriptorSetLayout::device = &device;
+	DescriptorSetLayout::createFlags = createFlags;
 
 	VkDescriptorSetLayoutCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	info.flags = createFlags;
 	info.bindingCount = static_cast<uint32_t>(bindings.size());
 	info.pBindings = bindings.data();
 

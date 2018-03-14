@@ -30,6 +30,18 @@ public:
 		return descriptorInfos;
 	}
 
+	VkWriteDescriptorSet getWriteInfo() const override
+	{
+		VkWriteDescriptorSet write = {};
+		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write.dstBinding = getBinding();
+		write.dstArrayElement = getFirstIndex();
+		write.descriptorType = getType();
+		write.descriptorCount = static_cast<uint32_t>(descriptorInfos.size());
+		write.pImageInfo = descriptorInfos.data();
+		return write;
+	}
+
 private:
 	std::vector<VkDescriptorImageInfo> descriptorInfos;
 };

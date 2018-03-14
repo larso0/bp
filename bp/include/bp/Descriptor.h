@@ -45,6 +45,8 @@ public:
 		Descriptor::firstIndex = firstIndex;
 	}
 
+	virtual VkWriteDescriptorSet getWriteInfo() const = 0;
+
 private:
 	VkDescriptorType type;
 	uint32_t binding;
