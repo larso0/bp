@@ -7,6 +7,8 @@
 #include <bp/DescriptorSetLayout.h>
 #include <bp/PipelineLayout.h>
 #include <bp/GraphicsPipeline.h>
+#include <bp/DescriptorPool.h>
+#include <bp/DescriptorSet.h>
 #include <bpScene/DrawableSubpass.h>
 #include <vector>
 #include <initializer_list>
@@ -41,6 +43,7 @@ class SortLastCompositor : public Compositor
 {
 public:
 	SortLastCompositor() :
+		deviceCount{0},
 		currentFrameIndex{0} {}
 
 	void init(std::initializer_list<std::pair<bp::Device*, SortLastRenderer*>> configurations,
@@ -48,6 +51,7 @@ public:
 	void resize(uint32_t width, uint32_t height) override;
 	void render(bp::Framebuffer& fbo, VkCommandBuffer cmdBuffer) override;
 private:
+	unsigned deviceCount;
 	bp::Shader vertexShader, fragmentShader;
 	bp::DescriptorSetLayout descriptorSetLayout;
 	bp::PipelineLayout pipelineLayout;
@@ -56,6 +60,8 @@ private:
 	bpScene::DrawableSubpass subpass;
 	std::vector<SortLastCompositingDrawable> compositingDrawables;
 
+	bp::DescriptorPool descriptorPool;
+	std::vector<bp::DescriptorSet> primaryDescriptorSets;
 	RenderStep primaryRenderStep;
 
 	std::vector<bp::Device*> secondaryDevices;
@@ -69,7 +75,6 @@ private:
 	void setupSubpasses() override;
 	void initResources(uint32_t width, uint32_t height) override;
 	void initShaders();
-	void initDescriptorSetLayout();
 	void initPipelineLayout();
 	void initPipeline();
 };

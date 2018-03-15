@@ -6,16 +6,19 @@ using namespace std;
 namespace bpMulti
 {
 
-void HostToDeviceStep::init(bp::Device& outputDevice, bool copyDepth, uint32_t width,
+void HostToDeviceStep::init(Device& outputDevice, DescriptorSetLayout& descriptorSetLayout,
+			    DescriptorPool& descriptorPool, bool copyDepth, uint32_t width,
 			    uint32_t height, unsigned outputCount, unsigned deviceCount)
 {
 	HostToDeviceStep::outputDevice = &outputDevice;
+	HostToDeviceStep::descriptorSetLayout = &descriptorSetLayout;
+	HostToDeviceStep::descriptorPool = &descriptorPool;
 	HostToDeviceStep::copyDepth = copyDepth;
 	HostToDeviceStep::width = width;
 	HostToDeviceStep::height = height;
 	HostToDeviceStep::deviceCount = deviceCount;
 
-	PipelineStep<vector<TexturePair>, vector<BufferPair>&, VkCommandBuffer>::init(outputCount);
+	PipelineStep<vector<Contribution>, vector<BufferPair>&, VkCommandBuffer>::init(outputCount);
 }
 
 void HostToDeviceStep::resize(uint32_t width, uint32_t height)
@@ -25,40 +28,42 @@ void HostToDeviceStep::resize(uint32_t width, uint32_t height)
 
 	for (unsigned i = 0; i < getOutputCount(); i++)
 	{
-		for (auto& p : getOutput(i))
+		for (auto& c : getOutput(i))
 		{
-			p.first->resize(width, height);
-			if (copyDepth) p.second->resize(width, height);
+			c.colorTexture.resize(width, height);
+			if (copyDepth) c.depthTexture->resize(width, height);
+			c.descriptorSet.update();
 		}
 	}
 }
 
-void HostToDeviceStep::prepare(vector<TexturePair>& output)
+void HostToDeviceStep::prepare(vector<Contribution>& output)
 {
 	output.resize(deviceCount);
 
-	for (auto& p : output)
+	for (auto& c : output)
 	{
-		p.first = new Texture(*outputDevice, VK_FORMAT_R8G8B8A8_UNORM,
-				      VK_IMAGE_USAGE_SAMPLED_BIT, width, height);
+		c.colorTexture.init(*outputDevice, VK_FORMAT_R8G8B8A8_UNORM,
+				    VK_IMAGE_USAGE_SAMPLED_BIT, width, height);
+		c.descriptorSet.init(*outputDevice, *descriptorPool, *descriptorSetLayout);
+		c.descriptorSet.bind(c.colorTexture.getDescriptor());
 		if (copyDepth)
 		{
-			p.second = new Texture(*outputDevice, VK_FORMAT_D16_UNORM,
-					       VK_IMAGE_USAGE_SAMPLED_BIT, width, height);
+			c.depthTexture = new Texture(*outputDevice, VK_FORMAT_D16_UNORM,
+						     VK_IMAGE_USAGE_SAMPLED_BIT, width, height);
+			c.descriptorSet.bind(c.depthTexture->getDescriptor());
 		}
+		c.descriptorSet.update();
 	}
 }
 
-void HostToDeviceStep::destroy(vector<TexturePair>& output)
+void HostToDeviceStep::destroy(vector<Contribution>& output)
 {
-	for (auto& p : output)
-	{
-		delete p.first;
-		if (copyDepth) delete p.second;
-	}
+	for (auto& c : output)
+		if (copyDepth) delete c.depthTexture;
 }
 
-void HostToDeviceStep::process(unsigned, vector<TexturePair>& output, vector<BufferPair>& input,
+void HostToDeviceStep::process(unsigned, vector<Contribution>& output, vector<BufferPair>& input,
 			       VkCommandBuffer cmdBuffer)
 {
 	for (unsigned i = 0; i < deviceCount; i++)
@@ -66,14 +71,14 @@ void HostToDeviceStep::process(unsigned, vector<TexturePair>& output, vector<Buf
 		auto& in = input[i];
 		auto& out = output[i];
 
-		out.first->getImage().transfer(*in.first, cmdBuffer);
-		out.first->transitionShaderReadable(cmdBuffer,
-						    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+		out.colorTexture.getImage().transfer(*in.first, cmdBuffer);
+		out.colorTexture.transitionShaderReadable(cmdBuffer,
+							  VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 		if (copyDepth)
 		{
-			out.second->getImage().transfer(*in.second, cmdBuffer);
-			out.second->transitionShaderReadable(cmdBuffer,
-							     VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+			out.depthTexture->getImage().transfer(*in.second, cmdBuffer);
+			out.depthTexture->transitionShaderReadable(
+				cmdBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 		}
 	}
 }

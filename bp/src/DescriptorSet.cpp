@@ -35,18 +35,25 @@ DescriptorSet::~DescriptorSet()
 
 void DescriptorSet::bind(const Descriptor& descriptor)
 {
-	VkWriteDescriptorSet write = descriptor.getWriteInfo();
-	write.dstSet = handle;
-
-	descriptorWrites.push_back(write);
+	descriptors.push_back(&descriptor);
 }
 
 void DescriptorSet::update()
 {
-	if (descriptorWrites.empty()) return;
-	vkUpdateDescriptorSets(*device, static_cast<uint32_t>(descriptorWrites.size()),
-			       descriptorWrites.data(), 0, nullptr);
-	descriptorWrites.clear();
+	if (descriptors.empty()) return;
+
+	std::vector<VkWriteDescriptorSet> writes;
+	writes.reserve(descriptors.size());
+	for (auto d : descriptors)
+	{
+		VkWriteDescriptorSet write = d->getWriteInfo();
+		write.dstSet = handle;
+		writes.push_back(write);
+	}
+
+	vkUpdateDescriptorSets(*device, static_cast<uint32_t>(writes.size()),
+			       writes.data(), 0, nullptr);
+	writes.clear();
 }
 
 }

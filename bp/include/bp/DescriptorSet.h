@@ -39,7 +39,7 @@ private:
 	Device* device;
 	DescriptorPool* pool;
 	VkDescriptorSet handle;
-	std::vector<VkWriteDescriptorSet> descriptorWrites;
+	std::vector<const Descriptor*> descriptors;
 };
 
 }
