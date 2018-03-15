@@ -5,7 +5,7 @@ using namespace bp;
 namespace bpMulti
 {
 
-void DeviceToHostStep::process(OffscreenFramebuffer& input, BufferPair& output, unsigned)
+void DeviceToHostStep::process(unsigned, BufferPair& output, bp::OffscreenFramebuffer& input)
 {
 	input.getColorAttachment().getImage().updateStagingBuffer();
 	output.first = input.getColorAttachment().getImage().getStagingBuffer();

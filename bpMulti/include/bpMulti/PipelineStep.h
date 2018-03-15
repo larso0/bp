@@ -21,9 +21,9 @@ public:
 		for (unsigned i = 0; i < outputCount; i++) prepare(outputs[i]);
 	}
 
-	Output& process(Input... input, unsigned outputIdx)
+	Output& execute(unsigned outputIdx, Input... input)
 	{
-		process(input..., outputs[outputIdx], outputIdx);
+		process(outputIdx, outputs[outputIdx], input...);
 		return outputs[outputIdx];
 	}
 
@@ -33,7 +33,7 @@ public:
 protected:
 	virtual void prepare(Output&) {}
 	virtual void destroy(Output&) {}
-	virtual void process(Input... input, Output& output, unsigned outputIndx) = 0;
+	virtual void process(unsigned outputIndx, Output& output, Input... input) = 0;
 
 private:
 	std::vector<Output> outputs;

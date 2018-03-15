@@ -36,7 +36,7 @@ protected:
 	bp::Renderer* renderer;
 
 	void prepare(bp::OffscreenFramebuffer& output) override;
-	void process(bp::OffscreenFramebuffer& output, unsigned) override;
+	void process(unsigned, bp::OffscreenFramebuffer& output) override;
 };
 
 }

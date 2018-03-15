@@ -43,7 +43,7 @@ void HostCopyStep::destroy(BufferPair& output)
 	if (copyDepth) delete output.second;
 }
 
-void HostCopyStep::process(BufferPair& input, BufferPair& output, unsigned)
+void HostCopyStep::process(unsigned, BufferPair& output, BufferPair& input)
 {
 	future<void> colorCopyFuture = async(launch::async, [&]{
 		size_t colorSize = width * height * 4;

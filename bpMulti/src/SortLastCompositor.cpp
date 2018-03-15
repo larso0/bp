@@ -1,6 +1,7 @@
 #include <bpMulti/SortLastCompositor.h>
 #include "SortLastCompositingSpv.inc"
 #include <stdexcept>
+#include <future>
 
 using namespace bp;
 using namespace std;
@@ -22,10 +23,9 @@ void SortLastCompositor::init(initializer_list<pair<Device*, SortLastRenderer*>>
 	secondaryRenderSteps.reserve(configurations.size() - 1);
 	deviceToHostSteps.reserve(configurations.size() - 1);
 	hostCopySteps.reserve(configurations.size() - 1);
-	hostToDeviceSteps.reserve(configurations.size() - 1);
 
 	bp::Device* primaryDevice = iter->first;
-	primaryRenderStep.init(*primaryDevice, 5, width, height, *iter->second);
+	primaryRenderStep.init(*primaryDevice, 2, width, height, *iter->second);
 
 	iter++;
 	for (; iter != configurations.end(); iter++)
@@ -33,33 +33,64 @@ void SortLastCompositor::init(initializer_list<pair<Device*, SortLastRenderer*>>
 		secondaryDevices.push_back(iter->first);
 
 		secondaryRenderSteps.emplace_back();
-		secondaryRenderSteps.back().init(*iter->first, 2, width, height, *iter->second);
+		secondaryRenderSteps.back().init(*iter->first, 1, width, height, *iter->second);
 
 		deviceToHostSteps.emplace_back();
 		deviceToHostSteps.back().init(true, 2);
 
 		hostCopySteps.emplace_back();
-		hostCopySteps.back().init(*primaryDevice, true, width, height, 2);
-
-		hostToDeviceSteps.emplace_back();
-		hostToDeviceSteps.back().init(*primaryDevice, true, width, height, 2);
+		hostCopySteps.back().init(*primaryDevice, true, width, height, 1);
 	}
+
+	hostToDeviceStep.init(*primaryDevice, true, width, height, 1,
+			      static_cast<unsigned int>(configurations.size() - 1));
 
 	Compositor::init(*primaryDevice, colorFormat, width, height);
 }
 
 void SortLastCompositor::resize(uint32_t width, uint32_t height)
 {
-	//TODO resize pipeline step resources
+	primaryRenderStep.resize(width, height);
+	for (auto& step : secondaryRenderSteps) step.resize(width, height);
+	for (auto& step : hostCopySteps) step.resize(width, height);
+	hostToDeviceStep.resize(width, height);
 
 	Renderer::resize(width, height);
 }
 
 void SortLastCompositor::render(Framebuffer& fbo, VkCommandBuffer cmdBuffer)
 {
-	//TODO perform pipeline steps for producing a frame
+	unsigned nextFrameIndex = (currentFrameIndex + 1) % 2;
+
+	auto primaryRenderFuture = async(launch::async, [this, nextFrameIndex]{
+		primaryRenderStep.execute(nextFrameIndex);
+	});
+
+	vector<BufferPair> secondaryCopied(secondaryDevices.size());
+	vector<future<void>> renderFutures;
+	vector<future<void>> hostCopyFutures;
+	for (unsigned i = 0; i < secondaryDevices.size(); i++)
+	{
+		renderFutures.push_back(async(launch::async, [this, nextFrameIndex, i]{
+			deviceToHostSteps[i].execute(nextFrameIndex,
+						     secondaryRenderSteps[i].execute(0));
+		}));
+
+		hostCopyFutures.push_back(async(launch::async, [this, &secondaryCopied, i]{
+			auto& p = hostCopySteps[i].
+				execute(0, deviceToHostSteps[i].getOutput(currentFrameIndex));
+			secondaryCopied[i].first = p.first;
+			secondaryCopied[i].second = p.second;
+		}));
+	}
+	for (auto& f : hostCopyFutures) f.wait();
+	primaryRenderFuture.wait();
+
+	hostToDeviceStep.execute(0, secondaryCopied, cmdBuffer);
 
 	Renderer::render(fbo, cmdBuffer);
+
+	currentFrameIndex = nextFrameIndex;
 }
 
 void SortLastCompositor::setupSubpasses()
@@ -76,10 +107,31 @@ void SortLastCompositor::initResources(uint32_t width, uint32_t height)
 	initPipelineLayout();
 	initPipeline();
 
-	//drawable.init(pipeline);
-	//subpass.addDrawable(drawable);
+	for (unsigned i = 0; i < compositingDrawables.size(); i++)
+	{
+		auto& current = compositingDrawables[i];
+		current.init(pipeline);
+		subpass.addDrawable(current);
 
-	//TODO add resource binding delegate to drawable for push descriptors
+		bpUtil::connect(current.resourceBindingEvent, [this, i](VkCommandBuffer cmdBuffer){
+			VkWriteDescriptorSet writes[2];
+
+			if (i == 0)
+			{
+				auto& fb = primaryRenderStep.getOutput(currentFrameIndex);
+				writes[0] = fb.getColorAttachment().getDescriptor().getWriteInfo();
+				writes[1] = fb.getDepthAttachment().getDescriptor().getWriteInfo();
+			} else
+			{
+				auto& textures = hostToDeviceStep.getOutput(0)[i - 1];
+				writes[0] = textures.first->getDescriptor().getWriteInfo();
+				writes[1] = textures.second->getDescriptor().getWriteInfo();
+			}
+
+			vkCmdPushDescriptorSetKHR(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+						  pipelineLayout, 0, 2, writes);
+		});
+	}
 }
 
 void SortLastCompositor::initShaders()

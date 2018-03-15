@@ -40,7 +40,7 @@ void RenderStep::prepare(bp::OffscreenFramebuffer& output)
 		    renderer->getColorAttachmentSlot(), renderer->getDepthAttachmentSlot());
 }
 
-void RenderStep::process(bp::OffscreenFramebuffer& output, unsigned)
+void RenderStep::process(unsigned, bp::OffscreenFramebuffer& output)
 {
 	VkCommandBufferBeginInfo beginInfo = {};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;

@@ -25,7 +25,7 @@ public:
 
 private:
 	bool copyDepth;
-	void process(bp::OffscreenFramebuffer& input, BufferPair& output, unsigned) override;
+	void process(unsigned, BufferPair& output, bp::OffscreenFramebuffer& input) override;
 };
 
 }

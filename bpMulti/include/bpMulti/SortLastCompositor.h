@@ -40,6 +40,9 @@ private:
 class SortLastCompositor : public Compositor
 {
 public:
+	SortLastCompositor() :
+		currentFrameIndex{0} {}
+
 	void init(std::initializer_list<std::pair<bp::Device*, SortLastRenderer*>> configurations,
 		  VkFormat colorFormat, uint32_t width, uint32_t height);
 	void resize(uint32_t width, uint32_t height) override;
@@ -59,7 +62,9 @@ private:
 	std::vector<RenderStep> secondaryRenderSteps;
 	std::vector<DeviceToHostStep> deviceToHostSteps;
 	std::vector<HostCopyStep> hostCopySteps;
-	std::vector<HostToDeviceStep> hostToDeviceSteps;
+	HostToDeviceStep hostToDeviceStep;
+
+	unsigned currentFrameIndex;
 
 	void setupSubpasses() override;
 	void initResources(uint32_t width, uint32_t height) override;

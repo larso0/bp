@@ -36,7 +36,7 @@ private:
 
 	void prepare(BufferPair& output) override;
 	void destroy(BufferPair& output) override;
-	void process(BufferPair& input, BufferPair& output, unsigned) override;
+	void process(unsigned, BufferPair& output, BufferPair& input) override;
 };
 
 }
