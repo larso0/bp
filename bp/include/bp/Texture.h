@@ -35,6 +35,8 @@ public:
 	void transitionShaderReadable(VkCommandBuffer cmdBuffer, VkPipelineStageFlags stage);
 	void before(VkCommandBuffer cmdBuffer) override;
 
+	void setDescriptorBinding(uint32_t binding) { descriptor.setBinding(binding); }
+
 	VkImageUsageFlags getImageUsage() const { return imageUsage; }
 	Image& getImage() { return *image; }
 	VkImageView getImageView() { return imageView; }
