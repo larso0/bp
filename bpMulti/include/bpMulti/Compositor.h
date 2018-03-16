@@ -10,6 +10,7 @@
 #include <vector>
 #include "Contribution.h"
 #include "RenderDeviceSteps.h"
+#include "CompositingDrawable.h"
 
 namespace bpMulti
 {
@@ -17,6 +18,7 @@ namespace bpMulti
 class Compositor : public bp::Renderer
 {
 public:
+	virtual ~Compositor() = default;
 
 protected:
 	bp::Shader vertexShader, fragmentShader;
