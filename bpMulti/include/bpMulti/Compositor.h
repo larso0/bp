@@ -7,6 +7,7 @@
 #include <bp/PipelineLayout.h>
 #include <bp/GraphicsPipeline.h>
 #include <bp/DescriptorPool.h>
+#include <bpScene/DrawableSubpass.h>
 #include <vector>
 #include "Contribution.h"
 #include "RenderDeviceSteps.h"
