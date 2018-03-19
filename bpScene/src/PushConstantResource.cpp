@@ -6,11 +6,11 @@ using glm::inverse;
 namespace bpScene
 {
 
-void PushConstantResource::init(VkPipelineLayout pipelineLayout, VkPipelineStageFlags pipelineStage,
+void PushConstantResource::init(VkPipelineLayout pipelineLayout, VkShaderStageFlags shaderStage,
 				bpScene::Node& node, bpScene::Camera& camera)
 {
 	PushConstantResource::pipelineLayout = pipelineLayout;
-	PushConstantResource::pipelineStage = pipelineStage;
+	PushConstantResource::shaderStage = shaderStage;
 	PushConstantResource::node = &node;
 	PushConstantResource::camera = &camera;
 	update();
@@ -25,7 +25,8 @@ void PushConstantResource::update()
 
 void PushConstantResource::bind(VkCommandBuffer cmdBuffer)
 {
-	vkCmdPushConstants(cmdBuffer, pipelineLayout, pipelineStage, 0, sizeof(Matrices),
+	update();
+	vkCmdPushConstants(cmdBuffer, pipelineLayout, shaderStage, 0, sizeof(Matrices),
 			   &matrices);
 }
 

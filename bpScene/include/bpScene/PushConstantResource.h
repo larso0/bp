@@ -20,19 +20,18 @@ public:
 
 	PushConstantResource() :
 		pipelineLayout{VK_NULL_HANDLE},
-		pipelineStage{VK_NULL_HANDLE},
+		shaderStage{VK_NULL_HANDLE},
 		node{nullptr},
 		camera{nullptr} {}
-	PushConstantResource(VkPipelineLayout pipelineLayout, VkPipelineStageFlags pipelineStage,
+	PushConstantResource(VkPipelineLayout pipelineLayout, VkShaderStageFlags shaderStage,
 			     bpScene::Node& node, bpScene::Camera& camera) :
 		PushConstantResource{}
 	{
-		init(pipelineLayout, pipelineStage, node, camera);
+		init(pipelineLayout, shaderStage, node, camera);
 	}
 
-	void init(VkPipelineLayout pipelineLayout, VkPipelineStageFlags pipelineStage,
+	void init(VkPipelineLayout pipelineLayout, VkShaderStageFlags shaderStage,
 		  bpScene::Node& node, bpScene::Camera& camera);
-	void update();
 	void bind(VkCommandBuffer cmdBuffer);
 
 	void setNode(bpScene::Node& node) { PushConstantResource::node = &node; }
@@ -42,12 +41,14 @@ public:
 
 private:
 	VkPipelineLayout pipelineLayout;
-	VkPipelineStageFlags pipelineStage;
+	VkShaderStageFlags shaderStage;
 
 	bpScene::Node* node;
 	bpScene::Camera* camera;
 
 	Matrices matrices;
+
+	void update();
 };
 
 }
