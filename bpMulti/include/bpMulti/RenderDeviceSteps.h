@@ -20,6 +20,7 @@ public:
 
 	void init(bp::Device& device, bp::Renderer& renderer, uint32_t width, uint32_t height,
 		  unsigned framebufferCount = 1);
+	void resize(uint32_t width, uint32_t height);
 	void render(unsigned framebufferIndex);
 	void deviceToHost(unsigned framebufferIndex, bool copyDepth = true);
 	bp::OffscreenFramebuffer& getFramebuffer(unsigned index) { return framebuffers[index]; }

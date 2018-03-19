@@ -8,6 +8,8 @@ namespace bp
 
 void Renderer::init(Device& device, VkFormat colorFormat, uint32_t width, uint32_t height)
 {
+	Renderer::width = width;
+	Renderer::height = height;
 	Renderer::device = &device;
 
 	colorAttachmentSlot.init(colorFormat, VK_SAMPLE_COUNT_1_BIT,
@@ -29,6 +31,8 @@ void Renderer::init(Device& device, VkFormat colorFormat, uint32_t width, uint32
 
 void Renderer::resize(uint32_t width, uint32_t height)
 {
+	Renderer::width = width;
+	Renderer::height = height;
 	renderPass.setRenderArea({{}, {width, height}});
 }
 

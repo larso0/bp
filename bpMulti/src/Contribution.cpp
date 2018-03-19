@@ -38,6 +38,11 @@ unsigned Contribution::addTexture(VkFormat format)
 	descriptorSet.bind(textures[idx]->getDescriptor());
 }
 
+void Contribution::flushStagingBuffers(VkCommandBuffer cmdBuffer)
+{
+	for (auto t : textures) t->getImage().flushStagingBuffer(cmdBuffer);
+}
+
 void Contribution::bind(VkCommandBuffer cmdBuffer)
 {
 	VkDescriptorSet set = descriptorSet;

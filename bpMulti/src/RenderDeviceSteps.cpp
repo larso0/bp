@@ -6,7 +6,7 @@ namespace bpMulti
 {
 
 void RenderDeviceSteps::init(Device& device, Renderer& renderer, uint32_t width, uint32_t height,
-		      unsigned framebufferCount)
+			     unsigned framebufferCount)
 {
 	RenderDeviceSteps::device = &device;
 	RenderDeviceSteps::renderer = &renderer;
@@ -25,6 +25,12 @@ void RenderDeviceSteps::init(Device& device, Renderer& renderer, uint32_t width,
 		fb.init(renderer.getRenderPass(), width, height, renderer.getColorAttachmentSlot(),
 			renderer.getDepthAttachmentSlot());
 	}
+}
+
+void RenderDeviceSteps::resize(uint32_t width, uint32_t height)
+{
+	renderer->resize(width, height);
+	for (auto& fb : framebuffers) fb.resize(width, height);
 }
 
 void RenderDeviceSteps::render(unsigned framebufferIndex)

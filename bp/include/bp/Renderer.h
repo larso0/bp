@@ -11,6 +11,7 @@ class Renderer
 {
 public:
 	Renderer() :
+		width{0}, height{0},
 		device{nullptr} {}
 	virtual ~Renderer() = default;
 
@@ -19,6 +20,8 @@ public:
 	virtual void resize(uint32_t width, uint32_t height);
 	virtual void render(Framebuffer& fbo, VkCommandBuffer cmdBuffer);
 
+	uint32_t getWidth() const { return  width; }
+	uint32_t getHeight() const { return height; }
 	Device& getDevice() { return *device; }
 	const AttachmentSlot& getColorAttachmentSlot() const { return colorAttachmentSlot; }
 	const AttachmentSlot& getDepthAttachmentSlot() const { return depthAttachmentSlot; }
@@ -31,6 +34,7 @@ protected:
 	void addSubpassGraph(Subpass& subpass);
 
 private:
+	uint32_t width, height;
 	Device* device;
 	AttachmentSlot colorAttachmentSlot;
 	AttachmentSlot depthAttachmentSlot;
