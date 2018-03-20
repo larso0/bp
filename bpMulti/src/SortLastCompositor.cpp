@@ -35,7 +35,7 @@ void SortLastCompositor::hostCopyStep()
 	for (unsigned i = 0; i < deviceCount - 1; i++)
 	{
 		auto& fb = secondaryRenderDeviceSteps[i].getFramebuffer(currentFrameIndex);
-		auto& contribution = secondaryContributions[i + 1];
+		auto& contribution = secondaryContributions[i];
 		futures.push_back(async(launch::async, [&fb, &contribution]{
 			auto colorCopyFuture = async(launch::async, [&]{
 				size_t colorSize = fb.getWidth() * fb.getHeight() * 4;
@@ -93,8 +93,8 @@ void SortLastCompositor::initDescriptorPool()
 
 void SortLastCompositor::setupContribution(Contribution& contribution)
 {
-	contribution.addTexture(VK_FORMAT_R8G8B8A8_UNORM);
-	contribution.addTexture(VK_FORMAT_D16_UNORM);
+	contribution.createTexture(VK_FORMAT_R8G8B8A8_UNORM);
+	contribution.createTexture(VK_FORMAT_D16_UNORM);
 }
 
 }

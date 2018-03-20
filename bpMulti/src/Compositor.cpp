@@ -71,11 +71,13 @@ void Compositor::initResources(uint32_t width, uint32_t height)
 	primaryRenderDeviceSteps.init(getDevice(), *primaryRenderer, primarySize.width,
 				      primarySize.height, 2);
 	primaryContributions.resize(2);
-	for (auto& c : primaryContributions)
+	for (unsigned i = 0; i < 2; i++)
 	{
+		auto& c = primaryContributions[i];
 		c.init(getDevice(), descriptorPool, descriptorSetLayout, pipelineLayout,
 		       primarySize.width, primarySize.height);
-		setupContribution(c);
+		c.addTexture(primaryRenderDeviceSteps.getFramebuffer(i).getColorAttachment());
+		c.addTexture(primaryRenderDeviceSteps.getFramebuffer(i).getDepthAttachment());
 		c.update();
 	}
 

@@ -6,6 +6,7 @@
 #include <vector>
 #include <bp/PipelineLayout.h>
 #include <bp/OffscreenFramebuffer.h>
+#include <memory>
 
 namespace bpMulti
 {
@@ -14,13 +15,13 @@ class Contribution
 {
 public:
 	Contribution() : device{nullptr}, width{0}, height{0} {}
-	~Contribution();
 
 	void init(bp::Device& device, bp::DescriptorPool& descriptorPool,
 		  bp::DescriptorSetLayout& descriptorSetLayout, bp::PipelineLayout& pipelineLayout,
 		  uint32_t width, uint32_t height);
 	void resize(uint32_t width, uint32_t height);
-	unsigned addTexture(VkFormat format);
+	unsigned createTexture(VkFormat format);
+	unsigned addTexture(bp::Texture& texture);
 	void flushStagingBuffers(VkCommandBuffer cmdBuffer);
 	void update() { descriptorSet.update(); }
 	void bind(VkCommandBuffer cmdBuffer);
@@ -31,7 +32,7 @@ public:
 private:
 	bp::Device* device;
 	uint32_t width, height;
-	std::vector<bp::Texture*> textures;
+	std::vector<std::shared_ptr<bp::Texture>> textures;
 	bp::PipelineLayout* pipelineLayout;
 	bp::DescriptorSet descriptorSet;
 };
