@@ -1,5 +1,4 @@
 #include <bpMulti/SortLastCompositor.h>
-#include <bp/Util.h>
 #include <future>
 #include "SortLastCompositingSpv.inc"
 
@@ -24,32 +23,20 @@ void SortLastCompositor::init(initializer_list<pair<bp::Device*, SortLastRendere
 	Compositor::init(primaryDevice, colorFormat, width, height);
 }
 
+void SortLastCompositor::resize(uint32_t width, uint32_t height)
+{
+	primaryRenderDeviceSteps.resize(width, height);
+	for (auto& c : primaryContributions) c.resize(width, height, false);
+
+	for (auto& steps : secondaryRenderDeviceSteps) steps.resize(width, height);
+	for (auto& c : secondaryContributions) c.resize(width, height);
+
+	Renderer::resize(width, height);
+}
+
 VkExtent2D SortLastCompositor::getContributionSize(unsigned deviceIndex)
 {
 	return {getWidth(), getHeight()};
-}
-
-void SortLastCompositor::hostCopyStep()
-{
-	vector<future<void>> futures;
-	for (unsigned i = 0; i < deviceCount - 1; i++)
-	{
-		auto& fb = secondaryRenderDeviceSteps[i].getFramebuffer(currentFrameIndex);
-		auto& contribution = secondaryContributions[i];
-		futures.push_back(async(launch::async, [&fb, &contribution]{
-			auto colorCopyFuture = async(launch::async, [&]{
-				size_t colorSize = fb.getWidth() * fb.getHeight() * 4;
-				bp::parallelCopy(contribution.getTexture(0).getImage().map(),
-						 fb.getColorAttachment().getImage().map(),
-						 colorSize);
-			});
-			size_t depthSize = fb.getWidth() * fb.getHeight() * 2;
-			bp::parallelCopy(contribution.getTexture(1).getImage().map(),
-					 fb.getDepthAttachment().getImage().map(),
-					 depthSize);
-			colorCopyFuture.wait();
-		}));
-	}
 }
 
 void SortLastCompositor::initShaders()
@@ -93,8 +80,8 @@ void SortLastCompositor::initDescriptorPool()
 
 void SortLastCompositor::setupContribution(Contribution& contribution)
 {
-	contribution.createTexture(VK_FORMAT_R8G8B8A8_UNORM);
-	contribution.createTexture(VK_FORMAT_D16_UNORM);
+	contribution.createTexture(VK_FORMAT_R8G8B8A8_UNORM, true);
+	contribution.createTexture(VK_FORMAT_D16_UNORM, true);
 }
 
 }

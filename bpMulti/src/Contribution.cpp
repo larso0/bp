@@ -17,36 +17,48 @@ void Contribution::init(Device& device, DescriptorPool& descriptorPool,
 	descriptorSet.update();
 }
 
-void Contribution::resize(uint32_t width, uint32_t height)
+void Contribution::resize(uint32_t width, uint32_t height, bool resizeTextures)
 {
 	Contribution::width = width;
 	Contribution::height = height;
-	for (auto& t : textures) t->resize(width, height);
+	if (resizeTextures) for (auto& t : textures) t->resize(width, height);
 	descriptorSet.update();
 }
 
-unsigned Contribution::createTexture(VkFormat format)
+unsigned Contribution::createTexture(VkFormat format, bool addToDescriptorSet)
 {
 	uint32_t idx = static_cast<uint32_t>(textures.size());
 	textures.emplace_back(
 		new Texture(*device, format, VK_IMAGE_USAGE_SAMPLED_BIT, width, height));
-	textures[idx]->setDescriptorBinding(idx);
-	descriptorSet.bind(textures[idx]->getDescriptor());
+	if (addToDescriptorSet)
+	{
+		textures[idx]->setDescriptorBinding(idx);
+		descriptorSet.bind(textures[idx]->getDescriptor());
+	}
 	return idx;
 }
 
-unsigned Contribution::addTexture(bp::Texture& texture)
+unsigned Contribution::addTexture(bp::Texture& texture, bool addToDescriptorSet)
 {
 	uint32_t idx = static_cast<uint32_t>(textures.size());
 	textures.emplace_back(&texture, [](Texture*){});
-	textures[idx]->setDescriptorBinding(idx);
-	descriptorSet.bind(textures[idx]->getDescriptor());
+	if (addToDescriptorSet)
+	{
+		textures[idx]->setDescriptorBinding(idx);
+		descriptorSet.bind(textures[idx]->getDescriptor());
+	}
 	return idx;
 }
 
-void Contribution::flushStagingBuffers(VkCommandBuffer cmdBuffer)
+void Contribution::flushStagingBuffer(unsigned index, VkCommandBuffer cmdBuffer)
 {
-	for (auto& t : textures) t->getImage().flushStagingBuffer(cmdBuffer);
+	getTexture(index).getImage().flushStagingBuffer(cmdBuffer);
+}
+
+void Contribution::transitionTextureShaderReadable(unsigned index, VkCommandBuffer cmdBuffer)
+{
+	getTexture(index).transitionShaderReadable(cmdBuffer,
+						   VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 }
 
 void Contribution::bind(VkCommandBuffer cmdBuffer)

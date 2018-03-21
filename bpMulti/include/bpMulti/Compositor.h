@@ -56,7 +56,7 @@ protected:
 	virtual VkExtent2D getContributionSize(unsigned deviceIndex) = 0;
 	virtual unsigned getCompositingElementCount() const = 0;
 	virtual bool shouldCopyDepth() const = 0;
-	virtual void hostCopyStep() = 0;
+	void hostCopyStep();
 	void hostToDeviceStep();
 	virtual void initShaders() = 0;
 	virtual void initDescriptorSetLayout() = 0;

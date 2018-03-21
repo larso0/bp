@@ -19,10 +19,11 @@ public:
 	void init(bp::Device& device, bp::DescriptorPool& descriptorPool,
 		  bp::DescriptorSetLayout& descriptorSetLayout, bp::PipelineLayout& pipelineLayout,
 		  uint32_t width, uint32_t height);
-	void resize(uint32_t width, uint32_t height);
-	unsigned createTexture(VkFormat format);
-	unsigned addTexture(bp::Texture& texture);
-	void flushStagingBuffers(VkCommandBuffer cmdBuffer);
+	void resize(uint32_t width, uint32_t height, bool resizeTextures = true);
+	unsigned createTexture(VkFormat format, bool addToDescriptorSet);
+	unsigned addTexture(bp::Texture& texture, bool addToDescriptorSet);
+	void flushStagingBuffer(unsigned index, VkCommandBuffer cmdBuffer);
+	void transitionTextureShaderReadable(unsigned index, VkCommandBuffer cmdBuffer);
 	void update() { descriptorSet.update(); }
 	void bind(VkCommandBuffer cmdBuffer);
 

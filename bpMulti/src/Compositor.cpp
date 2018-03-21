@@ -1,4 +1,5 @@
 #include <bpMulti/Compositor.h>
+#include <bp/Util.h>
 #include <future>
 using namespace std;
 
@@ -22,12 +23,59 @@ void Compositor::render(bp::Framebuffer& fbo, VkCommandBuffer cmdBuffer)
 		}));
 	}
 	hostCopyStep();
-	primaryRenderFuture.wait();
 	hostToDeviceStep();
+	primaryRenderFuture.wait();
 
+	primaryContributions[currentFrameIndex].transitionTextureShaderReadable(0, cmdBuffer);
+	if (shouldCopyDepth())
+	{
+		primaryContributions[currentFrameIndex]
+			.transitionTextureShaderReadable(1, cmdBuffer);
+	}
+
+	for (auto& c : secondaryContributions)
+	{
+		c.transitionTextureShaderReadable(0, cmdBuffer);
+		if (shouldCopyDepth())
+		{
+			c.transitionTextureShaderReadable(1, cmdBuffer);
+		}
+	}
 	Renderer::render(fbo, cmdBuffer);
 	for (auto& f : renderFutures) f.wait();
 	currentFrameIndex = nextFrameIndex;
+}
+
+void Compositor::hostCopyStep()
+{
+	vector<future<void>> futures;
+	for (unsigned i = 0; i < deviceCount - 1; i++)
+	{
+		auto& fb = secondaryRenderDeviceSteps[i].getFramebuffer(currentFrameIndex);
+		auto& contribution = secondaryContributions[i];
+		futures.push_back(async(launch::async, [this, &fb, &contribution]
+		{
+			future<void> depthCopyFuture;
+			if (shouldCopyDepth())
+			{
+				depthCopyFuture = async(launch::async, [&]{
+					size_t depthSize = fb.getWidth() * fb.getHeight() * 2;
+					bp::parallelCopy(
+						contribution.getTexture(1).getImage().map(),
+						fb.getDepthAttachment().getImage().map(),
+						depthSize);
+				});
+			}
+
+			size_t colorSize = fb.getWidth() * fb.getHeight() * 4;
+			bp::parallelCopy(contribution.getTexture(0).getImage().map(),
+					 fb.getColorAttachment().getImage().map(),
+					 colorSize);
+
+			if (shouldCopyDepth()) depthCopyFuture.wait();
+		}));
+	}
+	for (auto& f : futures) f.wait();
 }
 
 void Compositor::hostToDeviceStep()
@@ -37,8 +85,22 @@ void Compositor::hostToDeviceStep()
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 	vkBeginCommandBuffer(transferCommandBuffer, &beginInfo);
 
-	primaryContributions[currentFrameIndex].flushStagingBuffers(transferCommandBuffer);
-	for (auto& c : secondaryContributions) c.flushStagingBuffers(transferCommandBuffer);
+	primaryContributions[currentFrameIndex]
+		.flushStagingBuffer(0, transferCommandBuffer);
+	if (shouldCopyDepth())
+	{
+		primaryContributions[currentFrameIndex]
+			.flushStagingBuffer(1, transferCommandBuffer);
+	}
+
+	for (auto& c : secondaryContributions)
+	{
+		c.flushStagingBuffer(0, transferCommandBuffer);
+		if (shouldCopyDepth())
+		{
+			c.flushStagingBuffer(1, transferCommandBuffer);
+		}
+	}
 
 	vkEndCommandBuffer(transferCommandBuffer);
 	transferQueue->submit({}, {transferCommandBuffer}, {});
@@ -76,8 +138,9 @@ void Compositor::initResources(uint32_t width, uint32_t height)
 		auto& c = primaryContributions[i];
 		c.init(getDevice(), descriptorPool, descriptorSetLayout, pipelineLayout,
 		       primarySize.width, primarySize.height);
-		c.addTexture(primaryRenderDeviceSteps.getFramebuffer(i).getColorAttachment());
-		c.addTexture(primaryRenderDeviceSteps.getFramebuffer(i).getDepthAttachment());
+		c.addTexture(primaryRenderDeviceSteps.getFramebuffer(i).getColorAttachment(), true);
+		c.addTexture(primaryRenderDeviceSteps.getFramebuffer(i).getDepthAttachment(),
+			     shouldCopyDepth());
 		c.update();
 	}
 
@@ -105,6 +168,14 @@ void Compositor::initResources(uint32_t width, uint32_t height)
 	}
 
 	for (auto& d : drawables) subpass.addDrawable(d);
+
+	primaryRenderDeviceSteps.render(0);
+	for (auto& steps : secondaryRenderDeviceSteps)
+	{
+		steps.render(0);
+		steps.deviceToHost(0, shouldCopyDepth());
+	}
+
 }
 
 }

@@ -15,6 +15,7 @@ void OffscreenFramebuffer::init(RenderPass& renderPass, uint32_t width, uint32_t
 	depthAttachment.init(device, VK_FORMAT_D16_UNORM,
 			     VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
 			     | VK_IMAGE_USAGE_SAMPLED_BIT, width, height);
+	depthAttachment.setClearValue({1.f, 0.f});
 
 	setAttachment(colorAttachmentSlot, colorAttachment);
 	setAttachment(depthAttachmentSlot, depthAttachment);
