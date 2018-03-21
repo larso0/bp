@@ -32,6 +32,7 @@ void SortLastCompositor::resize(uint32_t width, uint32_t height)
 	for (auto& c : secondaryContributions) c.resize(width, height);
 
 	Renderer::resize(width, height);
+	renderFirstFrame();
 }
 
 VkExtent2D SortLastCompositor::getContributionSize(unsigned deviceIndex)

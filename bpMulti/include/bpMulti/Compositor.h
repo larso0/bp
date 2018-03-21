@@ -27,6 +27,7 @@ public:
 	virtual ~Compositor() = default;
 
 	void render(bp::Framebuffer& fbo, VkCommandBuffer cmdBuffer) override;
+	void renderFirstFrame();
 protected:
 	bp::Shader vertexShader, fragmentShader;
 	bp::DescriptorSetLayout descriptorSetLayout;

@@ -46,6 +46,23 @@ void Compositor::render(bp::Framebuffer& fbo, VkCommandBuffer cmdBuffer)
 	currentFrameIndex = nextFrameIndex;
 }
 
+void Compositor::renderFirstFrame()
+{
+	vector<future<void>> futures;
+	futures.push_back(async(launch::async, [this]{
+		primaryRenderDeviceSteps.render(currentFrameIndex);
+	}));
+
+	for (auto& steps : secondaryRenderDeviceSteps)
+	{
+		futures.push_back(async(launch::async, [this, &steps]{
+			steps.render(currentFrameIndex);
+			steps.deviceToHost(currentFrameIndex, shouldCopyDepth());
+		}));
+	}
+	for (auto& f : futures) f.wait();
+}
+
 void Compositor::hostCopyStep()
 {
 	vector<future<void>> futures;
@@ -169,13 +186,7 @@ void Compositor::initResources(uint32_t width, uint32_t height)
 
 	for (auto& d : drawables) subpass.addDrawable(d);
 
-	primaryRenderDeviceSteps.render(0);
-	for (auto& steps : secondaryRenderDeviceSteps)
-	{
-		steps.render(0);
-		steps.deviceToHost(0, shouldCopyDepth());
-	}
-
+	renderFirstFrame();
 }
 
 }
