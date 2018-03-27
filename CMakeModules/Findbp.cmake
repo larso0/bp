@@ -20,7 +20,16 @@ find_library(BP_LIBRARY_RELEASE NAMES bp
 find_library(BP_LIBRARY_DEBUG NAMES bpd
 	     HINTS ${BP_ROOT_DIR}/lib ${BP_ROOT_DIR}/cmake-build-debug
 	     PATHS ${BP_LIBRARY_DIR} ../bp/lib ../bp/cmake-build-debug)
-set(BP_LIBRARY optimized ${BP_LIBRARY_RELEASE} debug ${BP_LIBRARY_DEBUG})
+
+if(BP_LIBRARY_RELEASE AND BP_LIBRARY_DEBUG)
+	set(BP_LIBRARY optimized ${BP_LIBRARY_RELEASE} debug ${BP_LIBRARY_DEBUG})
+elseif(BP_LIBRARY_RELEASE)
+	set(BP_LIBRARY ${BP_LIBRARY_RELEASE})
+elseif(BP_LIBRARY_DEBUG)
+	set(BP_LIBRARY ${BP_LIBRARY_DEBUG})
+else()
+	message(SEND_ERROR "bp library not found.")
+endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(BP DEFAULT_MSG
