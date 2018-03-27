@@ -31,7 +31,16 @@ find_library(BP_MULTI_LIBRARY_DEBUG NAMES bpMultid
 	     ${BP_LIBRARY_DIR}
 	     ../bp/lib
 	     ../bp/cmake-build-debug)
-set(BP_MULTI_LIBRARY optimized ${BP_MULTI_LIBRARY_RELEASE} debug ${BP_MULTI_LIBRARY_DEBUG})
+
+if(BP_MULTI_LIBRARY_RELEASE AND BP_MULTI_LIBRARY_DEBUG)
+	set(BP_MULTI_LIBRARY optimized ${BP_MULTI_LIBRARY_RELEASE} debug ${BP_MULTI_LIBRARY_DEBUG})
+elseif(BP_MULTI_LIBRARY_RELEASE)
+	set(BP_MULTI_LIBRARY ${BP_MULTI_LIBRARY_RELEASE})
+elseif(BP_MULTI_LIBRARY_DEBUG)
+	set(BP_MULTI_LIBRARY ${BP_MULTI_LIBRARY_DEBUG})
+else()
+	message(SEND_ERROR "bpMulti library not found.")
+endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(BP_MULTI DEFAULT_MSG

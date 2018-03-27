@@ -24,7 +24,7 @@ void Window::init()
 	requirements.surface = surface;
 	requirements.extensions.push_back("VK_KHR_swapchain");
 	specifyDeviceRequirements(requirements);
-	
+
 	VkPhysicalDevice physical = selectDevice(queryDevices(*vulkanInstance(), requirements));
 	if (physical == VK_NULL_HANDLE) throw runtime_error("No suitable device available.");
 	device.init(physical, requirements);
@@ -47,7 +47,7 @@ void Window::init()
 
 	initRenderResources(static_cast<uint32_t>(width()), static_cast<uint32_t>(height()));
 
-	timer = clock();
+	timer = Clock::now();
 
 	inited = true;
 }
@@ -71,10 +71,10 @@ void Window::frame()
 	graphicsQueue->waitIdle();
 	swapchain.present(renderCompleteSem);
 
-	clock_t updatedTimer = clock();
-	double delta = static_cast<double>(updatedTimer - timer) / CLOCKS_PER_SEC;
+	auto updatedTimer = Clock::now();
+	Duration delta = updatedTimer - timer;
 	timer = updatedTimer;
-	update(delta);
+	update(delta.count());
 
 	if (continuousAnimation)
 		requestUpdate();

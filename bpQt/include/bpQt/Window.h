@@ -7,7 +7,7 @@
 #include <bp/Semaphore.h>
 #include <QWindow>
 #include <QVulkanInstance>
-#include <ctime>
+#include <chrono>
 
 namespace bpQt
 {
@@ -22,7 +22,6 @@ public:
 		surface{VK_NULL_HANDLE},
 		vsync{true},
 		resized{false},
-		timer{0},
 		graphicsQueue{nullptr},
 		frameCmdBuffer{VK_NULL_HANDLE},
 		frameCmdBufferBeginInfo{}
@@ -57,7 +56,12 @@ private:
 	VkSurfaceKHR surface;
 	bool vsync;
 	bool resized;
-	clock_t timer;
+
+	using Clock = std::chrono::high_resolution_clock;
+	using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
+	using Duration = std::chrono::duration<double>;
+
+	TimePoint timer;
 
 	bp::Queue* graphicsQueue;
 	bp::CommandPool cmdPool;
