@@ -31,7 +31,16 @@ find_library(BP_SCENE_LIBRARY_DEBUG NAMES bpScened
 	     ${BP_LIBRARY_DIR}
 	     ../bp/lib
 	     ../bp/cmake-build-debug)
-set(BP_SCENE_LIBRARY optimized ${BP_SCENE_LIBRARY_RELEASE} debug ${BP_SCENE_LIBRARY_DEBUG})
+
+if(BP_SCENE_LIBRARY_RELEASE AND BP_SCENE_LIBRARY_DEBUG)
+	set(BP_SCENE_LIBRARY optimized ${BP_SCENE_LIBRARY_RELEASE} debug ${BP_SCENE_LIBRARY_DEBUG})
+elseif(BP_SCENE_LIBRARY_RELEASE)
+	set(BP_SCENE_LIBRARY ${BP_SCENE_LIBRARY_RELEASE})
+elseif(BP_SCENE_LIBRARY_DEBUG)
+	set(BP_SCENE_LIBRARY ${BP_SCENE_LIBRARY_DEBUG})
+else()
+	message(SEND_ERROR "bpScene library not found.")
+endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(BP_SCENE DEFAULT_MSG

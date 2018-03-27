@@ -45,7 +45,16 @@ find_library(BP_QT_LIBRARY_DEBUG NAMES bpQtd
 	     	${BP_LIBRARY_DIR}
 	     	../bp/lib
 	     	../bp/cmake-build-debug)
-set(BP_QT_LIBRARY optimized ${BP_QT_LIBRARY_RELEASE} debug ${BP_QT_LIBRARY_DEBUG})
+
+if(BP_QT_LIBRARY_RELEASE AND BP_QT_LIBRARY_DEBUG)
+	set(BP_QT_LIBRARY optimized ${BP_QT_LIBRARY_RELEASE} debug ${BP_QT_LIBRARY_DEBUG})
+elseif(BP_QT_LIBRARY_RELEASE)
+	set(BP_QT_LIBRARY ${BP_QT_LIBRARY_RELEASE})
+elseif(BP_QT_LIBRARY_DEBUG)
+	set(BP_QT_LIBRARY ${BP_QT_LIBRARY_DEBUG})
+else()
+	message(SEND_ERROR "bpQt library not found.")
+endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(BP_QT DEFAULT_MSG

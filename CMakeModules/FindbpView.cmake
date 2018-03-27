@@ -31,7 +31,16 @@ find_library(BP_VIEW_LIBRARY_DEBUG NAMES bpViewd
 	     ${BP_LIBRARY_DIR}
 	     ../bp/lib
 	     ../bp/cmake-build-debug)
-set(BP_VIEW_LIBRARY optimized ${BP_VIEW_LIBRARY_RELEASE} debug ${BP_VIEW_LIBRARY_DEBUG})
+
+if(BP_VIEW_LIBRARY_RELEASE AND BP_VIEW_LIBRARY_DEBUG)
+	set(BP_VIEW_LIBRARY optimized ${BP_VIEW_LIBRARY_RELEASE} debug ${BP_VIEW_LIBRARY_DEBUG})
+elseif(BP_VIEW_LIBRARY_RELEASE)
+	set(BP_VIEW_LIBRARY ${BP_VIEW_LIBRARY_RELEASE})
+elseif(BP_VIEW_LIBRARY_DEBUG)
+	set(BP_VIEW_LIBRARY ${BP_VIEW_LIBRARY_DEBUG})
+else()
+	message(SEND_ERROR "bpView library not found.")
+endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(BP_VIEW DEFAULT_MSG
