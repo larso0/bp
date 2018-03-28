@@ -18,14 +18,13 @@ void PushConstantResource::init(VkPipelineLayout pipelineLayout, VkShaderStageFl
 
 void PushConstantResource::update()
 {
-	matrices.mvpMatrix = camera->getProjectionMatrix() * camera->getViewMatrix()
-			     * node->getWorldMatrix();
+	matrices.mvpMatrix = clipTransform * camera->getProjectionMatrix() * camera->getViewMatrix()
+			     * node->getWorldMatrix() * scaleTransform;
 	matrices.normalMatrix = transpose(inverse(node->getWorldMatrix()));
 }
 
 void PushConstantResource::bind(VkCommandBuffer cmdBuffer)
 {
-	update();
 	vkCmdPushConstants(cmdBuffer, pipelineLayout, shaderStage, 0, sizeof(Matrices),
 			   &matrices);
 }

@@ -32,8 +32,11 @@ public:
 
 	void init(VkPipelineLayout pipelineLayout, VkShaderStageFlags shaderStage,
 		  bpScene::Node& node, bpScene::Camera& camera);
+	void update();
 	void bind(VkCommandBuffer cmdBuffer);
 
+	void setClipTransform(const glm::mat4& transform) { clipTransform = transform; }
+	void setScaleTransform(const glm::mat4& transform) { scaleTransform = transform; }
 	void setNode(bpScene::Node& node) { PushConstantResource::node = &node; }
 	void setCamera(bpScene::Camera& camera) { PushConstantResource::camera = &camera; }
 
@@ -42,13 +45,12 @@ public:
 private:
 	VkPipelineLayout pipelineLayout;
 	VkShaderStageFlags shaderStage;
+	glm::mat4 clipTransform, scaleTransform;
 
 	bpScene::Node* node;
 	bpScene::Camera* camera;
 
 	Matrices matrices;
-
-	void update();
 };
 
 }
