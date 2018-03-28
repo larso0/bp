@@ -31,13 +31,29 @@ void DrawableSubpass::render(const VkRect2D& area, VkCommandBuffer cmdBuffer)
 	}
 }
 
+static bool drawablePipelineSortPredicate(Drawable* a, Drawable* b)
+{
+	return a->getPipeline() < b->getPipeline();
+}
+
 void DrawableSubpass::addDrawable(Drawable& drawable)
 {
 	drawables.insert(upper_bound(drawables.begin(), drawables.end(), &drawable,
-				     [](Drawable* a, Drawable* b){
-					     return a->getPipeline() < b->getPipeline();
-				     }),
+				     drawablePipelineSortPredicate),
 			 &drawable);
+}
+
+void DrawableSubpass::removeDrawable(Drawable& drawable)
+{
+	auto lower = lower_bound(drawables.begin(), drawables.end(), &drawable,
+				 drawablePipelineSortPredicate);
+	if (lower != drawables.end())
+	{
+		auto upper = upper_bound(lower, drawables.end(), &drawable,
+					 drawablePipelineSortPredicate);
+		auto pos = find(lower, upper, &drawable);
+		if (pos != upper) drawables.erase(pos);
+	}
 }
 
 }

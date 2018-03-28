@@ -16,6 +16,7 @@ public:
 
 	void render(const VkRect2D& area, VkCommandBuffer cmdBuffer) override;
 	void addDrawable(Drawable& drawable);
+	void removeDrawable(Drawable& drawable);
 
 private:
 	std::vector<Drawable*> drawables;
