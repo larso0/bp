@@ -2,12 +2,12 @@
 #include "SortFirstCompositingSpv.inc"
 
 using namespace bp;
-using namespace std; 
+using namespace std;
 
 namespace bpMulti
 {
 
-void SortFirstCompositor::init(initializer_list<pair<Device*, SortFirstRenderer*>> configurations,
+void SortFirstCompositor::init(vector<pair<Device*, SortFirstRenderer*>> configurations,
 			       VkFormat colorFormat, uint32_t width, uint32_t height)
 {
 	deviceCount = static_cast<unsigned int>(configurations.size());

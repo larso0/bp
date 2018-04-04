@@ -7,7 +7,7 @@ using namespace std;
 namespace bpMulti
 {
 
-void SortLastCompositor::init(initializer_list<pair<bp::Device*, SortLastRenderer*>> configurations,
+void SortLastCompositor::init(vector<pair<bp::Device*, SortLastRenderer*>> configurations,
 			      VkFormat colorFormat, uint32_t width, uint32_t height)
 {
 	deviceCount = static_cast<unsigned int>(configurations.size());
