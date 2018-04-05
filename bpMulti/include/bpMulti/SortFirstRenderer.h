@@ -2,6 +2,7 @@
 #define BP_SORTFIRSTRENDERER_H
 
 #include <bp/Renderer.h>
+#include <bpUtil/Event.h>
 #include <bpScene/Math.h>
 
 namespace bpMulti
@@ -24,6 +25,8 @@ public:
 
 	const Contribution& getContribution() const { return contribution; }
 	const glm::mat4& getContributionClipTransform() const { return contributionClipTransform; }
+
+	bpUtil::Event<> contributionChangedEvent;
 
 private:
 	Contribution contribution;
