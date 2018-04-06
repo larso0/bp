@@ -6,9 +6,10 @@ using namespace std;
 namespace bpScene
 {
 
-void MeshResources::init(Device& device, Mesh& mesh)
+void MeshResources::init(Device& device, Mesh& mesh, uint32_t offset, uint32_t count)
 {
-	elementCount = mesh.getElementCount();
+	MeshResources::offset = offset;
+	MeshResources::elementCount = count;
 
 	vertexBuffer.init(device, mesh.getVertexDataSize(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 			  VMA_MEMORY_USAGE_GPU_ONLY);
@@ -19,7 +20,7 @@ void MeshResources::init(Device& device, Mesh& mesh)
 	indexBuffer.transfer(0, VK_WHOLE_SIZE, mesh.getIndexDataPtr());
 }
 
-void MeshResources::bind(VkCommandBuffer cmdBuffer, uint32_t offset)
+void MeshResources::bind(VkCommandBuffer cmdBuffer)
 {
 	VkDeviceSize vertexBufferOffset = 0;
 	VkDeviceSize indexBufferOffset = offset * sizeof(uint32_t);

@@ -11,9 +11,7 @@ void MeshDrawable::init(bp::GraphicsPipeline& pipeline, MeshResources& mesh, uin
 	MeshDrawable::elementCount = elementCount;
 	MeshDrawable::instanceCount = instanceCount;
 
-	bpUtil::connect(Drawable::resourceBindingEvent, [this, offset](VkCommandBuffer cmdBuffer){
-		MeshDrawable::mesh->bind(cmdBuffer, offset);
-	});
+	bpUtil::connect(Drawable::resourceBindingEvent, mesh, &MeshResources::bind);
 }
 
 void MeshDrawable::draw(VkCommandBuffer cmdBuffer)
