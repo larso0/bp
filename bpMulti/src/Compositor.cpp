@@ -23,8 +23,16 @@ void Compositor::render(bp::Framebuffer& fbo, VkCommandBuffer cmdBuffer)
 		}));
 	}
 	hostCopyStep();
-	hostToDeviceStep();
-	primaryRenderFuture.wait();
+
+	if (dedicatedTransferQueue)
+	{
+		hostToDeviceStep();
+		primaryRenderFuture.wait();
+	} else
+	{
+		primaryRenderFuture.wait();
+		hostToDeviceStep();
+	}
 
 	primaryContributions[currentFrameIndex].transitionTextureShaderReadable(0, cmdBuffer);
 	if (shouldCopyDepth())
@@ -102,14 +110,6 @@ void Compositor::hostToDeviceStep()
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 	vkBeginCommandBuffer(transferCommandBuffer, &beginInfo);
 
-	primaryContributions[currentFrameIndex]
-		.flushStagingBuffer(0, transferCommandBuffer);
-	if (shouldCopyDepth())
-	{
-		primaryContributions[currentFrameIndex]
-			.flushStagingBuffer(1, transferCommandBuffer);
-	}
-
 	for (auto& c : secondaryContributions)
 	{
 		c.flushStagingBuffer(0, transferCommandBuffer);
@@ -142,6 +142,10 @@ void Compositor::initResources(uint32_t width, uint32_t height)
 	transferQueue = &getDevice().getTransferQueue();
 	transferCommandPool.init(*transferQueue);
 	transferCommandBuffer = transferCommandPool.allocateCommandBuffer();
+
+	if (getDevice().getTransferQueue().getHandle()
+	    != getDevice().getGraphicsQueue().getHandle())
+		dedicatedTransferQueue = true;
 
 	drawables.resize(deviceCount);
 

@@ -22,6 +22,7 @@ public:
 	Compositor() :
 		transferQueue{nullptr},
 		transferCommandBuffer{VK_NULL_HANDLE},
+		dedicatedTransferQueue{false},
 		deviceCount{1}, currentFrameIndex{0},
 		primaryRenderer{nullptr} {}
 	virtual ~Compositor() = default;
@@ -37,6 +38,7 @@ protected:
 	bp::Queue* transferQueue;
 	bp::CommandPool transferCommandPool;
 	VkCommandBuffer transferCommandBuffer;
+	bool dedicatedTransferQueue;
 
 	unsigned deviceCount;
 	unsigned currentFrameIndex;
