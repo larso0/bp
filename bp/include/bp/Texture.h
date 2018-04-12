@@ -29,8 +29,9 @@ public:
 
 	virtual ~Texture();
 
-	virtual void init(Device& device, VkFormat format, VkImageUsageFlags usage, uint32_t width,
+	void init(Device& device, VkFormat format, VkImageUsageFlags usage, uint32_t width,
 			  uint32_t height);
+	void load(Device& device, VkImageUsageFlags usage, const std::string& path);
 	void resize(uint32_t width, uint32_t height) override;
 	void transitionShaderReadable(VkCommandBuffer cmdBuffer, VkPipelineStageFlags stage);
 	void before(VkCommandBuffer cmdBuffer) override;

@@ -6,7 +6,7 @@ using namespace std;
 namespace bpScene
 {
 
-void MeshResources::init(Device& device, Mesh& mesh, uint32_t offset, uint32_t count)
+void MeshResources::init(Device& device, const Mesh& mesh, uint32_t offset, uint32_t count)
 {
 	MeshResources::offset = offset;
 	MeshResources::elementCount = count;

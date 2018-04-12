@@ -112,6 +112,7 @@ void Device::init(VkPhysicalDevice physicalDevice, const DeviceRequirements& req
 	if (!suitable)
 		throw runtime_error("Given physical device is not suitable.");
 	physical = physicalDevice;
+	vkGetPhysicalDeviceProperties(physical, &properties);
 
 	try
 	{

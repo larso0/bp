@@ -41,6 +41,7 @@ public:
 	Device() :
 		physical{VK_NULL_HANDLE},
 		logical{VK_NULL_HANDLE},
+		properties{},
 		allocator{nullptr} {}
 	Device(const Instance& instance, const DeviceRequirements& requirements) :
 		Device()
@@ -62,6 +63,7 @@ public:
 
 	VkPhysicalDevice getPhysicalHandle() { return physical; }
 	VkDevice getLogicalHandle() { return logical; }
+	const VkPhysicalDeviceProperties& getProperties() const { return properties; }
 	MemoryAllocator& getMemoryAllocator() { return *allocator; }
 	uint32_t getQueueCount() const { return static_cast<uint32_t>(queues.size()); }
 	Queue& getQueue(uint32_t index = 0);
@@ -74,6 +76,7 @@ public:
 private:
 	VkPhysicalDevice physical;
 	VkDevice logical;
+	VkPhysicalDeviceProperties properties;
 
 	MemoryAllocator* allocator;
 

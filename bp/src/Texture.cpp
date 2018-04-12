@@ -1,4 +1,7 @@
 #include <bp/Texture.h>
+#include <bp/Util.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 using namespace std;
 
@@ -67,6 +70,19 @@ void Texture::init(Device& device, VkFormat format, VkImageUsageFlags usage, uin
 	descriptor.setType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 	descriptor.addDescriptorInfo({sampler, imageView,
 				      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL});
+}
+
+void Texture::load(Device& device, VkImageUsageFlags usage, const string& path)
+{
+	int x, y, n;
+	unsigned char* raw = stbi_load(path.c_str(), &x, &y, &n, 4);
+
+	init(device, VK_FORMAT_R8G8B8A8_UNORM, usage,
+	     static_cast<uint32_t>(x), static_cast<uint32_t>(y));
+	parallelCopy(image->map(), raw, static_cast<size_t>(x * y * 4));
+	image->flushStagingBuffer();
+
+	stbi_image_free(raw);
 }
 
 void Texture::resize(uint32_t width, uint32_t height)

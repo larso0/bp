@@ -7,8 +7,11 @@
 namespace bpScene
 {
 
+class ModelResources;
+
 class Model
 {
+	friend class ModelResources;
 public:
 	void loadObj(const std::string& path);
 
