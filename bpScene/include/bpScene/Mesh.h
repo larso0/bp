@@ -4,6 +4,7 @@
 #include "Vertex.h"
 #include <bpUtil/FlagSet.h>
 #include <vulkan/vulkan.h>
+#include <tiny_obj_loader.h>
 #include <vector>
 #include <initializer_list>
 #include <string>
@@ -28,6 +29,9 @@ public:
 
 	void loadObj(const std::string& filename,
 		     const LoadFlags& flags = LoadFlags() << POSITION << NORMAL);
+	void loadShape(const tinyobj::attrib_t& attrib, const tinyobj::shape_t& shape,
+		       const LoadFlags& flags = LoadFlags() << POSITION << NORMAL
+							    << TEXTURE_COORDINATE);
 
 	uint32_t addVertex(const Vertex& vertex)
 	{

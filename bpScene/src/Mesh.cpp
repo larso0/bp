@@ -1,5 +1,4 @@
 #define TINYOBJLOADER_IMPLEMENTATION
-#include <tiny_obj_loader.h>
 #include <bpScene/Mesh.h>
 #include <unordered_map>
 #include <stdexcept>
@@ -66,6 +65,33 @@ void Mesh::loadObj(const string& filename, const LoadFlags& flags)
 
 			indices.push_back(uniqueVertices[vertex]);
 		}
+	}
+}
+
+void Mesh::loadShape(const tinyobj::attrib_t& attrib, const tinyobj::shape_t& shape,
+		     const LoadFlags& flags)
+{
+	unordered_map<Vertex, uint32_t> uniqueVertices;
+	for (const auto& index : shape.mesh.indices)
+	{
+		Vertex vertex;
+		if (flags & LoadFlag::POSITION)
+			vertex.position = vec3(attrib.vertices[3 * index.vertex_index],
+					       attrib.vertices[3 * index.vertex_index + 1],
+					       attrib.vertices[3 * index.vertex_index + 2]);
+		if (flags & LoadFlag::NORMAL)
+			vertex.normal = vec3(attrib.normals[3 * index.normal_index],
+					     attrib.normals[3 * index.normal_index + 1],
+					     attrib.normals[3 * index.normal_index + 2]);
+		if (flags & LoadFlag::TEXTURE_COORDINATE)
+			vertex.textureCoordinate =
+				vec2(attrib.texcoords[2 * index.texcoord_index],
+				     1.f - attrib.texcoords[2 * index.texcoord_index + 1]);
+
+		if (uniqueVertices.count(vertex) == 0)
+			uniqueVertices[vertex] = addVertex(vertex);
+
+		indices.push_back(uniqueVertices[vertex]);
 	}
 }
 
