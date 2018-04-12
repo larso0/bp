@@ -1,5 +1,5 @@
-#ifndef BP_SCENE_MODEL_RESOURCES_H
-#define BP_SCENE_MODEL_RESOURCES_H
+#ifndef BP_SCENE_MODELRESOURCES_H
+#define BP_SCENE_MODELRESOURCES_H
 
 #include "ResourceList.h"
 #include "Model.h"

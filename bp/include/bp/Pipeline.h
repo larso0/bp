@@ -39,6 +39,7 @@ public:
 	bool isReady() const { return handle != VK_NULL_HANDLE; }
 
 	VkPipeline getHandle() { return handle; }
+	VkPipelineLayout getPipelineLayout() { return layout; }
 
 protected:
 	Device* device;
