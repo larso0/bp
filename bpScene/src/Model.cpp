@@ -6,6 +6,19 @@ using namespace std;
 namespace bpScene
 {
 
+static string getDirectoryOfPath(const string& path)
+{
+	char sep = '/';
+#ifdef _WIN32
+	sep = '\\';
+#endif
+	size_t i = path.rfind(sep, path.length());
+	if (i != string::npos) {
+		return(path.substr(0, i) + sep);
+	}
+	return("");
+}
+
 void Model::loadObj(const std::string& path)
 {
 	tinyobj::attrib_t attrib;
@@ -13,10 +26,12 @@ void Model::loadObj(const std::string& path)
 	vector <tinyobj::material_t> materials;
 	string err;
 
-	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &err, path.c_str()))
+	auto dir = getDirectoryOfPath(path);
+	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &err, path.c_str(), dir.c_str()))
 		throw runtime_error(err);
 
 	meshes.resize(shapes.size());
+	meshMaterialIndices.resize(shapes.size());
 	Model::materials.resize(materials.size());
 
 	for (unsigned i = 0; i < shapes.size(); i++)
@@ -26,7 +41,7 @@ void Model::loadObj(const std::string& path)
 	}
 
 	for (unsigned i = 0; i < materials.size(); i++)
-		Model::materials[i].loadMtl(materials[i]);
+		Model::materials[i].loadMtl(materials[i], dir);
 }
 
 }

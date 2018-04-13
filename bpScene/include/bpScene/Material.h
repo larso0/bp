@@ -17,7 +17,7 @@ public:
 		texturePath{texturePath},
 		ambient{ambient}, diffuse{diffuse} {}
 
-	void loadMtl(const tinyobj::material_t& mtl);
+	void loadMtl(const tinyobj::material_t& mtl, const std::string& dir);
 
 	void setTexturePath(const std::string& path) { texturePath = path; }
 	void setAmbient(const glm::vec3& color) { ambient = color; }

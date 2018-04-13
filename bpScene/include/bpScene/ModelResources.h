@@ -33,13 +33,13 @@ public:
 	}
 
 private:
+	bp::DescriptorPool descriptorPool;
 	std::vector<MeshResources> meshes;
 	std::vector<MaterialResources> materials;
 	std::vector<unsigned> meshMaterialIndices;
 
 	VkDeviceSize uniformStride;
 	bp::Buffer uniformBuffer;
-	bp::DescriptorPool descriptorPool;
 };
 
 }
