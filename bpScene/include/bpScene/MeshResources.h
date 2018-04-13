@@ -27,6 +27,7 @@ public:
 	void init(bp::Device& device, const Mesh& mesh, uint32_t offset, uint32_t count);
 	void bind(VkCommandBuffer cmdBuffer);
 	VkPrimitiveTopology getTopology() const { return topology; }
+	uint32_t getOffset() const { return offset; }
 	uint32_t getElementCount() const { return elementCount; }
 
 private:
