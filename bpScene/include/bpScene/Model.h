@@ -28,6 +28,8 @@ public:
 		return materials[meshMaterialIndices[meshIndex]];
 	}
 
+	glm::vec3 getSize() const;
+
 private:
 	std::vector<Mesh> meshes;
 	std::vector<Material> materials;

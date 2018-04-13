@@ -13,10 +13,12 @@ void MaterialResources::init(Device& device, const Material& material,
 			     Buffer& uniformBuffer, VkDeviceSize offset)
 {
 	descriptorSet.init(device, descriptorPool, descriptorSetLayout);
-	texture.load(device, VK_IMAGE_USAGE_SAMPLED_BIT, material.getTexturePath());
-
-	texture.setDescriptorBinding(textureBinding);
-	descriptorSet.bind(texture.getDescriptor());
+	if (material.isTextured())
+	{
+		texture.load(device, VK_IMAGE_USAGE_SAMPLED_BIT, material.getTexturePath());
+		texture.setDescriptorBinding(textureBinding);
+		descriptorSet.bind(texture.getDescriptor());
+	}
 
 	uniformBufferDescriptor.setType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 	uniformBufferDescriptor.setBinding(uniformBinding);

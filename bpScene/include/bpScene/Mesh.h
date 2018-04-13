@@ -25,7 +25,8 @@ public:
 	using LoadFlags = bpUtil::FlagSet<LoadFlag>;
 
 	Mesh(VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST) :
-		topology{topology} {}
+		topology{topology},
+		maxVertex{FLT_MIN, FLT_MIN, FLT_MIN}, minVertex{FLT_MAX, FLT_MAX, FLT_MAX} {}
 
 	void loadObj(const std::string& filename,
 		     const LoadFlags& flags = LoadFlags() << POSITION << NORMAL);
@@ -64,11 +65,14 @@ public:
 	size_t getVertexDataSize() const { return vertices.size() * Vertex::STRIDE; }
 	size_t getIndexDataSize() const { return indices.size() * sizeof(uint32_t); }
 	uint32_t getElementCount() const { return static_cast<uint32_t>(indices.size()); }
+	const glm::vec3& getMaxVertex() const { return maxVertex; }
+	const glm::vec3& getMinVertex() const { return minVertex; }
 
 private:
 	VkPrimitiveTopology topology;
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
+	glm::vec3 maxVertex, minVertex;
 };
 
 }

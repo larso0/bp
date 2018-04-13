@@ -48,9 +48,18 @@ void Mesh::loadObj(const string& filename, const LoadFlags& flags)
 		{
 			Vertex vertex;
 			if (flags & LoadFlag::POSITION)
+			{
 				vertex.position = vec3(attrib.vertices[3 * index.vertex_index],
 						       attrib.vertices[3 * index.vertex_index + 1],
 						       attrib.vertices[3 * index.vertex_index + 2]);
+				auto& v = vertex.position;
+				if (v.x < minVertex.x) minVertex.x = v.x;
+				else if (v.x > maxVertex.x) maxVertex.x = v.x;
+				if (v.y < minVertex.y) minVertex.y = v.y;
+				else if (v.y > maxVertex.y) maxVertex.y = v.y;
+				if (v.z < minVertex.z) minVertex.z = v.z;
+				else if (v.z > maxVertex.z) maxVertex.z = v.z;
+			}
 			if (flags & LoadFlag::NORMAL)
 				vertex.normal = vec3(attrib.normals[3 * index.normal_index],
 						     attrib.normals[3 * index.normal_index + 1],
@@ -76,9 +85,18 @@ void Mesh::loadShape(const tinyobj::attrib_t& attrib, const tinyobj::shape_t& sh
 	{
 		Vertex vertex;
 		if (flags & LoadFlag::POSITION)
+		{
 			vertex.position = vec3(attrib.vertices[3 * index.vertex_index],
 					       attrib.vertices[3 * index.vertex_index + 1],
 					       attrib.vertices[3 * index.vertex_index + 2]);
+			auto& v = vertex.position;
+			if (v.x < minVertex.x) minVertex.x = v.x;
+			else if (v.x > maxVertex.x) maxVertex.x = v.x;
+			if (v.y < minVertex.y) minVertex.y = v.y;
+			else if (v.y > maxVertex.y) maxVertex.y = v.y;
+			if (v.z < minVertex.z) minVertex.z = v.z;
+			else if (v.z > maxVertex.z) maxVertex.z = v.z;
+		}
 		if (flags & LoadFlag::NORMAL)
 			vertex.normal = vec3(attrib.normals[3 * index.normal_index],
 					     attrib.normals[3 * index.normal_index + 1],
