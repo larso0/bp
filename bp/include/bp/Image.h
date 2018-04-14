@@ -63,7 +63,7 @@ private:
 
 	Device* device;
 	VkImage handle;
-	CommandPool cmdPool;
+	CommandPool transferCmdPool, graphicsCmdPool;
 	uint32_t width, height;
 	VkFormat format;
 	VkImageTiling tiling;

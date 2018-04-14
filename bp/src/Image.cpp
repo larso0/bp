@@ -41,7 +41,8 @@ void Image::init(Device& device, uint32_t width, uint32_t height, VkFormat forma
 
 	memory = device.getMemoryAllocator().createImage(info, memoryUsage, handle);
 
-	cmdPool.init(device.getTransferQueue(), VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
+	transferCmdPool.init(device.getTransferQueue(), VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
+	graphicsCmdPool.init(device.getGraphicsQueue(), VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
 }
 
 Image::~Image()
@@ -98,7 +99,7 @@ void Image::transition(VkImageLayout dstLayout, VkAccessFlags dstAccess,
 	bool useOwnBuffer = cmdBuffer == VK_NULL_HANDLE;
 	if (useOwnBuffer)
 	{
-		cmdBuffer = cmdPool.allocateCommandBuffer();
+		cmdBuffer = graphicsCmdPool.allocateCommandBuffer();
 		VkCommandBufferBeginInfo beginInfo = {};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -125,10 +126,10 @@ void Image::transition(VkImageLayout dstLayout, VkAccessFlags dstAccess,
 	if (useOwnBuffer)
 	{
 		vkEndCommandBuffer(cmdBuffer);
-		Queue& queue = device->getTransferQueue();
+		Queue& queue = device->getGraphicsQueue();
 		queue.submit({}, {cmdBuffer}, {});
 		queue.waitIdle();
-		cmdPool.freeCommandBuffer(cmdBuffer);
+		graphicsCmdPool.freeCommandBuffer(cmdBuffer);
 	}
 
 	layout = dstLayout;
@@ -141,7 +142,7 @@ void Image::transfer(Image& fromImage, VkCommandBuffer cmdBuffer)
 	bool useOwnBuffer = cmdBuffer == VK_NULL_HANDLE;
 	if (useOwnBuffer)
 	{
-		cmdBuffer = cmdPool.allocateCommandBuffer();
+		cmdBuffer = transferCmdPool.allocateCommandBuffer();
 		VkCommandBufferBeginInfo beginInfo = {};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -178,7 +179,7 @@ void Image::transfer(Image& fromImage, VkCommandBuffer cmdBuffer)
 		Queue& queue = device->getTransferQueue();
 		queue.submit({}, {cmdBuffer}, {});
 		queue.waitIdle();
-		cmdPool.freeCommandBuffer(cmdBuffer);
+		transferCmdPool.freeCommandBuffer(cmdBuffer);
 	}
 }
 
@@ -188,7 +189,7 @@ void Image::transfer(Buffer& src, VkCommandBuffer cmdBuffer)
 	bool useOwnBuffer = cmdBuffer == VK_NULL_HANDLE;
 	if (useOwnBuffer)
 	{
-		cmdBuffer = cmdPool.allocateCommandBuffer();
+		cmdBuffer = transferCmdPool.allocateCommandBuffer();
 		VkCommandBufferBeginInfo beginInfo = {};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -218,7 +219,7 @@ void Image::transfer(Buffer& src, VkCommandBuffer cmdBuffer)
 		Queue& queue = device->getTransferQueue();
 		queue.submit({}, {cmdBuffer}, {});
 		queue.waitIdle();
-		cmdPool.freeCommandBuffer(cmdBuffer);
+		transferCmdPool.freeCommandBuffer(cmdBuffer);
 	}
 }
 

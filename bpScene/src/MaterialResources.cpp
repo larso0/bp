@@ -16,6 +16,8 @@ void MaterialResources::init(Device& device, const Material& material,
 	if (material.isTextured())
 	{
 		texture.load(device, VK_IMAGE_USAGE_SAMPLED_BIT, material.getTexturePath());
+		texture.transitionShaderReadable(VK_NULL_HANDLE,
+						 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 		texture.setDescriptorBinding(textureBinding);
 		descriptorSet.bind(texture.getDescriptor());
 	}
