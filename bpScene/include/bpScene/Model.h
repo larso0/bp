@@ -28,12 +28,14 @@ public:
 		return materials[meshMaterialIndices[meshIndex]];
 	}
 
-	glm::vec3 getSize() const;
+	const glm::vec3& getMaxVertex() const { return maxVertex; }
+	const glm::vec3& getMinVertex() const { return minVertex; }
 
 private:
 	std::vector<Mesh> meshes;
 	std::vector<Material> materials;
 	std::vector<unsigned> meshMaterialIndices;
+	glm::vec3 maxVertex, minVertex;
 };
 
 }
