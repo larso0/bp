@@ -15,6 +15,7 @@ void MaterialResources::init(Device& device, const Material& material,
 	descriptorSet.init(device, descriptorPool, descriptorSetLayout);
 	if (material.isTextured())
 	{
+		loadMessageEvent("Loading texture \"" + material.getTexturePath() + "\"...");
 		texture.load(device, VK_IMAGE_USAGE_SAMPLED_BIT, material.getTexturePath());
 		texture.getImage().freeStagingBuffer();
 		texture.transitionShaderReadable(VK_NULL_HANDLE,

@@ -6,6 +6,7 @@
 #include <bp/DescriptorPool.h>
 #include <bp/DescriptorSet.h>
 #include <bp/BufferDescriptor.h>
+#include <bpUtil/Event.h>
 
 namespace bpScene
 {
@@ -24,6 +25,8 @@ public:
 		  bp::Buffer& uniformBuffer, VkDeviceSize offset);
 
 	bp::DescriptorSet& getDescriptorSet() { return descriptorSet; }
+
+	bpUtil::Event<const std::string&> loadMessageEvent;
 
 private:
 	bp::DescriptorSet descriptorSet;

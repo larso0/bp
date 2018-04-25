@@ -9,6 +9,7 @@
 #include <bp/Buffer.h>
 #include <bp/DescriptorPool.h>
 #include <bp/DescriptorSetLayout.h>
+#include <bpUtil/Event.h>
 
 namespace bpScene
 {
@@ -31,6 +32,8 @@ public:
 	{
 		return materials[meshMaterialIndices[meshIndex]];
 	}
+
+	bpUtil::Event<const std::string&> loadMessageEvent;
 
 private:
 	bp::DescriptorPool descriptorPool;

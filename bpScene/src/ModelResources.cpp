@@ -33,6 +33,7 @@ void ModelResources::init(bp::Device& device, bp::DescriptorSetLayout& descripto
 	materials.resize(model.getMaterialCount());
 	for (unsigned i = 0; i < model.getMaterialCount(); i++)
 	{
+		bpUtil::connect(materials[i].loadMessageEvent, loadMessageEvent);
 		materials[i].init(device, model.getMaterial(i), descriptorPool, descriptorSetLayout,
 				  textureBinding, uniformBinding, uniformBuffer, i * uniformStride);
 	}
