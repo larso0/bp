@@ -10,9 +10,6 @@ class SortLastRenderer : public bp::Renderer
 {
 public:
 	virtual ~SortLastRenderer() = default;
-
-	virtual void increaseWorkload(float hint) = 0;
-	virtual void decreaseWorkload(float hint) = 0;
 };
 
 }
