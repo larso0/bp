@@ -48,6 +48,7 @@ void Window::init()
 	initRenderResources(static_cast<uint32_t>(width()), static_cast<uint32_t>(height()));
 
 	timer = Clock::now();
+	fpsTimer = timer;
 
 	inited = true;
 }
@@ -78,6 +79,14 @@ void Window::frame()
 
 	if (continuousAnimation)
 		requestUpdate();
+
+	if (++fpsFrameCount % 50 == 0)
+	{
+		auto now = Clock::now();
+		Duration delta = now - fpsTimer;
+		fpsTimer = now;
+		framerateEvent(static_cast<float>(50.0 / delta.count()));
+	}
 }
 
 void Window::resizeEvent(QResizeEvent* event)
