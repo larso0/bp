@@ -5,12 +5,17 @@
 #include <bp/Swapchain.h>
 #include <bp/CommandPool.h>
 #include <bp/Semaphore.h>
+#include <bpUtil/Event.h>
 #include <QWindow>
 #include <QVulkanInstance>
 #include <chrono>
 
 namespace bpQt
 {
+
+using Clock = std::chrono::high_resolution_clock;
+using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
+using Duration = std::chrono::duration<double>;
 
 class Window : public QWindow
 {
@@ -22,6 +27,7 @@ public:
 		surface{VK_NULL_HANDLE},
 		vsync{true},
 		resized{false},
+		fpsFrameCount{0},
 		graphicsQueue{nullptr},
 		frameCmdBuffer{VK_NULL_HANDLE},
 		frameCmdBufferBeginInfo{}
@@ -38,6 +44,8 @@ public:
 
 	void setVSync(bool enabled) { vsync = enabled; }
 	void setContinuousRendering(bool enabled) { continuousAnimation = enabled; }
+
+	bpUtil::Event<float> framerateEvent;
 
 protected:
 	bp::Device device;
@@ -57,11 +65,9 @@ private:
 	bool vsync;
 	bool resized;
 
-	using Clock = std::chrono::high_resolution_clock;
-	using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
-	using Duration = std::chrono::duration<double>;
-
 	TimePoint timer;
+	TimePoint fpsTimer;
+	unsigned fpsFrameCount;
 
 	bp::Queue* graphicsQueue;
 	bp::CommandPool cmdPool;
