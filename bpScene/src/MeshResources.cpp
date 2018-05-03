@@ -21,10 +21,12 @@ void MeshResources::init(Device& device, const Mesh& mesh, uint32_t offset, uint
 	buffers[0].init(device, mesh.getIndexDataSize(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 			VMA_MEMORY_USAGE_GPU_ONLY);
 	buffers[0].transfer(0, VK_WHOLE_SIZE, mesh.getIndexDataPtr());
+	buffers[0].freeStagingBuffer();
 
 	buffers[1].init(device, mesh.getPositionDataSize(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 			  VMA_MEMORY_USAGE_GPU_ONLY);
 	buffers[1].transfer(0, VK_WHOLE_SIZE, mesh.getPositionDataPtr());
+	buffers[1].freeStagingBuffer();
 	vertexBufferOffsets.push_back(0);
 	vertexBufferHandles.push_back(buffers[1].getHandle());
 
@@ -33,6 +35,7 @@ void MeshResources::init(Device& device, const Mesh& mesh, uint32_t offset, uint
 		buffers[2].init(device, mesh.getNormalDataSize(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 				VMA_MEMORY_USAGE_GPU_ONLY);
 		buffers[2].transfer(0, VK_WHOLE_SIZE, mesh.getNormalDataPtr());
+		buffers[2].freeStagingBuffer();
 		vertexBufferOffsets.push_back(0);
 		vertexBufferHandles.push_back(buffers[2].getHandle());
 	}
@@ -41,6 +44,7 @@ void MeshResources::init(Device& device, const Mesh& mesh, uint32_t offset, uint
 		buffers[3].init(device, mesh.getTexCoordDataSize(),
 				VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 		buffers[3].transfer(0, VK_WHOLE_SIZE, mesh.getTexCoordDataPtr());
+		buffers[3].freeStagingBuffer();
 		vertexBufferOffsets.push_back(0);
 		vertexBufferHandles.push_back(buffers[3].getHandle());
 	}
