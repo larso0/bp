@@ -1,7 +1,7 @@
 #ifndef BP_SCENE_MESH_H
 #define BP_SCENE_MESH_H
 
-#include "Vertex.h"
+#include "Math.h"
 #include <bpUtil/FlagSet.h>
 #include <vulkan/vulkan.h>
 #include <tiny_obj_loader.h>
@@ -17,7 +17,6 @@ class Mesh
 public:
 	enum LoadFlag
 	{
-		POSITION,
 		NORMAL,
 		TEXTURE_COORDINATE,
 		BP_FLAGSET_LAST
@@ -28,24 +27,9 @@ public:
 		topology{topology},
 		maxVertex{FLT_MIN, FLT_MIN, FLT_MIN}, minVertex{FLT_MAX, FLT_MAX, FLT_MAX} {}
 
-	void loadObj(const std::string& filename,
-		     const LoadFlags& flags = LoadFlags() << POSITION << NORMAL);
+	void loadObj(const std::string& filename, const LoadFlags& flags = LoadFlags() << NORMAL);
 	void loadShape(const tinyobj::attrib_t& attrib, const tinyobj::shape_t& shape,
-		       const LoadFlags& flags = LoadFlags() << POSITION << NORMAL
-							    << TEXTURE_COORDINATE);
-
-	uint32_t addVertex(const Vertex& vertex)
-	{
-		uint32_t i = static_cast<uint32_t>(vertices.size());
-		vertices.push_back(vertex);
-		return i;
-	}
-
-	uint32_t addVertex(const glm::vec3& position, const glm::vec3& normal,
-			   const glm::vec2& textureCoordinate)
-	{
-		return addVertex(Vertex(position, normal, textureCoordinate));
-	}
+		       const LoadFlags& flags = LoadFlags() << NORMAL << TEXTURE_COORDINATE);
 
 	void addIndices(std::initializer_list<uint32_t> indices)
 	{
@@ -58,11 +42,19 @@ public:
 	}
 
 	VkPrimitiveTopology getTopology() const { return topology; }
-	const std::vector<Vertex>& getVertices() const { return vertices; }
+	const std::vector<glm::vec3>& getPositions() const { return positions; }
+	const std::vector<glm::vec3>& getNormals() const { return normals; }
+	const std::vector<glm::vec2>& getTexCoords() const { return texCoords; }
 	const std::vector<uint32_t>& getIndices() const { return indices; }
-	const void* getVertexDataPtr() const { return static_cast<const void*>(vertices.data()); }
+	bool haveNormals() const { return !normals.empty(); }
+	bool haveTexCoords() const { return !texCoords.empty(); }
+	const void* getPositionDataPtr() const { return static_cast<const void*>(positions.data()); }
+	const void* getNormalDataPtr() const { return static_cast<const void*>(normals.data()); }
+	const void* getTexCoordDataPtr() const { return static_cast<const void*>(texCoords.data()); }
 	const void* getIndexDataPtr() const { return static_cast<const void*>(indices.data()); }
-	size_t getVertexDataSize() const { return vertices.size() * Vertex::STRIDE; }
+	size_t getPositionDataSize() const { return positions.size() * sizeof(glm::vec3); }
+	size_t getNormalDataSize() const { return normals.size() * sizeof(glm::vec3); }
+	size_t getTexCoordDataSize() const { return texCoords.size() * sizeof(glm::vec2); }
 	size_t getIndexDataSize() const { return indices.size() * sizeof(uint32_t); }
 	uint32_t getElementCount() const { return static_cast<uint32_t>(indices.size()); }
 	const glm::vec3& getMaxVertex() const { return maxVertex; }
@@ -70,7 +62,9 @@ public:
 
 private:
 	VkPrimitiveTopology topology;
-	std::vector<Vertex> vertices;
+	std::vector<glm::vec3> positions;
+	std::vector<glm::vec3> normals;
+	std::vector<glm::vec2> texCoords;
 	std::vector<uint32_t> indices;
 	glm::vec3 maxVertex, minVertex;
 };

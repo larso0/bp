@@ -19,7 +19,7 @@ static string getDirectoryOfPath(const string& path)
 	return("");
 }
 
-void Model::loadObj(const std::string& path)
+void Model::loadObj(const std::string& path, const Mesh::LoadFlags& loadFlags)
 {
 	tinyobj::attrib_t attrib;
 	vector <tinyobj::shape_t> shapes;
@@ -36,7 +36,7 @@ void Model::loadObj(const std::string& path)
 
 	for (unsigned i = 0; i < shapes.size(); i++)
 	{
-		meshes[i].loadShape(attrib, shapes[i]);
+		meshes[i].loadShape(attrib, shapes[i], loadFlags);
 
 		const auto& minV = meshes[i].getMinVertex();
 		const auto& maxV = meshes[i].getMaxVertex();

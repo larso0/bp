@@ -3,6 +3,7 @@
 
 #include "Mesh.h"
 #include <bp/Buffer.h>
+#include <vector>
 
 namespace bpScene
 {
@@ -13,7 +14,8 @@ public:
 	MeshResources() :
 		topology{VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST},
 		offset{0},
-		elementCount{0} {}
+		elementCount{0},
+		indexBufferOffset{0} {}
 	MeshResources(bp::Device& device, Mesh& mesh, uint32_t offset, uint32_t count) :
 		MeshResources{}
 	{
@@ -31,10 +33,12 @@ public:
 	uint32_t getElementCount() const { return elementCount; }
 
 private:
-	bp::Buffer vertexBuffer;
-	bp::Buffer indexBuffer;
+	std::vector<bp::Buffer> buffers;
+	std::vector<VkDeviceSize> vertexBufferOffsets;
+	std::vector<VkBuffer> vertexBufferHandles;
 	VkPrimitiveTopology topology;
 	uint32_t offset, elementCount;
+	VkDeviceSize indexBufferOffset;
 };
 
 }

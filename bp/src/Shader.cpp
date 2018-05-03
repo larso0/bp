@@ -75,7 +75,8 @@ void Shader::init(Device& device, VkShaderStageFlagBits stage,
 
 Shader::~Shader()
 {
-	vkDestroyShaderModule(*device, handle, nullptr);
+	if (isReady())
+		vkDestroyShaderModule(*device, handle, nullptr);
 }
 
 }

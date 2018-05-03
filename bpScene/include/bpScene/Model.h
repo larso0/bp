@@ -13,7 +13,7 @@ class Model
 {
 	friend class ModelResources;
 public:
-	void loadObj(const std::string& path);
+	void loadObj(const std::string& path, const Mesh::LoadFlags& loadFlags);
 
 	unsigned getMeshCount() const { return static_cast<unsigned>(meshes.size()); }
 	unsigned getMaterialCount() const { return static_cast<unsigned>(materials.size()); }
