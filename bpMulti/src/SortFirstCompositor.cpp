@@ -24,7 +24,7 @@ void SortFirstCompositor::init(vector<pair<Device*, SortFirstRenderer*>> configu
 	bp::Device& primaryDevice = *iter->first;
 	primaryRenderer = iter->second;
 	unsigned i = 0;
-	auto& r = contributionRegions[i];
+	auto& r = contributionRegions[i++];
 	iter->second->setContribution(
 		{static_cast<float>(r.offset.x) / static_cast<float>(width),
 		 static_cast<float>(r.offset.y) / static_cast<float>(height)},
@@ -35,14 +35,13 @@ void SortFirstCompositor::init(vector<pair<Device*, SortFirstRenderer*>> configu
 	{
 		secondaryDevices.push_back(iter->first);
 		secondaryRenderers.push_back(iter->second);
-		auto& r = contributionRegions[i];
+		auto& r = contributionRegions[i++];
 		iter->second->setContribution(
 			{static_cast<float>(r.offset.x) / static_cast<float>(width),
 			 static_cast<float>(r.offset.y) / static_cast<float>(height)},
 			{static_cast<float>(r.extent.width) / static_cast<float>(width),
 			 static_cast<float>(r.extent.height) / static_cast<float>(height)});
 		iter++;
-		i++;
 	}
 
 	Compositor::init(primaryDevice, colorFormat, width, height);
