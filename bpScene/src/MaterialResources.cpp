@@ -2,6 +2,7 @@
 #include <bp/Buffer.h>
 
 using namespace bp;
+using namespace std;
 
 namespace bpScene
 {
@@ -15,9 +16,12 @@ void MaterialResources::init(Device& device, const Material& material,
 	descriptorSet.init(device, descriptorPool, descriptorSetLayout);
 	if (material.isTextured())
 	{
-		loadMessageEvent("Loading texture \"" + material.getTexturePath() + "\"...");
 		texture.load(device, VK_IMAGE_USAGE_SAMPLED_BIT, material.getTexturePath());
 		texture.getImage().freeStagingBuffer();
+		loadMessageEvent("Loaded texture \"" + material.getTexturePath()
+				 + "\" of resolution "
+				 + to_string(texture.getWidth()) + "X"
+				 + to_string(texture.getHeight()) + ".");
 		texture.transitionShaderReadable(VK_NULL_HANDLE,
 						 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 		texture.setDescriptorBinding(textureBinding);
