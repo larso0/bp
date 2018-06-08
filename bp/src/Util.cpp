@@ -4,8 +4,13 @@
 #include <sstream>
 #include <streambuf>
 #include <thread>
-#include <cstring>
 #include <future>
+
+#ifdef AVX_CPY
+#include <FastMemcpy_Avx.h>
+#else
+#include <FastMemcpy.h>
+#endif
 
 using namespace std;
 
@@ -195,7 +200,7 @@ static const size_t CHUNK_SIZE = 524288;
 
 void* parallelCopy(void* dest, const void* src, size_t count)
 {
-	if (count <= CHUNK_SIZE) return memmove(dest, src, count);
+	if (count <= CHUNK_SIZE) return memcpy_fast(dest, src, count);
 
 	size_t threadCount = thread::hardware_concurrency();
 	size_t chunkSize = count / threadCount;
@@ -206,13 +211,13 @@ void* parallelCopy(void* dest, const void* src, size_t count)
 	futures.reserve(threadCount);
 	for (auto i = 0; i < threadCount; i++)
 		futures.push_back(async(launch::async, [dest, src, i, chunkSize]{
-			memmove(static_cast<char*>(dest) + i * chunkSize,
+			memcpy_fast(static_cast<char*>(dest) + i * chunkSize,
 					static_cast<const char*>(src) + i * chunkSize, chunkSize);
 		}));
 
 	size_t amountScheduled = threadCount * chunkSize;
 	if (amountScheduled < count)
-		memmove(static_cast<char*>(dest) + amountScheduled,
+		memcpy_fast(static_cast<char*>(dest) + amountScheduled,
 				static_cast<const char*>(src) + amountScheduled, count - amountScheduled);
 
 	for (auto& future : futures) future.wait();
