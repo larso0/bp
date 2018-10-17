@@ -1,3 +1,5 @@
+add_subdirectory(external)
+
 cmake_minimum_required(VERSION 3.3)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
 set(CMAKE_DEBUG_POSTFIX d)
@@ -23,12 +25,13 @@ file(GLOB_RECURSE BP_UTIL_INCLUDE_FILES "${BP_UTIL_INCLUDE_DIR}/*.h" "${BP_UTIL_
 set(BP_SRC ${BP_SRC_FILES} ${BP_INCLUDE_FILES} ${BP_UTIL_INCLUDE_FILES})
 
 find_package(Vulkan REQUIRED)
-find_package(shaderc REQUIRED)
 add_library(bp STATIC ${BP_SRC})
 target_include_directories(bp
-	PUBLIC ${Vulkan_INCLUDE_DIRS} ${SHADERC_INCLUDE_DIRS}
+	PUBLIC
+	${Vulkan_INCLUDE_DIRS}
+	"${CMAKE_CURRENT_SOURCE_DIR}/external/shaderc/libshaderc/include"
 	${BP_INCLUDE_DIR} ${BP_UTIL_INCLUDE_DIR})
-target_link_libraries(bp ${Vulkan_LIBRARIES} ${SHADERC_LIBRARIES})
+target_link_libraries(bp ${Vulkan_LIBRARIES} shaderc)
 
 if (Scene IN_LIST BP_MODULES)
 	set(BP_SCENE_INCLUDE_DIR bpScene/include)
@@ -37,10 +40,9 @@ if (Scene IN_LIST BP_MODULES)
 	file(GLOB_RECURSE BP_SCENE_INCLUDE_FILES "${BP_SCENE_INCLUDE_DIR}/*.h" "${BP_SCENE_INCLUDE_DIR}/*.hpp")
 	set(BP_SCENE_SRC ${BP_SCENE_SRC_FILES} ${BP_SCENE_INCLUDE_FILES})
 
-	find_package(GLM REQUIRED)
 	add_library(bpScene STATIC ${BP_SCENE_SRC})
 	target_include_directories(bpScene
-		PUBLIC ${GLM_INCLUDE_DIRS} ${BP_SCENE_INCLUDE_DIR})
+		PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/external/glm" ${BP_SCENE_INCLUDE_DIR})
 	target_link_libraries(bpScene bp)
 endif()
 if (Multi IN_LIST BP_MODULES)
