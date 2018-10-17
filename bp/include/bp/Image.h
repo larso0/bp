@@ -35,7 +35,7 @@ public:
 		  VkImageTiling tiling, VkImageUsageFlags usage, VmaMemoryUsage memoryUsage,
 		  VkImageLayout initialLayout = VK_IMAGE_LAYOUT_UNDEFINED);
 
-	void* map();
+	uint8_t* map();
 	void createStagingBuffer();
 	void freeStagingBuffer();
 	void updateStagingBuffer(VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);

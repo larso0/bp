@@ -36,7 +36,7 @@ void MaterialResources::init(Device& device, const Material& material,
 
 	descriptorSet.update();
 
-	MaterialUniform& uniform = *static_cast<MaterialUniform*>(uniformBuffer.map() + offset);
+	MaterialUniform& uniform = *reinterpret_cast<MaterialUniform*>(uniformBuffer.map() + offset);
 	uniform.ambient = {material.getAmbient(), 1.f};
 	uniform.diffuse = {material.getDiffuse(), 1.f};
 }

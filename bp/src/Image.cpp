@@ -52,10 +52,11 @@ Image::~Image()
 	vkDestroyImage(*device, handle, nullptr);
 }
 
-void* Image::map()
+uint8_t* Image::map()
 {
 	assertReady();
-	if (tiling == VK_IMAGE_TILING_LINEAR && memory->isMapped()) return memory->getMapped();
+	if (tiling == VK_IMAGE_TILING_LINEAR && memory->isMapped())
+		return static_cast<uint8_t*>(memory->getMapped());
 
 	if (stagingBuffer == nullptr) createStagingBuffer();
 	return stagingBuffer->map();

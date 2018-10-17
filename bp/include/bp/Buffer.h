@@ -29,7 +29,7 @@ public:
 	void init(Device& device, VkDeviceSize size, VkBufferUsageFlags usage,
 		  VmaMemoryUsage memoryUsage);
 
-	void* map();
+	uint8_t* map();
 	void createStagingBuffer();
 	void freeStagingBuffer();
 	void updateStagingBuffer(VkCommandBuffer cmdBuffer = VK_NULL_HANDLE);

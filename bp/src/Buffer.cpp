@@ -35,10 +35,10 @@ Buffer::~Buffer()
 	vkDestroyBuffer(*device, handle, nullptr);
 }
 
-void* Buffer::map()
+uint8_t* Buffer::map()
 {
 	assertReady();
-	if (memory->isMapped()) return memory->getMapped();
+	if (memory->isMapped()) return static_cast<uint8_t*>(memory->getMapped());
 
 	if (stagingBuffer == nullptr) createStagingBuffer();
 	return stagingBuffer->map();
